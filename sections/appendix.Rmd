@@ -1,0 +1,25 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# (APPENDIX) Appendix {-}
+
+# Tables {#tables}
+
+...
+
+\FloatBarrier
+\pagebreak
+
+# Figures {#figures}
+
+...
+
+\FloatBarrier
+\pagebreak
+
+# Code {#code}
+
+...
+

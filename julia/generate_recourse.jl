@@ -8,7 +8,7 @@ function gradient_cost(x_f, x_cf)
     (x_f - x_cf) ./ norm(x_f - x_cf)
 end;
 
-function generate_recourse_wachter(x, gradient, w, target, α=1, τ=1e-5, λ=0.5, gradient_cost=gradient_cost, T=1000)
+function generate_recourse_wachter(x, gradient, w, target; α=1, τ=1e-5, λ=0.25, gradient_cost=gradient_cost, T=1000)
     D = length(x) # input dimension
     path = reshape(x, 1, D) # storing the path
     # Initialize:
@@ -41,14 +41,14 @@ function predictive(x, model=model, posterior_predictive=posterior_predictive)
     return posterior_predictive(model, x)
 end;
 
-function generate_recourse_schut(x,gradient,w,target,Γ,δ,n,T,predictive,args)
+function generate_recourse_schut(x,gradient,w,target;Γ=0.95,δ=1,n=30,T=100,predictive=predictive,predictive_args)
     D = length(x) # input dimension
     path = reshape(x, 1, D) # storing the path
     # Initialize:
     x_cf = copy(x) # start from factual
     t = 1 # counter
     P = zeros(D) # number of times feature is changed
-    converged = predictive(vcat(1,x_cf),args...)[1] > Γ
+    converged = predictive(vcat(1,x_cf),predictive_args...)[1] > Γ
     max_number_changes_reached = all(P.==n)
     # Recursion:
     while !converged && t < T && !max_number_changes_reached
@@ -58,7 +58,7 @@ function generate_recourse_schut(x,gradient,w,target,Γ,δ,n,T,predictive,args)
         x_cf[i_t] -= δ * sign(𝐠_t[i_t]) # counterfactual update
         P[i_t] += 1 # update 
         t += 1 # update number of times feature is changed
-        converged = predictive(vcat(1,x_cf),args...)[1] .> Γ # check if converged
+        converged = predictive(vcat(1,x_cf),predictive_args...)[1] .> Γ # check if converged
         max_number_changes_reached = all(P.==n)
         path = vcat(path, reshape(x_cf, 1, D))
     end

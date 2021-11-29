@@ -64,8 +64,17 @@ end
 # Methods:
 μ(mod::BayesLogreg) = mod.μ
 Σ(mod::BayesLogreg) = mod.Σ
-using Distributions
+# Predict from classifier:
+function predict(mod::BayesLogreg, X, proba=true)
+    μ = mod.μ # MAP mean vector
+    y_hat = 𝛔(X*w)
+    if (proba)
+        y_hat = round.(y_hat)
+    end
+    return(y_hat)
+end
 # Sampling from posterior distribution:
+using Distributions
 function sample_posterior(mod::BayesLogreg, n)
     rand(MvNormal(mod.μ, mod.Σ),n)
 end

@@ -1,5 +1,6 @@
 ---
-title: "Endogenous model shifts in Algorithmic Recourse"
+title: "Overlooked dynamics of algorithmic recourse"
+subtitle: "Research Proposal"
 author:
 - "Patrick Altmeyer (p.altmeyer@tudelft.nl)"
 date: "`r format(Sys.Date(), '%B, %Y')`"
@@ -7,11 +8,10 @@ output:
   bookdown::pdf_document2: 
     toc: false
     includes:
-      in_header: assets/preamble.tex
-      before_body: assets/before_body.tex
+      in_header: ../tex/preamble.tex
   bookdown::html_document2: default
 fontsize: 12pt
-bibliography: "bib.bib"
+bibliography: ../bib.bib
 link-citations: true
 abstract: "..."
 ---
@@ -25,20 +25,5 @@ knitr::opts_chunk$set(
   out.width = 450,
   fig.align = "center"
 )
-```
-
-```{r introduction, child="introduction.Rmd"}
-```
-
-\FloatBarrier
-\pagebreak
-
-# References {-}
-
-<div id="refs"></div>
-
-\pagebreak
-
-```{r annex, child="appendix.Rmd"}
 ```
 

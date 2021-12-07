@@ -64,11 +64,18 @@ end
 # Methods:
 μ(mod::BayesLogreg) = mod.μ
 Σ(mod::BayesLogreg) = mod.Σ
+# Coefficients:
+function coef(mod::BayesLogreg)
+    return mod.μ 
+end
 # Predict from classifier:
-function predict(mod::BayesLogreg, X, proba=true)
+function predict(mod::BayesLogreg, X, proba=false)
     μ = mod.μ # MAP mean vector
+    if !isa(X, Matrix)
+        X = reshape(X, 1, length(X))
+    end
     y_hat = 𝛔(X*w)
-    if (proba)
+    if (!proba)
         y_hat = round.(y_hat)
     end
     return(y_hat)

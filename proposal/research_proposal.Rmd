@@ -27,3 +27,28 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Introduction
+
+# Related work
+
+## @wachter2017counterfactual
+
+## @schut2021generating
+
+## @upadhyay2021towards
+
+## Other
+
+- @joshi2019towards
+- @ustun2019actionable
+- @karimi2021algorithmic
+
+# Preliminary findings
+
+## Synthetic data
+
+## German credit data
+
+
+
+

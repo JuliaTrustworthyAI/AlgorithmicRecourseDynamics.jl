@@ -27,4 +27,15 @@ function train_test_split(X,y;test_size=0.2)
     return X_train, y_train, X_test, y_test
 end
 
+# K-fold
+using MLDataUtils
+function kfolds_(N;k=5)
+    rows = 1:N
+    rows_shuffled = StatsBase.sample(rows,N,replace=false)
+    folds = kfolds(rows_shuffled, k)
+    train_indices = [folds.data[idx] for idx in folds.train_indices]
+    test_indices = [folds.data[idx] for idx in folds.val_indices]
+    return train_indices, test_indices
+end
+
 

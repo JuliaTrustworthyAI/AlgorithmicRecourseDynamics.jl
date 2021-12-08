@@ -79,6 +79,10 @@ function predict(mod::BayesLogreg, X; proba=false)
     if !isa(X, Matrix)
         X = reshape(X, 1, length(X))
     end
+    # Constant:
+    if size(X)[2]<length(μ)
+        X = hcat(ones(size(X)[1]), X)
+    end
     y_hat = 𝛔(X*w)
     if (!proba)
         y_hat = round.(y_hat)

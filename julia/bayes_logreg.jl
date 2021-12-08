@@ -19,16 +19,6 @@ function 𝓁(w,w_0,H_0,X,y)
     return - ∑( y[n] * log(μ[n]) + (1-y[n]) * log(1-μ[n]) for n=1:N) + 1/2 * Δw'H_0*Δw
 end
 
-# Negative log likelihood (unconstrained)
-function 𝓁_(w,w_0,H_0,X,y)
-    N = length(y)
-    D = size(X)[2]
-    #a = clamp.(X*w, -8.0, 8.0)
-    a = X*w
-    Δw = w-w_0
-    return a'y .- log.(1 .+ exp.(a')) * ones(N) .+ 1/2 * Δw'H_0*Δw
-end
-
 # Gradient:
 function ∇𝓁(w,w_0,H_0,X,y)
     N = length(y)
@@ -51,25 +41,40 @@ struct BayesLogreg
     μ::Vector{Float64}
     Σ::Matrix{Float64}
 end
-function bayes_logreg(X,y,w_0,H_0,𝓁,∇𝓁,∇∇𝓁,optim_options...)
+function bayes_logreg(X,y;w_0=nothing,H_0=nothing,𝓁=𝓁,∇𝓁=∇𝓁,∇∇𝓁=∇∇𝓁,constant=true,λ=0.005,optim_options...)
+    # Setup:
+    if constant
+        if !all(X[:,1] .== 1)
+            X = hcat(ones(size(X)[1]), X)
+        else
+        end
+    end
+    N, D = size(X)
+    if isnothing(w_0)
+        w_0 = zeros(D)
+    end
+    if isnothing(H_0)
+        H_0 = UniformScaling(λ)
+    end
+    
     # Model:
     w_map, H_map = newton(𝓁, w_0, ∇𝓁, ∇∇𝓁, (w_0=w_0, H_0=H_0, X=X, y=y), optim_options...) # fit the model (find mode of posterior distribution)
     Σ_map = inv(H_map) # inverse Hessian at the mode
     Σ_map = Symmetric(Σ_map) # to ensure matrix is Hermitian (i.e. avoid rounding issues)
+    
     # Output:
     mod = BayesLogreg(w_map, Σ_map)
     return mod
 end
 
-# Methods:
+#  ------------ Outer constructor methods: ------------
+# Accessing fields:
 μ(mod::BayesLogreg) = mod.μ
 Σ(mod::BayesLogreg) = mod.Σ
 # Coefficients:
-function coef(mod::BayesLogreg)
-    return mod.μ 
-end
+coef(mod::BayesLogreg) = mod.μ 
 # Predict from classifier:
-function predict(mod::BayesLogreg, X, proba=false)
+function predict(mod::BayesLogreg, X; proba=false)
     μ = mod.μ # MAP mean vector
     if !isa(X, Matrix)
         X = reshape(X, 1, length(X))
@@ -82,9 +87,7 @@ function predict(mod::BayesLogreg, X, proba=false)
 end
 # Sampling from posterior distribution:
 using Distributions
-function sample_posterior(mod::BayesLogreg, n)
-    rand(MvNormal(mod.μ, mod.Σ),n)
-end
+sample_posterior(mod::BayesLogreg, n) = rand(MvNormal(mod.μ, mod.Σ),n)
 # Posterior predictions:
 function posterior_predictive(mod::BayesLogreg, X)
     μ = mod.μ # MAP mean vector

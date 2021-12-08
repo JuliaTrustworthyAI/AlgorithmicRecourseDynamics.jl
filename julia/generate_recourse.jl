@@ -1,8 +1,32 @@
-struct Recourse
+mutable struct Recourse
     x_cf::Vector{Float64}
+    y_cf::Float64
     path::Matrix{Float64}
+    target::Float64
     valid::Bool
+    cost::Float64
+    factual::Vector{Float64}
 end;
+
+# Outer constructor methods:
+function valid(self::Recourse; classifier=nothing)
+    if isnothing(classifier)
+        valid = self.valid
+    else 
+        valid = predict(classifier, vcat(1, self.x_cf); proba=false)[1] == self.target
+    end
+    return valid
+end
+
+function cost(self::Recourse; cost_fun=nothing, cost_fun_kargs)
+    if isnothing(cost_fun)
+        cost = self.cost
+    else 
+        cost = cost_fun(self.factual .- self.x_cf; cost_fun_kargs...)
+        self.cost = cost
+    end
+    return cost
+end
 
 # ------------------------- Wachter et al (2018) -------------------------
 function gradient_cost(x_f, x_cf)
@@ -34,10 +58,15 @@ function generate_recourse_wachter(x, gradient, classifier, target; α=1, τ=1e-
         converged = convergence_condition(vcat(1,x_cf), gradient, w, target, τ) # check if converged
         path = vcat(path, reshape(x_cf, 1, D))
     end
+    # New label:
+    new_label = predict(classifier, vcat(1,x_cf); proba=false)[1]
     # Validity:
-    valid = predict(classifier, vcat(1,x_cf), false)[1] == target * 1.0
+    valid = new_label == target * 1.0
+    # Cost:
+    cost = norm(x.-x_cf)
     # Output:
-    recourse = Recourse(x_cf, path, valid) 
+    recourse = Recourse(x_cf, new_label, path, target, valid, cost, x) 
+    return recourse
 end;
 
 # ------------------------- Upadhyay et al (2021) -------------------------
@@ -70,10 +99,15 @@ function generate_recourse_roar(x, gradient, classifier, target; α=1, τ=1e-5, 
         converged = convergence_condition(vcat(1,x_cf), gradient, w, target, τ) # check if converged
         path = vcat(path, reshape(x_cf, 1, D))
     end
+    # New label:
+    new_label = predict(classifier, vcat(1,x_cf); proba=false)[1]
     # Validity:
-    valid = predict(classifier, vcat(1,x_cf), false)[1] == target * 1.0
+    valid = new_label == target * 1.0
+    # Cost:
+    cost = norm(x.-x_cf)
     # Output:
-    recourse = Recourse(x_cf, path, valid) 
+    recourse = Recourse(x_cf, new_label, path, target, valid, cost, x) 
+    return recourse
 end;
 
 # ------------------------- Schut et al (2021) -------------------------
@@ -99,9 +133,13 @@ function generate_recourse_schut(x,gradient,classifier,target;Γ=0.95,δ=1,n=30,
         max_number_changes_reached = all(P.==n)
         path = vcat(path, reshape(x_cf, 1, D))
     end
+    # New label:
+    new_label = predict(classifier, vcat(1,x_cf); proba=false)[1]
     # Validity:
-    valid = predict(classifier, vcat(1,x_cf), false)[1] == target * 1.0
+    valid = new_label == target * 1.0
+    # Cost:
+    cost = norm(x.-x_cf)
     # Output:
-    recourse = Recourse(x_cf, path, valid) 
+    recourse = Recourse(x_cf, new_label, path, target, valid, cost, x) 
     return recourse
 end;

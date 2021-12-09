@@ -30,7 +30,7 @@ end
 
 # ------------------------- Wachter et al (2018) -------------------------
 function gradient_cost(x_f, x_cf)
-    (x_f - x_cf) ./ norm(x_f - x_cf)
+    (x_cf .- x_f) ./ norm(x_cf .- x_f)
 end;
 
 function generate_recourse_wachter(x, gradient, classifier, target; α=1, τ=1e-5, λ=0.1, gradient_cost=gradient_cost, T=1000, immutable_=[])
@@ -58,9 +58,9 @@ function generate_recourse_wachter(x, gradient, classifier, target; α=1, τ=1e-
         𝐠_t[immutable_] .= 0 # set gradient of immutable features to zero
         𝐠_cost_t = gradient_cost(x,x_cf) # compute gradient of cost function
         𝐠_cost_t[immutable_] .= 0 # set gradient of immutable features to zero
-        cost = norm(x-x_cf) # update cost
+        cost = norm(x_cf-x) # update cost
         if cost != 0
-            x_cf -= (α .* (𝐠_t - λ .* 𝐠_cost_t)) # counterfactual update
+            x_cf -= (α .* (𝐠_t + λ .* 𝐠_cost_t)) # counterfactual update
         else
             x_cf -= (α .* 𝐠_t)
         end

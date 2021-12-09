@@ -10,13 +10,15 @@ function gradient(x,w,y)
 end;
 
 # MSE:
-function gradient(x,w,y)
-    𝐠 = 2 * 𝛔(w'x) * (1-𝛔(w'x)) * (𝛔(w'x) - y) .* w
-    return 𝐠
-end;
+# function gradient(x,w,y)
+#     𝐠 = 2 * 𝛔(w'x) * (1-𝛔(w'x)) * (𝛔(w'x) - y) .* w
+#     return 𝐠
+# end;
 
 # Cross-entropy:
 function gradient(x,w,y)
     𝐠 = (𝛔(w'x) - y) .* w
     return 𝐠
 end;
+
+

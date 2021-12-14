@@ -29,6 +29,8 @@ knitr::opts_chunk$set(
 
 # Introduction
 
+In their NeurIPS 2021 paper @upadhyay2021towards demonstrate that existing approaches to algorithmic recourse are not robust to exogenous domain and model shifts. A related and so far unexplored idea is that recourse itself may lead to endogenous domain and model shifts, if a substantial share of individuals acts on it. We believe that this can have implications on the validity and cost of algorithmic recourse that have so far been overlooked. 
+
 # Related work
 
 ## @wachter2017counterfactual

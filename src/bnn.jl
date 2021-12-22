@@ -60,12 +60,6 @@ end
     end
 end
 
-# Inference:
-function inference(bnn_instance; sample=HMC(0.05, 4); num_samples=500) 
-    ch = sample(bnn_instance, NUTS(0.65), num_samples);
-    return ch
-end
-
 # Extract parameters
 function coefs(chain)
     return MCMCChains.group(chain, :θ).value

@@ -8,7 +8,13 @@ To facilitate reproducibility this repository works with its own environment. Wh
 
 ### Compatibility
 
-In this project I use Turing.jl for the purpose of Bayesian Deep Learning. Unfortunately, Turing is currently not compatible with the latest version of Julia (1.7).  When using the code contained in this project you are therefore best advised to work in versions `julia = "1.3, 1.4, 1.5, 1.6"` as specified in 'Project.toml'.
+In this project I use Turing.jl for the purpose of Bayesian Deep Learning. Unfortunately, Turing is currently not compatible with the latest version of Julia (1.7).  When using the code contained in this project you are therefore best advised to work in versions 
+
+```toml 
+julia = "1.3, 1.4, 1.5, 1.6"
+```
+
+as specified in 'Project.toml'.
 
 ### AlgorithmicRecourse.jl
 

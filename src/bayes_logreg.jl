@@ -74,26 +74,26 @@ end
 # Coefficients:
 coef(mod::BayesLogreg) = mod.μ 
 # Predict from classifier:
-function predict(mod::BayesLogreg, X; proba=false)
-    μ = mod.μ # MAP mean vector
-    if !isa(X, Matrix)
-        X = reshape(X, 1, length(X))
-    end
-    # Constant:
-    if size(X)[2]<length(μ)
-        X = hcat(ones(size(X)[1]), X)
-    end
-    y_hat = 𝛔(X*w)
-    if (!proba)
-        y_hat = round.(y_hat)
-    end
-    return(y_hat)
-end
+# function predict(mod::BayesLogreg, X; proba=false)
+#     μ = mod.μ # MAP mean vector
+#     if !isa(X, Matrix)
+#         X = reshape(X, 1, length(X))
+#     end
+#     # Constant:
+#     if size(X)[2]<length(μ)
+#         X = hcat(ones(size(X)[1]), X)
+#     end
+#     y_hat = 𝛔(X*w)
+#     if (!proba)
+#         y_hat = round.(y_hat)
+#     end
+#     return(y_hat)
+# end
 # Sampling from posterior distribution:
 using Distributions
 sample_posterior(mod::BayesLogreg, n) = rand(MvNormal(mod.μ, mod.Σ),n)
 # Posterior predictions:
-function posterior_predictive(mod::BayesLogreg, X)
+function predict(mod::BayesLogreg, X)
     μ = mod.μ # MAP mean vector
     Σ = mod.Σ # MAP covariance matrix
     if !isa(X, Matrix)

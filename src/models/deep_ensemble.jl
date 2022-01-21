@@ -14,10 +14,8 @@ function build_model(;input_dim=2,n_hidden=32,output_dim=1)
     b₀ = output_dim
     
     nn = Chain(
-        Dense(input_dim, n_hidden),
-        BatchNorm(n_hidden, relu),
-        Dense(n_hidden, n_hidden),
-        BatchNorm(n_hidden, relu),
+        Dense(input_dim, n_hidden, relu),
+        Dense(n_hidden, n_hidden, relu),
         Dense(n_hidden, output_dim))  
 
     return nn

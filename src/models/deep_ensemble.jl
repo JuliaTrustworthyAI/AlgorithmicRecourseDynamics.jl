@@ -5,19 +5,13 @@ using Flux, Plots
 
 Helper function that builds a single neural network.
 """
-function build_model(;input_dim=2,n_hidden=32,output_dim=1)
-    
-    # Params:
-    W₁ = input_dim
-    b₁ = n_hidden
-    W₀ = n_hidden
-    b₀ = output_dim
+function build_model(;input_dim=2,n_hidden=32,output_dim=1,p=0.3)
     
     nn = Chain(
         Dense(input_dim, n_hidden, relu),
-        # BatchNorm(n_hidden, relu),
+        Dropout(p),
         Dense(n_hidden, n_hidden, relu),
-        # BatchNorm(n_hidden, relu),
+        Dropout(p),
         Dense(n_hidden, output_dim))
 
     return nn

@@ -1,3 +1,116 @@
+"""
+    Grid(μ::AbstractArray, γ::AbstractArray, ℓ::AbstractArray)
+
+Sets up the the grid of variables. `μ` refers to the proportion of individuals that shall
+recieve recourse and `γ` refers to the desired threshold probability for recourse.
+"""
+struct GridVariables
+    μ::AbstractArray
+    γ::AbstractArray
+end
+
+"""
+    Grid(grid::Base.Iterators.ProductIterator)
+
+The unfolded grid containing all combinations of all variables.
+"""
+struct Grid
+    grid::Base.Iterators.ProductIterator
+end
+
+"""
+    build_grid(grid::GridVariables) = Base.Iterators.product(grid.μ, grid.γ)    
+
+Builds the grid based on provided variables.
+"""
+build_grid(grid::GridVariables) = Grid(Base.Iterators.product(grid.μ, grid.γ))
+
+
+using AlgorithmicRecourse
+
+"""
+    Experiment(X::AbstractArray,y::AbstractArray,𝑴::AlgorithmicRecourse.Models.FittedModel,target::AbstractFloat,grid::Base.Iterators.ProductIterator,n_rounds::Int)
+
+Sets up the experiment to be run.
+"""
+struct Experiment
+    X::AbstractArray
+    y::AbstractArray
+    𝑴::AlgorithmicRecourse.Models.FittedModel
+    target::AbstractFloat
+    grid::GridVariables
+    n_rounds::Int
+end
+
+using Random, StatsBase, LinearAlgebra
+
+"""
+    run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.Generator, n_folds=5; seed=nothing, T=1000)
+
+A wrapper function that runs the experiment for endogenous models shifts.
+"""
+function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.Generator, n_folds=5; seed=nothing, T=1000)
+
+    # Setup:
+    if !isnothing(seed)
+        Random.seed!(seed)
+    end
+    output = []
+    grid = build_grid(experiment.grid)
+
+    for k in n_folds
+        for (μ,γ) in grid
+
+            X = copy(experiment.X)
+            chosen_individuals = []
+            
+            for t in 1:experiment.n_rounds
+
+                # Classifier:
+                if t > 1
+                    𝑴 = Models.retrain(experiment.𝑴)
+                end
+    
+                # Choose individuals:
+                adverse_outcome = findall(experiment.y .!=  experiment.target)
+                n_individuals = Int(round(μ * length(adverse_outcome)))
+                chosen_individualsₜ = StatsBase.sample(adverse_outcome,n_individuals,replace=false)
+
+                # Generate recourse:
+                for i in chosen_individualsₜ
+                    x̅ = X[i,:]
+                    recourse = generate_recourse(generator, x̅, 𝑴, experiment.target, γ, T=T)
+                    X[i,:] = recourse.x̲ # update individuals features
+                end
+
+                # Evaluate recourse:
+                chosen_individuals = union(chosen_individuals, chosen_individualsₜ)
+                pct_validₜ = sum(round.(probs(𝑴, X[chosen_individuals,:])) .== experiment.target)/length(chosen_individuals)
+                ΔX = X[chosen_individuals,:] - experiment.X[chosen_individuals,:]
+                avg_costₜ = norm(ΔX, 2)
+
+                # Collect and store output:
+                outputₜ = (
+                    pct_valid=pct_validₜ, 
+                    avg_cost=avg_costₜ,
+                    t = t,
+                    μ = μ,
+                    γ = γ,
+                    k = k
+                )
+                output = vcat(output, outputₜ)
+                
+            end
+        end
+    end
+end
+
+
+#### Old stuff
+
+
+
+
 function run_experiment(X,y,model,target,generators,generator_args,experiment;scale=false)
 
     # Setup:
@@ -120,10 +233,10 @@ function experiment_dynamic(X,y,classifier,target,generator,generator_args;gradi
             # H_0 = model.Σ
             
             # Provide recourse:
-            undesired = findall(y_train.!=target)
-            N_0 = length(undesired)
-            recourse_eligible = StatsBase.sample(undesired,Int(round(proportion_recourse * N_0)),replace=false)
-            for i in recourse_eligible
+            adverse_outcome = findall(y_train.!=target)
+            N_0 = length(adverse_outcome)
+            chosen_individualsₜ = StatsBase.sample(adverse_outcome,Int(round(proportion_recourse * N_0)),replace=false)
+            for i in chosen_individualsₜ
                 # Implement recourse:
                 x_f = X_train[i,:]
                 recourse = generator(x_f,gradient,model,target;generator_args...)
@@ -159,3 +272,4 @@ function experiment_dynamic(X,y,classifier,target,generator,generator_args;gradi
     
     return evaluation, recourse_path, clf_path
 end;
+

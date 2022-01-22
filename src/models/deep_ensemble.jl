@@ -128,12 +128,14 @@ using AlgorithmicRecourse
 import AlgorithmicRecourse.Models: logits, probs # import functions in order to extend
 
 """
-    FittedEnsemble(𝓜::AbstractArray)
+    FittedEnsemble(𝓜::AbstractArray,opt::Any,loss_type::Symbol)
 
-A simple subtype that is compatible with the AlgorithmicRecourse.jlpackage.
+A simple subtype that is compatible with the AlgorithmicRecourse.jl package.
 """
 struct FittedEnsemble <: AlgorithmicRecourse.Models.FittedModel
     𝓜::AbstractArray
+    opt::Any
+    loss_type::Symbol
 end
 
 """
@@ -149,3 +151,11 @@ logits(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([n
 A method (extension) that computes predicted probabilities for a deep ensemble.
 """
 probs(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([σ.(nn(X)) for nn in 𝑴.𝓜],1)),dims=1)
+
+function retrain(𝑴::FittedEnsemble, data; n_epochs=200) 
+    𝓜 = copy(𝑴.𝓜)
+    𝓜 = forward(𝓜, data, 𝑴.opt, loss_type=𝑴.loss_type, plot_loss=false, n_epochs=n_epochs)
+    𝑴 = FittedEnsemble(𝓜, 𝑴.opt, 𝑴.loss_type)
+    return 𝑴
+end
+

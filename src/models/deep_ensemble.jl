@@ -152,9 +152,9 @@ A method (extension) that computes predicted probabilities for a deep ensemble.
 """
 probs(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([σ.(nn(X)) for nn in 𝑴.𝓜],1)),dims=1)
 
-function retrain(𝑴::FittedEnsemble, data; n_epochs=200) 
+function retrain(𝑴::FittedEnsemble, data; n_epochs=10) 
     𝓜 = copy(𝑴.𝓜)
-    𝓜 = forward(𝓜, data, 𝑴.opt, loss_type=𝑴.loss_type, plot_loss=false, n_epochs=n_epochs)
+    𝓜, anim = forward(𝓜, data, 𝑴.opt, loss_type=𝑴.loss_type, plot_loss=false, n_epochs=n_epochs)
     𝑴 = FittedEnsemble(𝓜, 𝑴.opt, 𝑴.loss_type)
     return 𝑴
 end

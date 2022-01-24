@@ -47,12 +47,18 @@ using Flux.Optimise: update!
 
 Trains a single neural network `nn`.
 """
-function forward_nn(nn, loss, data, opt; n_epochs=200, plotting=nothing)
+function forward_nn(nn, loss, data, opt; n_epochs=200, plotting=nothing, τ=1.0)
 
     avg_l = []
-    
-    for epoch = 1:n_epochs
-      for d in data
+
+    # Helper function for stopping criterium:
+    accuracy() = sum(map(d ->round.(Flux.σ.(nn(d[1]))) .== d[2], data))[1]/length(data)
+    stopping_criterium_reached = accuracy() >= τ
+    epoch = 1
+
+    while epoch <= n_epochs && !stopping_criterium_reached
+      
+        for d in data
         gs = gradient(Flux.params(nn)) do
           l = loss(d...)
         end
@@ -70,6 +76,11 @@ function forward_nn(nn, loss, data, opt; n_epochs=200, plotting=nothing)
           frame(anim, plt)
         end
       end
+
+      # Check if desired accuracy reached:
+      stopping_criterium_reached = accuracy() >= τ
+      epoch += 1
+
     end
     
 end
@@ -107,9 +118,9 @@ probs(𝑴::FittedNeuralNet, X::AbstractArray) = Flux.σ.(logits(𝑴, X))
 
 Retrains a fitted a neural network for (new) data.
 """
-function retrain(𝑴::FittedNeuralNet, data; n_epochs=10) 
+function retrain(𝑴::FittedNeuralNet, data; n_epochs=10, τ=1.0) 
     nn = 𝑴.nn
-    nn = forward_nn(nn, 𝑴.loss, data, 𝑴.opt, n_epochs=n_epochs)
+    nn = forward_nn(nn, 𝑴.loss, data, 𝑴.opt, n_epochs=n_epochs, τ=τ)
     𝑴 = FittedNeuralNet(nn, 𝑴.opt, 𝑴.loss)
     return 𝑴
 end
@@ -120,7 +131,7 @@ using Statistics
 
 Trains a deep ensemble by separately training each neural network.
 """
-function forward(𝓜, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=true, n_epochs=200, plot_every=20) 
+function forward(𝓜, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=true, n_epochs=200, plot_every=20, τ=1.0) 
 
     anim = nothing
     if plot_loss
@@ -129,13 +140,13 @@ function forward(𝓜, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=
         for i in 1:length(𝓜)
             nn = 𝓜[i]
             loss(x, y) = getfield(Flux.Losses,loss_type)(nn(x), y)
-            forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=(plt, anim, i, plot_every))
+            forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=(plt, anim, i, plot_every), τ=τ)
         end
     else
         plt = nothing
         for nn in 𝓜
             loss(x, y) = getfield(Flux.Losses,loss_type)(nn(x), y)
-            forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=plt)
+            forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=plt, τ=τ)
         end
     end
 
@@ -208,9 +219,9 @@ probs(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([σ
 
 Retrains a fitted deep ensemble for (new) data.
 """
-function retrain(𝑴::FittedEnsemble, data; n_epochs=10) 
+function retrain(𝑴::FittedEnsemble, data; n_epochs=10, τ=1.0) 
     𝓜 = copy(𝑴.𝓜)
-    𝓜, anim = forward(𝓜, data, 𝑴.opt, loss_type=𝑴.loss_type, plot_loss=false, n_epochs=n_epochs)
+    𝓜, anim = forward(𝓜, data, 𝑴.opt, loss_type=𝑴.loss_type, plot_loss=false, n_epochs=n_epochs, τ=τ)
     𝑴 = FittedEnsemble(𝓜, 𝑴.opt, 𝑴.loss_type)
     return 𝑴
 end

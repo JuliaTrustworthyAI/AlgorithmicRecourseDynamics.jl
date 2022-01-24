@@ -50,7 +50,7 @@ using ..Models
 
 A wrapper function that runs the experiment for endogenous models shifts.
 """
-function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.Generator, n_folds=5; seed=nothing, T=1000)
+function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.Generator, n_folds=5; seed=nothing, T=1000, τ=1.0)
 
     # Setup:
     if !isnothing(seed)
@@ -72,7 +72,7 @@ function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.G
 
                 # Classifier:
                 if t > 1
-                    𝑴 = Models.retrain(experiment.𝑴, data)
+                    𝑴 = Models.retrain(experiment.𝑴, data, τ=τ)
                 end
     
                 # Choose individuals:

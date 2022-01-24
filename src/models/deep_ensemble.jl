@@ -3,7 +3,7 @@ using Flux, Plots
 """
     build_model(;input_dim=2,n_hidden=32,output_dim=1)
 
-Helper function that builds a single neural network.
+Helper function that builds a single neural network. If available, model is moved to GPU.
 """
 function build_model(;input_dim=2,n_hidden=32,output_dim=1,p=0.3)
     
@@ -12,7 +12,7 @@ function build_model(;input_dim=2,n_hidden=32,output_dim=1,p=0.3)
         Dropout(p),
         Dense(n_hidden, n_hidden, relu),
         Dropout(p),
-        Dense(n_hidden, output_dim))
+        Dense(n_hidden, output_dim)) |> gpu
 
     return nn
 
@@ -27,6 +27,18 @@ Helper function that builds an ensemble of `K` models.
 function build_ensemble(K::Int;kw=(input_dim=2,n_hidden=32,output_dim=1))
     ensemble = [build_model(;kw...) for i in 1:K]
     return ensemble
+end
+
+"""
+    prepare_data(X::AbstractArray, y::AbstractArray)
+
+Helper function that prepares the data for training and moves arrays to GPU if available.
+"""
+function prepare_data(X::AbstractArray, y::AbstractArray)
+    xs = Flux.unstack(X,2) |> gpu
+    y = Flux.unstack(y,2) |> gpu
+    data = zip(xs,y)
+    return data
 end
 
 using Flux.Optimise: update!

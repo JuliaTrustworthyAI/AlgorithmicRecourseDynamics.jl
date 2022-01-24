@@ -59,7 +59,7 @@ function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.G
     output = []
     grid = build_grid(experiment.grid)
 
-    for k in n_folds
+    for k in 1:n_folds
         for (μ,γ) in grid.grid
 
             X = copy(experiment.X)

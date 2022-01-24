@@ -74,8 +74,47 @@ function forward_nn(nn, loss, data, opt; n_epochs=200, plotting=nothing)
     
 end
 
-using Statistics
+using AlgorithmicRecourse
+import AlgorithmicRecourse.Models: logits, probs # import functions in order to extend
 
+"""
+    FittedNeuralNet(𝓜::AbstractArray,opt::Any,loss::Function)
+
+A simple subtype that is compatible with the AlgorithmicRecourse.jl package.
+"""
+struct FittedNeuralNet <: AlgorithmicRecourse.Models.FittedModel
+    nn::Any
+    opt::Any
+    loss::Function
+end
+
+"""
+    logits(𝑴::FittedNeuralNet, X::AbstractArray)
+
+A method (extension) that computes predicted logits for a single deep neural network.
+"""
+logits(𝑴::FittedNeuralNet, X::AbstractArray) = 𝑴.nn(X)
+
+"""
+    probs(𝑴::FittedNeuralNet, X::AbstractArray)
+
+A method (extension) that computes predicted probabilities for a single deep neural network.
+"""
+probs(𝑴::FittedNeuralNet, X::AbstractArray) = Flux.σ.(logits(𝑴, X))
+
+"""
+    retrain(𝑴::FittedNeuralNet, data; n_epochs=10)
+
+Retrains a fitted a neural network for (new) data.
+"""
+function retrain(𝑴::FittedNeuralNet, data; n_epochs=10) 
+    nn = 𝑴.nn
+    nn = forward_nn(nn, 𝑴.loss, data, 𝑴.opt, n_epochs=n_epochs)
+    𝑴 = FittedNeuralNet(nn, 𝑴.opt, 𝑴.loss)
+    return 𝑴
+end
+
+using Statistics
 """
     forward(𝓜, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=true, n_epochs=200, plot_every=20) 
 
@@ -164,6 +203,11 @@ A method (extension) that computes predicted probabilities for a deep ensemble.
 """
 probs(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([σ.(nn(X)) for nn in 𝑴.𝓜],1)),dims=1)
 
+"""
+    retrain(𝑴::FittedEnsemble, data; n_epochs=10) 
+
+Retrains a fitted deep ensemble for (new) data.
+"""
 function retrain(𝑴::FittedEnsemble, data; n_epochs=10) 
     𝓜 = copy(𝑴.𝓜)
     𝓜, anim = forward(𝓜, data, 𝑴.opt, loss_type=𝑴.loss_type, plot_loss=false, n_epochs=n_epochs)

@@ -29,18 +29,6 @@ function build_ensemble(K::Int;kw=(input_dim=2,n_hidden=32,output_dim=1))
     return ensemble
 end
 
-"""
-    prepare_data(X::AbstractArray, y::AbstractArray)
-
-Helper function that prepares the data for training and moves arrays to GPU if available.
-"""
-function prepare_data(X::AbstractArray, y::AbstractArray)
-    xs = Flux.unstack(X,2) |> gpu
-    y = Flux.unstack(y,2) |> gpu
-    data = zip(xs,y)
-    return data
-end
-
 using Flux.Optimise: update!
 """
     forward_nn(nn, loss, data, opt; n_epochs=200, plotting=nothing)
@@ -82,6 +70,8 @@ function forward_nn(nn, loss, data, opt; n_epochs=200, plotting=nothing, τ=1.0)
       epoch += 1
 
     end
+
+    return nn
     
 end
 
@@ -140,13 +130,15 @@ function forward(𝓜, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=
         for i in 1:length(𝓜)
             nn = 𝓜[i]
             loss(x, y) = getfield(Flux.Losses,loss_type)(nn(x), y)
-            forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=(plt, anim, i, plot_every), τ=τ)
+            nn = forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=(plt, anim, i, plot_every), τ=τ)
+            𝓜[i] = nn
         end
     else
         plt = nothing
         for nn in 𝓜
             loss(x, y) = getfield(Flux.Losses,loss_type)(nn(x), y)
-            forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=plt, τ=τ)
+            nn = forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=plt, τ=τ)
+            𝓜[i] = nn
         end
     end
 

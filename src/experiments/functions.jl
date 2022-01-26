@@ -50,13 +50,14 @@ using ..Models
 
 A wrapper function that runs the experiment for endogenous models shifts.
 """
-function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.Generator, n_folds=5; seed=nothing, T=1000, τ=1.0)
+function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.Generator, n_folds=5; seed=nothing, T=1000, τ=1.0, store_path=false)
 
     # Setup:
     if !isnothing(seed)
         Random.seed!(seed)
     end
     output = []
+    path = []
     grid = build_grid(experiment.grid)
 
     for k in 1:n_folds
@@ -64,15 +65,16 @@ function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.G
 
             X = copy(experiment.X)
             y = copy(experiment.y)
-            xs = Flux.unstack(X,2)
-            data = zip(xs,y)
             chosen_individuals = []
             
             for t in 1:experiment.n_rounds
 
+                data = Models.prepare_data(X,y)
                 # Classifier:
                 if t > 1
                     𝑴 = Models.retrain(experiment.𝑴, data, τ=τ)
+                else
+                    𝑴 = experiment.𝑴
                 end
     
                 # Choose individuals:
@@ -83,15 +85,16 @@ function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.G
                 # Generate recourse:
                 for i in chosen_individualsₜ
                     x̅ = X[:,i]
-                    recourse = generate_recourse(generator, x̅, experiment.𝑴, experiment.target, γ, T=T)
+                    recourse = generate_recourse(generator, x̅, 𝑴, experiment.target, γ, T=T)
                     X[:,i] = recourse.x̲ # update individuals features
+                    y[i] = recourse.y̲
                 end
 
                 # Evaluate recourse:
                 chosen_individuals = union(chosen_individuals, chosen_individualsₜ)
-                pct_validₜ = sum(round.(AlgorithmicRecourse.Models.probs(experiment.𝑴, X[:,chosen_individuals])) .== experiment.target)/length(chosen_individuals)
-                ΔX = X[:,chosen_individuals] - experiment.X[:,chosen_individuals]
-                avg_costₜ = norm(ΔX, 2)
+                pct_validₜ = sum(y[chosen_individuals] .== experiment.target)/length(chosen_individuals)
+                ΔX = X[:,chosen_individuals] .- experiment.X[:,chosen_individuals]
+                avg_costₜ = mean(norm.(ΔX, 2))
 
                 # Collect and store output:
                 outputₜ = (
@@ -103,12 +106,25 @@ function run_experiment(experiment::Experiment, generator::AlgorithmicRecourse.G
                     k = k
                 )
                 output = vcat(output, outputₜ)
-                
+
+                if store_path
+                    pathₜ = (
+                        X̲ = copy(X),
+                        y̲ = copy(y),
+                        𝑴 = 𝑴,
+                        t = t,
+                        μ = μ,
+                        γ = γ,
+                        k = k
+                    )
+                    path = vcat(path, pathₜ)
+                end
+
             end
         end
     end
 
-    return output
+    return output, path
 
 end
 

@@ -1,6 +1,3 @@
-# Helper functions:
-∑(vector)=sum(vector)
-
 # Compute cartesian product over two vectors:
 function expandgrid(x,y)
     N = length(x) * length(y)

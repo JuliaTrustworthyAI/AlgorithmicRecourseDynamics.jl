@@ -1,6 +1,3 @@
-# Helper functions:
-∑(vector)=sum(vector)
-
 # Compute cartesian product over two vectors:
 function expandgrid(x,y)
     N = length(x) * length(y)
@@ -36,6 +33,18 @@ function kfolds_(N;k=5)
     train_indices = [folds.data[idx] for idx in folds.train_indices]
     test_indices = [folds.data[idx] for idx in folds.val_indices]
     return train_indices, test_indices
+end
+
+using StatsBase
+function scale(X, dim)
+    dt = fit(ZScoreTransform, X, dim=dim)
+    X_scaled = StatsBase.transform(dt, X)
+    return X_scaled, dt
+end
+
+function rescale(X, dt)
+    X_rescaled = StatsBase.reconstruct(dt, X)
+    return X_rescaled
 end
     
 

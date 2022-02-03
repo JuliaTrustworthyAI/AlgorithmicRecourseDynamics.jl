@@ -135,7 +135,8 @@ function forward(𝓜, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=
         end
     else
         plt = nothing
-        for nn in 𝓜
+        for i in 1:length(𝓜)
+            nn = 𝓜[i]
             loss(x, y) = getfield(Flux.Losses,loss_type)(nn(x), y)
             nn = forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=plt, τ=τ)
             𝓜[i] = nn

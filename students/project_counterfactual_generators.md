@@ -1,15 +1,185 @@
-# Counterfactual explanations for black-box algorithms in Julia Language
-
-Responsible Professor: Dr. Cynthia Liem
-Supervisor: Patrick Altmeyer
+Responsible Professor: Dr. Cynthia Liem Supervisor: Patrick Altmeyer
 
 ## Project overview
 
-Counterfactual explanations is a popular approach towards interpreting black-box algorithms...
+Algorithmic recourse is an approach towards not only explaining
+black-box machine learning algorithms, but provide subjects who have
+been adversely affected by such with a realistic set of actions they can
+take in order to revise their outcome. The approach has been quickly
+growing in popularity during recent years, perhaps because the
+underlying tend to be methodologies tend to be intuitive and easy to
+implement. This project aims to shed some light on what happens *after*
+recourse is actually implemented. In particular, we want to investigate
+if and how the resulting domain shifts lead to model shifts and compare
+outcomes for different recourse generators.
 
-## Goals
+## Motivation and background
 
-- Contribute at least two additional counterfactual generators to the package: firstly, 
+The topic is also of great importance to society since automated
+decision-making through black-box algorithm affects all of us -
+inlcuding you! Suppose, for example, that upon graduation you apply for
+a job at a large coorperation. Unfortunately, you soon receive an email
+stating that you have not “met the short-listing criteria and no further
+feedback can be provided”. Unbeknown to you, the company has used an
+algorithm to decide who makes it onto the short list. The HR teams does
+not fully understand the inner workings of the algorithm, so they
+genuinely cannot provide you with feedback.
+
+Algorithmic recourse aims to resolve these types of issues. But existing
+work has paid little attention to the dynamics of recourse. The first
+paper to consider the problem that algorithms are updated in response to
+(exogenous) domain shifts was presented at NeurIPS in December 2021
+(Upadhyay, Joshi, and Lakkaraju 2021). The authors propose a recourse
+generator that is robust to “small (and not drastic)” shifts. But rather
+than small shifts, we find that the actual implementation of recourse
+can lead to potentially quite large domain shifts and consequently model
+shifts. The animation below illustrates this: after a small share of
+individuals moves across the decision boundary, the classifier is
+updated in response. Evidently, the model shifts are quite significant
+in this toy example. Below we refer to these types of shifts as
+*endogenous* shifts.
+
+We think that endogenous shifts deserve attention for various reasons:
+
+1.  Our initial experimental results suggests that even generators that
+    aim to produce realisitic counterfactuals can induce significant
+    domain and model shifts.
+2.  Model shifts in response to some individuals’ recourse may lead to
+    undesired consequences (label switch) for other individuals.
+3.  Individuals that have implemented recourse may end up forming their
+    own distinct cluster in the feature domain. The original classifier
+    could therefore be adapted to distinguish “recourse” indviduals in
+    the target class from those that were always in the target class.
+
+![](../work/www/synthetic/bayesian.gif)
+
+## Research questions
+
+Collectively, students will discuss and agree on an answer to the
+following question:
+
+-   How can we quantify endogenous domain and model shifts?
+
+Individually, each of the students will then choose one of the recourse
+generators already implemented in
+[CARLA](https://github.com/carla-recourse/CARLA) and run a simple
+experiment (details below) to generate endogenous shifts and quantify
+their magnitude.
+
+Collectively, the students will finally tackle the following questions:
+
+-   Does the magnitude of induced model shifts vary by recourse
+    generator?
+-   If so, what factors might be playing a role here?
+-   Based on your findings, what appear to be good ways to deal mitigate
+    endogenous shifts?
+
+While the individual part should really be done individually, do keep in
+mind that you will end up comparing the results of your experiments and
+you should therefore all generate the same, comparable output.
 
 ## Methodology
 
+Overall, this will be a project focused on benchmarking and experimental
+design: you will learn about how to use existing tools for benchmarking
+to asses outcomes from your own experiments.
+
+For a gentle introduction to the topic of algorithmic recourse you can
+check out this
+[primer](https://towardsdatascience.com/individual-recourse-for-black-box-models-5e9ed1e4b4cc)
+written by Patrick as part of his PhD application. To familiarize
+yourself further with the topic and
+[CARLA](https://github.com/carla-recourse/CARLA) you should all read
+this [paper](https://arxiv.org/pdf/2108.00783.pdf).
+
+You are free to choose any of the generators already implemented
+[CARLA](https://github.com/carla-recourse/CARLA), but below are five
+suggestions:
+
+1.  [Wachter](https://arxiv.org/ftp/arxiv/papers/1711/1711.00399.pdf)
+2.  [REVISE](https://arxiv.org/pdf/1907.09615.pdf)
+3.  [CEM](https://arxiv.org/pdf/1802.07623.pdf)
+4.  [CEM-VAE](https://arxiv.org/pdf/1802.07623.pdf)
+5.  [AR-LIME](https://arxiv.org/pdf/1809.06514.pdf)
+
+Since the generators are all conveniently implemented in the same
+library, running the experiment should require roughly the same effort
+for all of them. While you are not expected to fully understand in
+detail the methodology underlying your chosen generator, you should
+study the relevant paper and ask yourself: what makes your generator
+particular? What assumptions do the authors make? How do you expect
+these particularities to affect recourse outcome with respect to
+endogenous shifts?
+
+**Experiment**
+
+The idea is that you replicate a variation of the following experiement
+already implemented by Patrick:
+
+1.  Train an algorithm ℳ for a binary classification task.
+2.  Determine a target class. Generate recourse for a share *μ* of
+    randomly selected individuals in the other class to revise their
+    label (i.e. move to the target class). Store some of the
+    conventional benchmark measures readily implemented in CARLA (cost,
+    success rate, …)
+3.  Implement recourse for those indviduals and quantify the domain
+    shift.
+4.  Retrain ℳ and quantify the model shift.
+5.  Repeat steps 1-4 for *K* rounds.
+
+You are free to either follow Patrick’s recipe exactly or tweak the
+various parameters that determine the experiemntal design as you see
+fit. Make sure that you end up running the exact same experiment though,
+in order for the results to be comparable.
+
+**Hypothesis**
+
+-   I expect to find that generators that focus on creating realisitic
+    counterfactuals in high-density regions of the feature domain
+    (REVISE, CEM-VAE) tend to be associated with endogenous shifts of a
+    smaller magnitude compared to generators that do not specifically
+    address this (CEM, Wachter, AR-LIME).
+
+## Relation between sub-projects
+
+The students will collectively design and establish an evaluation
+benchmark, while each focusing on a particular framework implementation
+to ultimately evaluate in the benchmark. Researching the intricacies of
+each framework will lead to clearly individual contributions, while part
+of the relevant literature is shared, and the final comparison connects
+the individual insights.
+
+## Responsible Engineering / Computer Science / Research
+
+As noted above, algorithmic recourse was designed in the context of
+responsible machine learning. Work on this topic should foster an
+awareness that automated decision-making can have detrimental
+consequences for individuals and that many researchers are working on
+approaches to deal with some of those consequences. Comparing different
+approaches to the issue will also make it clear that in the context of
+research there is rarely (if ever) one right solution. More to the point
+of this particular research project, solutions to one particular issue
+usually open up new questions.
+
+## Possible publication
+
+In 2021 there was an [ICML
+workshop](https://icml.cc/Conferences/2021/ScheduleMultitrack?event=8363)
+on algorithmic recourse. Should this workshop take place again, the
+results of this project could lead to a poster presentation. Later in
+the year NeurIPS is coming up, which in 2021 also attracted conference
+and workshop papers on algorithmic recourse and benchmarking.
+
+## References
+
+<div id="refs" class="references csl-bib-body hanging-indent">
+
+<div id="ref-upadhyay2021towards" class="csl-entry">
+
+Upadhyay, Sohini, Shalmali Joshi, and Himabindu Lakkaraju. 2021.
+“Towards Robust and Reliable Algorithmic Recourse.” *arXiv Preprint
+arXiv:2102.13620*.
+
+</div>
+
+</div>

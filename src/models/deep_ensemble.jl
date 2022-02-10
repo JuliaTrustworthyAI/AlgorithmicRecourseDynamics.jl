@@ -45,30 +45,28 @@ function forward_nn(nn, loss, data, opt; n_epochs=200, plotting=nothing, τ=1.0)
     epoch = 1
 
     while epoch <= n_epochs && !stopping_criterium_reached
-      
         for d in data
-        gs = gradient(Flux.params(nn)) do
-          l = loss(d...)
+            gs = gradient(Flux.params(nn)) do
+                loss(d...)
+            end
+            update!(opt, Flux.params(nn), gs)
         end
-        update!(opt, Flux.params(nn), gs)
-      end
-      if !isnothing(plotting)
-        plt = plotting[1]
-        anim = plotting[2]
-        idx = plotting[3]
-        avg_loss(data) = mean(map(d -> loss(d[1],d[2]), data))
-        avg_l = vcat(avg_l,avg_loss(data))
-        x_range = maximum([epoch-plotting[4],1]):epoch
-        if epoch % plotting[4]==0 
-          plot!(plt, x_range, avg_l[x_range], color=idx, alpha=0.3)
-          frame(anim, plt)
+        if !isnothing(plotting)
+            plt = plotting[1]
+            anim = plotting[2]
+            idx = plotting[3]
+            avg_loss(data) = mean(map(d -> loss(d[1],d[2]), data))
+            avg_l = vcat(avg_l,avg_loss(data))
+            x_range = maximum([epoch-plotting[4],1]):epoch
+            if epoch % plotting[4]==0 
+                plot!(plt, x_range, avg_l[x_range], color=idx, alpha=0.3)
+                frame(anim, plt)
+            end
         end
-      end
 
-      # Check if desired accuracy reached:
-      stopping_criterium_reached = accuracy() >= τ
-      epoch += 1
-
+        # Check if desired accuracy reached:
+        stopping_criterium_reached = accuracy() >= τ
+        epoch += 1
     end
 
     return nn

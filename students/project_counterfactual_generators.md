@@ -1,3 +1,12 @@
+---
+author: Patrick Altmeyer
+bibliography: ../bib.bib
+date: February 03, 2022
+format: gfm
+title: Endogenous model shifts in algorithmic recourse
+toc-title: Table of contents
+---
+
 Responsible Professor: Dr. Cynthia Liem Supervisor: Patrick Altmeyer
 
 ## Project overview
@@ -64,14 +73,18 @@ Individually, each of the students will then choose one of the recourse
 generators already implemented in
 [CARLA](https://github.com/carla-recourse/CARLA) and run a simple
 experiment (details below) to generate endogenous shifts and quantify
-their magnitude.
+their magnitude. You will also each produce results for the baseline
+generator
+([Wachter](https://arxiv.org/ftp/arxiv/papers/1711/1711.00399.pdf)) and
+benchmark the results from both generators.
 
-Collectively, the students will finally tackle the following questions:
+Use the results to answer the following questions with respect to your
+chosen generator:
 
--   Does the magnitude of induced model shifts vary by recourse
-    generator?
+-   Does the magnitude of induced model shifts differ compared to the
+    baseline generator?
 -   If so, what factors might be playing a role here?
--   Based on your findings, what appear to be good ways to deal mitigate
+-   Based on your findings, what appear to be good ways to mitigate
     endogenous shifts?
 
 While the individual part should really be done individually, do keep in
@@ -96,7 +109,7 @@ You are free to choose any of the generators already implemented
 [CARLA](https://github.com/carla-recourse/CARLA), but below are five
 suggestions:
 
-1.  [Wachter](https://arxiv.org/ftp/arxiv/papers/1711/1711.00399.pdf)
+1.  [FACE](https://arxiv.org/pdf/1909.09369.pdf)
 2.  [REVISE](https://arxiv.org/pdf/1907.09615.pdf)
 3.  [CEM](https://arxiv.org/pdf/1802.07623.pdf)
 4.  [CEM-VAE](https://arxiv.org/pdf/1802.07623.pdf)
@@ -117,11 +130,13 @@ The idea is that you replicate a variation of the following experiement
 already implemented by Patrick:
 
 1.  Train an algorithm ℳ for a binary classification task.
-2.  Determine a target class. Generate recourse for a share *μ* of
-    randomly selected individuals in the other class to revise their
-    label (i.e. move to the target class). Store some of the
-    conventional benchmark measures readily implemented in CARLA (cost,
-    success rate, …)
+2.  Determine a target class. Using your chosen generator and the
+    baseline generator
+    ([Wachter](https://arxiv.org/ftp/arxiv/papers/1711/1711.00399.pdf))
+    generate recourse for a share *μ* of randomly selected individuals
+    in the other class to revise their label (i.e. move to the target
+    class). Store some of the conventional benchmark measures readily
+    implemented in CARLA (cost, success rate, …)
 3.  Implement recourse for those indviduals and quantify the domain
     shift.
 4.  Retrain ℳ and quantify the model shift.

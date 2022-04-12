@@ -1,0 +1,12 @@
+project:
+  title: "Algorithmic Recourse Dynamics"
+filters:
+  - include-files.lua
+  - quarto
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    include-in-header: tex/preamble.tex
+    include-before-body: tex/before_body.tex
+

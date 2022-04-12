@@ -1,0 +1,29 @@
+---
+title: "Overlooked Dynamics in Algorithmic Recourse"
+author:
+- "Patrick Altmeyer (p.altmeyer@tudelft.nl)"
+date: "`r format(Sys.Date(), '%B, %Y')`"
+format: pdf
+fontsize: 12pt
+bibliography: https://raw.githubusercontent.com/pat-alt/bib/main/bib.bib
+link-citations: true
+abstract: "..."
+---
+
+```{.include}
+sections/introduction.md
+```
+
+\FloatBarrier
+\pagebreak
+
+# References {-}
+
+<div id="refs"></div>
+
+\pagebreak
+
+```{.include}
+sections/appendix.md
+```
+

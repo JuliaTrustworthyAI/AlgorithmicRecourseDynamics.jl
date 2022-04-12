@@ -1,8 +1,7 @@
 ---
-output:
-  pdf_document: default
-  html_document: default
+format: gfm
 ---
+
 # (APPENDIX) Appendix {-}
 
 # Tables {#tables}

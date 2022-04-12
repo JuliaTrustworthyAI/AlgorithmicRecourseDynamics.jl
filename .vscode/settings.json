@@ -1,4 +1,3 @@
 {
-    "jupyter.jupyterServerType": "local",
-    "julia.environmentPath": "/Users/patrickaltmeyer/Documents/code/EndogenousShifts"
+    "jupyter.jupyterServerType": "local"
 }

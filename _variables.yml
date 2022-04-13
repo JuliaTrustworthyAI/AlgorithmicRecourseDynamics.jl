@@ -1,0 +1,18 @@
+author:
+  name: Patrick Altmeyer
+  affiliation: Delft University of Technology
+  affiliation-url: https://www.tudelft.nl/
+  url: https://www.paltmeyer.com/
+  email: p.altmeyer@tudelft.nl
+  tel: +4917648726927
+  nationality: German  
+
+phd:
+  graduation-date: 2025-09-15
+  years: <1
+
+advisor: 
+  name: Cynthia C. S. Liem
+  email: c.c.s.liem@tudelft.nl
+
+keywords: Algorithmic Recourse, Explainable AI, Recourse Dynamics, Endogenous Shifts

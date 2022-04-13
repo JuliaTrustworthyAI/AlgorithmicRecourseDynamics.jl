@@ -3,9 +3,9 @@ title: "Overlooked Dynamics in Algorithmic Recourse"
 author:
 - "Patrick Altmeyer (p.altmeyer@tudelft.nl)"
 date: "`r format(Sys.Date(), '%B, %Y')`"
-format:
-  pdf:
-    documentclass: acmart
+format: 
+    pdf:
+        documentclass: acmart
 ---
 
 \pagebreak

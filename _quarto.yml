@@ -3,15 +3,14 @@ project:
 filters:
   - include-files.lua
   - quarto
-format:
-  pdf:
-    toc: true
-    number-sections: true
-    include-in-header: tex/preamble.tex
-    include-before-body: tex/before_body.tex
+  - abstract-to-meta.lua
 bibliography: https://raw.githubusercontent.com/pat-alt/bib/main/bib.bib
-author:
-- "Patrick Altmeyer (p.altmeyer@tudelft.nl)"
 date: today
 date-format: long
+author:
+  - name: Patrick Altmeyer
+    affiliation: Delft University of Technology
+    affiliation-url: https://www.tudelft.nl/
+    url: https://www.paltmeyer.com/
+    email: p.altmeyer@tudelft.nl
 

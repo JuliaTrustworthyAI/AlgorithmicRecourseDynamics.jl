@@ -1,27 +1,24 @@
 ---
 title: "Overlooked Dynamics in Algorithmic Recourse"
-format: pdf
+format: 
+    pdf:
+        include-in-header: tex/preamble.tex
+        include-before-body: tex/before_body.tex
+    html: default
 link-citations: true
-abstract: "..."
 ---
 
 ```{.include}
-sections/introduction.md
+sections/abstract.qmd
+```
+
+```{.include}
+sections/introduction.qmd
 ```
 
 @schut2021generating
 
-\FloatBarrier
-\pagebreak
-
-## References {-}
-
-::: {#refs}
-:::
-
-\pagebreak
-
 ```{.include}
-sections/appendix.md
+sections/appendix.qmd
 ```
 

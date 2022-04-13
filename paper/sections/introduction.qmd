@@ -2,6 +2,6 @@
 format: gfm
 ---
 
-# Introduction
+## Introduction {#intro}
 
 ...

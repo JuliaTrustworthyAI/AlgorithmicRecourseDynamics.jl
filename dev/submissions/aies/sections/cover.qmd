@@ -1,13 +1,4 @@
----
-title: "Overlooked Dynamics in Algorithmic Recourse"
-format: 
-    html: default
-    pdf:
-        documentclass: acmart
-        # include-in-header: preamble.tex
-author:
-  - name: Patrick Altmeyer
----
+## Front matter
 
 ### Author
 
@@ -27,9 +18,3 @@ author:
 - Full Name: {{< var advisor.name >}}
 
 *Key words*: {{< var keywords >}}
-
-### Letter of Support
-
-\pagebreak
-
-## Extended abstract

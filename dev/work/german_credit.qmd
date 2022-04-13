@@ -1,0 +1,152 @@
+---
+jupyter: julia-1.6
+---
+
+## German credit data
+
+```{julia}
+include("../src/load.jl")
+using AlgorithmicRecourse
+using CSV;
+using DataFrames;
+using LinearAlgebra;
+```
+
+```{julia}
+df = CSV.read("../data/credit.csv", DataFrame);
+df[!,:] = convert.(Float64, df[!,:]); # convert to floats
+y = df[:,:y]
+N = length(y)
+X = Matrix(df[:,Not(:y)])';
+X_train = copy(X)
+y_train = copy(y);
+```
+
+```{julia}
+using MLDataUtils, Random, Flux
+Random.seed!(1234)
+
+# # Preproc:
+# X_train, y_train = oversample((X_train,y_train))
+# # Standardize continuous features:
+# using StatsBase
+# dt = fit(ZScoreTransform, X_train[1:3,:], dims=1)
+# X_train[1:3,:] = StatsBase.transform(dt, X_train[1:3,:])
+
+# Stack:
+xs = Flux.unstack(X_train,2)
+ys = Flux.flatten(y_train)
+data = zip(xs, ys)
+nn = Models.build_model(input_dim=size(X_train)[1], n_hidden=32)
+loss(x, y) = Flux.Losses.logitbinarycrossentropy(nn(x), y)
+ps = params(nn);
+```
+
+```{julia}
+using Flux.Optimise: update!, ADAM
+using Statistics
+opt = ADAM()
+epochs = 50
+avg_loss(data) = mean(map(d -> loss(d[1],d[2]), data))
+
+using Plots
+anim = Animation()
+plt = plot(ylim=(0,avg_loss(data)), xlim=(0,epochs), legend=false, xlab="Epoch")
+avg_l = []
+
+for epoch = 1:epochs
+  for d in data
+    gs = gradient(params(nn)) do
+      l = loss(d...)
+    end
+    update!(opt, params(nn), gs)
+  end
+  avg_l = vcat(avg_l,avg_loss(data))
+  plot!(plt, avg_l, color=1, title="Average (training) loss")
+  frame(anim, plt)
+end
+
+gif(anim)
+```
+
+**EVEN THE NEURAL NET JUST CLASSIFIES ALL AS 1, WHAT IS GOING ON HERE?**
+
+```{julia}
+sum(round.(Flux.σ.(nn(X_train)))' .== 1)
+```
+
+```{julia}
+using EvalMetrics
+using Plots
+y_hat = predict(model,X)
+rocplot(y,y_hat)
+```
+
+```{julia}
+generators = (wachter = generate_recourse_wachter, schut = generate_recourse_schut);
+generator_args = (wachter=(λ=0.01,), schut=(T=1000,δ=0.05));
+target = 1;
+```
+
+```{julia}
+props = [0.01,0.05,0.1,0.25]
+results = DataFrame()
+for prop in props
+    results_prop = run_experiment(X,y,bayes_logreg,target,generators,generator_args,experiment_dynamic)
+    insertcols!(results_prop, :prop => prop)
+    results = vcat(results, results_prop)
+end
+```
+
+Possible that these results are driven by the following fact:
+
+- classifier is biased towards target class (try random over/undersampling)
+
+```{julia}
+dt_plot = groupby(results, [:period, :generator, :prop]) |>
+    gdf -> combine(gdf, :validity .=> [mean, std] .=> [:mean, :std])
+dt_plot[!,:ymin] = dt_plot[!,:mean] - dt_plot[!,:std]
+dt_plot[!,:ymax] = dt_plot[!,:mean] + dt_plot[!,:std]
+ggplot(data=dt_plot, aes(x=:period, y=:mean, colour=:generator)) +
+    geom_line() + 
+    geom_errorbar(aes(ymin=:ymin, ymax=:ymax), width=.2) + 
+    geom_point() +
+    facet_wrap(R".~prop") +
+    theme_bw() |>
+    p -> ggsave("www/german_dynamic_validity.png", plot = p);
+load("www/german_dynamic_validity.png")
+```
+
+Interesting to see that there are some clear trends in the cost of recourse over time:
+
+- what could be the reason for these dynamics?
+
+```{julia}
+dt_plot = groupby(results, [:period, :generator, :prop]) |>
+    gdf -> combine(gdf, :cost .=> [mean, std] .=> [:mean, :std])
+dt_plot[!,:ymin] = dt_plot[!,:mean] - dt_plot[!,:std]
+dt_plot[!,:ymax] = dt_plot[!,:mean] + dt_plot[!,:std]
+ggplot(data=dt_plot, aes(x=:period, y=:mean, colour=:generator)) +
+    geom_line() + 
+    geom_errorbar(aes(ymin=:ymin, ymax=:ymax), width=.2) + 
+    geom_point() +
+    facet_wrap(R".~prop") +
+    theme_bw() |>
+    p -> ggsave("www/german_dynamic_cost.png", plot = p);
+load("www/german_dynamic_cost.png")
+```
+
+### Adjusting for imbalance
+
+```{julia}
+using MLDataUtils
+X_train, y_train = oversample((transpose(X),y))
+X_train = transpose(X_train);
+model = bayes_logreg(X_train,y_train);
+```
+
+```{julia}
+y_hat = predict(model,X)
+rocplot(y,y_hat)
+```
+

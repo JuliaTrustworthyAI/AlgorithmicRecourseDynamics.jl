@@ -9,4 +9,9 @@ format:
     number-sections: true
     include-in-header: tex/preamble.tex
     include-before-body: tex/before_body.tex
+bibliography: https://raw.githubusercontent.com/pat-alt/bib/main/bib.bib
+author:
+- "Patrick Altmeyer (p.altmeyer@tudelft.nl)"
+date: today
+date-format: long
 

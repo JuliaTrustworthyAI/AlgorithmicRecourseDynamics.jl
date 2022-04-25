@@ -176,7 +176,7 @@
 \begin{document}
 \maketitle
 
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, sharp corners, interior hidden, enhanced, breakable, frame hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, breakable, sharp corners, interior hidden, enhanced, borderline west={3pt}{0pt}{shadecolor}, frame hidden]}{\end{tcolorbox}}\fi
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
@@ -246,12 +246,28 @@ Figure~\ref{fig-dynamics} illustrates this idea for a binary problem
 involving a probabilistic classifier and a greedy counterfactual
 generator proposed by Schut et al. (2021): AR leads to a domain shift,
 which in turn causes a drastic model shift. As this game of implementing
-AR and updating the classifier is repeated, individuals who receive and
-implement algorithmic recourse end up forming a distinct subgroup inside
-the target class, which may leave them vulnerable to discrimination.
-Through future experiments we want to investigate if this phenomenon is
-robust across different benchmark datasets and counterfactual
-generators.
+AR and updating the classifier is repeated, the decision boundary moves
+in the opposite direction of the original training samples in the target
+class. We consider several aspects of these dynamics as problematic.
+Firstly, as the decision boundary moves in the direction of the
+non-target class, counterfactual paths become shorter: in the loan
+example, individuals that previously would have been denied credit based
+on their input features are suddenly considered as credit worthy.
+Average default risk across all borrowers can therefore be expected to
+increase. Conversely, lenders that anticipate or detect these sorts of
+dynamics may choose to still deny credit to individuals that have
+implemented AR, thereby comprimising the validity of AR.
+
+To the best of my knowledge this is the first work investigating
+endogenous dynamic in algorithmic recourse. In future experiments I want
+to investigate how this phenomenon plays out across different benchmark
+datasets (including German credit ({``German Credit Data''} 1994),
+Boston Housing ({``Boston Housing Data''} 1993) and COMPAS (Larson et
+al. 2016)). Furthermore, I want to asses to what extent the magnitude
+and direction of domain and model shifts depends on the choice of the
+counterfactual generator. To this end, I am currently supervising a
+group of undergraduate students, who are tackling some of these tasks in
+their final-year research project.
 
 \begin{figure}
 
@@ -270,34 +286,20 @@ recourse.}
 \hypertarget{benchmarking-ce-in-julia}{%
 \subsection{Benchmarking CE in Julia}\label{benchmarking-ce-in-julia}}
 
-Alongside my research I have developed open-source implementations
-related to explainable AI.
-\href{https://www.paltmeyer.com/CounterfactualExplanations.jl/stable/}{CounterfactualExplanations.jl}
-is a Julia package that can be used to generate counterfactual
-explanations for models developed and trained not only in Julia, but
-also in other popular programming languages like Python and R. I have
-recently submitted the package along with a companion paper as a
-proposal for a main talk at \href{https://juliacon.org/2022/}{JuliaCon}.
-\href{https://www.paltmeyer.com/BayesLaplace.jl/dev/}{BayesLaplace.jl}
-is a small Julia package that can be used to recover Bayesian
-representations of deep neural networks through Laplace approximation in
-a post-hoc manner. It is inspired by a recent paper (Daxberger et al.
-2021) and has also been submitted to JuliaCon. Finally,
-\href{https://github.com/pat-alt/deepvars}{deepvars} is an R package
-that implements an approach towards vector autoregression that leverages
-deep learning. This was originally my master's thesis and later
-presented at the NeurIPS 2021 MLECON workshop. I have also published
-several blog posts on explainable AI and probabilisitic ML in an effort
-to make my research accessible to a broad audience.
+Until recently there existed only one open-source library that provides
+a unifying approach to generate and benchmark counterfactual
+explanations for models built and trained in Python (Pawelczyk et al.
+2021). To address this limitation I have developed
+\href{https://www.paltmeyer.com/CounterfactualExplanations.jl/stable/}{CounterfactualExplanations.jl}:
+a Julia package that can be used to generate counterfactual explanations
+for models developed and trained not only in Julia, but also in other
+popular programming languages like Python and R. The package and
+companion paper are currently pending acceptance for a main talk at
+\href{https://juliacon.org/2022/}{JuliaCon}.
 
-\hypertarget{probabilistic-methods-for-realistic-counterfactual-explanations}{%
-\subsection{Probabilistic methods for realistic counterfactual
-explanations}\label{probabilistic-methods-for-realistic-counterfactual-explanations}}
-
-Probabilistic machine learning can be leveraged in this context and more
-generally facilitates inference and interpretability. It is also closely
-related to Bayesian statistics, which has played an important role in
-both finance and economics for many years.
+\hypertarget{probabilistic-methods-for-realistic-ce}{%
+\subsection{Probabilistic Methods for Realistic
+CE}\label{probabilistic-methods-for-realistic-ce}}
 
 To ensure that the generated explanations are realistic it is important
 to understand which input-output pairs are likely and which are not. To
@@ -306,30 +308,52 @@ generative models or restricted the analysis to probabilistic models
 that incorporate uncertainty in their predictions. While the former
 approach is more versatile since it is applicable to both deterministic
 and probabilistic models, the latter is computationally much more
-efficient. In my work I want to explore how recent advances in post-hoc
-uncertainty quantification can be leveraged to generate realistic and
-unambiguous counterfactual explanations for any model.
+efficient. The approach proposed by Schut et al. (2021) and used to
+generate the examples in Figure~\ref{fig-dynamics} falls into the latter
+category. In future work I want to explore how recent advances in
+post-hoc uncertainty quantification, most notably Laplace Redux
+(Daxberger et al. 2021), can be leveraged to generate realistic and
+unambiguous counterfactual explanations for any model.\footnote{For some
+  initial work on this see my Julia implementation of Laplace Redux:
+  \href{https://www.paltmeyer.com/BayesLaplace.jl/dev/}{BayesLaplace.jl}.}
 
-\hypertarget{ce-for-time-series}{%
-\subsection{CE for time series}\label{ce-for-time-series}}
+\hypertarget{xai-for-time-series-models}{%
+\subsection{XAI for time series
+models}\label{xai-for-time-series-models}}
 
-Data sets in finance and economics typically involve time series data.
-Therefore, I am naturally interested in the application of explainable
-AI to sequential data, an area which has so far not been explored
-extensively. In the future, I want to work on counterfactual
-explanations for time series models. I am also interested in seeing if
-and how Laplace approximation can be used for Bayesian deep learning
-with time series data. I hope that the findings from both of these
-projects can ultimately be used to build complex but interpretable time
-series models for classification and forecasting in finance and
-economics.
+Datasets in Finance and Economics often involve autoregressive time
+series, which is modelled differently than static, cross-sectional data.
+One popular approach to macroeconomic forecasting, for example, is
+Vector Autoregression (VAR), which involves an interpretable system of
+linear equations. Recent work has shown that machine learning can be
+leveraged in this context to improve forecasting performance, albeit at
+the sacrifice of explainability (Altmeyer, Agusti, and Vidal-Quadras
+Costa 2021).\footnote{For an open-source implementation of our approach
+  see \href{https://github.com/pat-alt/deepvars}{deepvars}: an R package
+  Deep Vector Autoregression}. Through my PhD research I hope to
+ultimately adress that shortfall through explainable AI and
+probabilistic methods.
 
-\hypertarget{explainable-black-box-models-for-time-series}{%
-\subsection{Explainable black-box models for time
-series}\label{explainable-black-box-models-for-time-series}}
+\hypertarget{counterfactual-explanations}{%
+\subsubsection{Counterfactual
+Explanations}\label{counterfactual-explanations}}
 
-For example, I would like to leverage effortless Bayesian deep learning
-to make our proposed Deep Vector Autoregression model explainable.
+I would like to investigate if and how CE can be used to leverage
+machine learning for time series forecasting without sacrificing
+explainability. In the context of conventional VAR counterfactual
+outcomes are actually well-studied (Kilian and Lütkepohl 2017), which
+makes macroeconomic forecasting and interesting case study. More
+generally though, work on applying CE to black-box models for time
+series data has so far been limited and therefore warrants attention.
+
+\hypertarget{probabilistic-methods}{%
+\subsubsection{Probabilistic Methods}\label{probabilistic-methods}}
+
+I am also interested in seeing if and how Laplace approximation can be
+used for Bayesian deep learning with time series data. I hope that the
+findings from both of these projects can ultimately be used to build
+complex but interpretable time series models for classification and
+forecasting in finance and economics.
 
 \hypertarget{references}{%
 \section*{References}\label{references}}
@@ -337,17 +361,30 @@ to make our proposed Deep Vector Autoregression model explainable.
 
 \hypertarget{refs}{}
 \begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-altmeyer2021deep}{}}%
+Altmeyer, Patrick, Marc Agusti, and Ignacio Vidal-Quadras Costa. 2021.
+{``Deep Vector Autoregression for Macroeconomic Data.''}
+\url{https://thevoice.bse.eu/wp-content/uploads/2021/07/ds21-project-agusti-et-al.pdf}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-antoran2020getting}{}}%
 Antorán, Javier, Umang Bhatt, Tameem Adel, Adrian Weller, and José
 Miguel Hernández-Lobato. 2020. {``Getting a Clue: A Method for
 Explaining Uncertainty Estimates.''} \emph{arXiv Preprint
 arXiv:2006.06848}.
 
+\leavevmode\vadjust pre{\hypertarget{ref-boston1993}{}}%
+{``Boston Housing Data.''} 1993.
+\url{https://archive.ics.uci.edu/ml/machine-learning-databases/housing/}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-daxberger2021laplace}{}}%
 Daxberger, Erik, Agustinus Kristiadi, Alexander Immer, Runa Eschenhagen,
 Matthias Bauer, and Philipp Hennig. 2021. {``Laplace Redux-Effortless
 Bayesian Deep Learning.''} \emph{Advances in Neural Information
 Processing Systems} 34.
+
+\leavevmode\vadjust pre{\hypertarget{ref-germancredit1994}{}}%
+{``German Credit Data.''} 1994.
+\url{https://archive.ics.uci.edu/ml/datasets/statlog+(german+credit+data)}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-joshi2019towards}{}}%
 Joshi, Shalmali, Oluwasanmi Koyejo, Warut Vijitbenjaronk, Been Kim, and
@@ -361,11 +398,25 @@ Karimi, Amir-Hossein, Bernhard Schölkopf, and Isabel Valera. 2021.
 Interventions.''} In \emph{Proceedings of the 2021 ACM Conference on
 Fairness, Accountability, and Transparency}, 353--62.
 
+\leavevmode\vadjust pre{\hypertarget{ref-kilian2017structural}{}}%
+Kilian, Lutz, and Helmut Lütkepohl. 2017. \emph{Structural Vector
+Autoregressive Analysis}. Cambridge University Press.
+
+\leavevmode\vadjust pre{\hypertarget{ref-compas2016}{}}%
+Larson, Jeff, Surya Mattu, Lauren Kirchner, and Julia Angwin. 2016.
+{``COMPAS.''} \url{https://github.com/propublica/compas-analysis}.
+
 \leavevmode\vadjust pre{\hypertarget{ref-mothilal2020explaining}{}}%
 Mothilal, Ramaravind K, Amit Sharma, and Chenhao Tan. 2020.
 {``Explaining Machine Learning Classifiers Through Diverse
 Counterfactual Explanations.''} In \emph{Proceedings of the 2020
 Conference on Fairness, Accountability, and Transparency}, 607--17.
+
+\leavevmode\vadjust pre{\hypertarget{ref-pawelczyk2021carla}{}}%
+Pawelczyk, Martin, Sascha Bielawski, Johannes van den Heuvel, Tobias
+Richter, and Gjergji Kasneci. 2021. {``Carla: A Python Library to
+Benchmark Algorithmic Recourse and Counterfactual Explanation
+Algorithms.''} \emph{arXiv Preprint arXiv:2108.00783}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-schut2021generating}{}}%
 Schut, Lisa, Oscar Key, Rory Mc Grath, Luca Costabello, Bogdan

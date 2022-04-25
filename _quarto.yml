@@ -1,9 +1,9 @@
 project:
   title: "Algorithmic Recourse Dynamics"
 filters:
-  - include-files.lua
+  - lua/include-files.lua
   - quarto
-  - abstract-to-meta.lua
+  - lua/abstract-to-meta.lua
 bibliography: https://raw.githubusercontent.com/pat-alt/bib/main/bib.bib
 date: today
 date-format: long

@@ -77,7 +77,7 @@ using AlgorithmicRecourse
 import AlgorithmicRecourse.Models: logits, probs # import functions in order to extend
 
 """
-    FittedNeuralNet(𝓜::AbstractArray,opt::Any,loss::Function)
+    FittedNeuralNet(ensemble::AbstractArray,opt::Any,loss::Function)
 
 A simple subtype that is compatible with the AlgorithmicRecourse.jl package.
 """
@@ -115,45 +115,45 @@ end
 
 using Statistics
 """
-    forward(𝓜, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=true, n_epochs=200, plot_every=20) 
+    forward(ensemble, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=true, n_epochs=200, plot_every=20) 
 
 Trains a deep ensemble by separately training each neural network.
 """
-function forward(𝓜, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=true, n_epochs=200, plot_every=20, τ=1.0) 
+function forward(ensemble, data, opt; loss_type=:logitbinarycrossentropy, plot_loss=true, n_epochs=200, plot_every=20, τ=1.0) 
 
     anim = nothing
     if plot_loss
         anim = Animation()
         plt = plot(ylim=(0,1), xlim=(0,n_epochs), legend=false, xlab="Epoch", title="Average (training) loss")
-        for i in 1:length(𝓜)
-            nn = 𝓜[i]
+        for i in 1:length(ensemble)
+            nn = ensemble[i]
             loss(x, y) = getfield(Flux.Losses,loss_type)(nn(x), y)
             nn = forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=(plt, anim, i, plot_every), τ=τ)
-            𝓜[i] = nn
+            ensemble[i] = nn
         end
     else
         plt = nothing
-        for i in 1:length(𝓜)
-            nn = 𝓜[i]
+        for i in 1:length(ensemble)
+            nn = ensemble[i]
             loss(x, y) = getfield(Flux.Losses,loss_type)(nn(x), y)
             nn = forward_nn(nn, loss, data, opt, n_epochs=n_epochs, plotting=plt, τ=τ)
-            𝓜[i] = nn
+            ensemble[i] = nn
         end
     end
 
-    return 𝓜, anim
+    return ensemble, anim
 end;
 
 using BSON: @save
 """
-    save_ensemble(𝓜::AbstractArray; root="")
+    save_ensemble(ensemble::AbstractArray; root="")
 
 Saves all models in ensemble to disk.
 """
-function save_ensemble(𝓜::AbstractArray; root="")
-    for i in 1:length(𝓜)
+function save_ensemble(ensemble::AbstractArray; root="")
+    for i in 1:length(ensemble)
         path = root * "/nn" * string(i) * ".bson"
-        model = 𝓜[i]
+        model = ensemble[i]
         @save path model
     end
 end
@@ -169,24 +169,24 @@ function load_ensemble(;root="")
     is_bson_file = map(file -> Base.Filesystem.splitext(file)[2][2:end], all_files) .== "bson"
     bson_files = all_files[is_bson_file]
     bson_files = map(file -> root * "/" * file, bson_files)
-    𝓜 = []
+    ensemble = []
     for file in bson_files
         @load file model
-        𝓜 = vcat(𝓜, model)
+        ensemble = vcat(ensemble, model)
     end
-    return 𝓜
+    return ensemble
 end
 
 using AlgorithmicRecourse
 import AlgorithmicRecourse.Models: logits, probs # import functions in order to extend
 
 """
-    FittedEnsemble(𝓜::AbstractArray,opt::Any,loss_type::Symbol)
+    FittedEnsemble(ensemble::AbstractArray,opt::Any,loss_type::Symbol)
 
 A simple subtype that is compatible with the AlgorithmicRecourse.jl package.
 """
 struct FittedEnsemble <: AlgorithmicRecourse.Models.FittedModel
-    𝓜::AbstractArray
+    ensemble::AbstractArray
     opt::Any
     loss_type::Symbol
 end
@@ -196,14 +196,14 @@ end
 
 A method (extension) that computes predicted logits for a deep ensemble.
 """
-logits(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([nn(X) for nn in 𝑴.𝓜],1)),dims=1)
+logits(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([nn(X) for nn in 𝑴.ensemble],1)),dims=1)
 
 """
     probs(𝑴::FittedEnsemble, X::AbstractArray)
 
 A method (extension) that computes predicted probabilities for a deep ensemble.
 """
-probs(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([σ.(nn(X)) for nn in 𝑴.𝓜],1)),dims=1)
+probs(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([σ.(nn(X)) for nn in 𝑴.ensemble],1)),dims=1)
 
 """
     retrain(𝑴::FittedEnsemble, data; n_epochs=10) 
@@ -211,9 +211,9 @@ probs(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([σ
 Retrains a fitted deep ensemble for (new) data.
 """
 function retrain(𝑴::FittedEnsemble, data; n_epochs=10, τ=1.0) 
-    𝓜 = copy(𝑴.𝓜)
-    𝓜, anim = forward(𝓜, data, 𝑴.opt, loss_type=𝑴.loss_type, plot_loss=false, n_epochs=n_epochs, τ=τ)
-    𝑴 = FittedEnsemble(𝓜, 𝑴.opt, 𝑴.loss_type)
+    ensemble = copy(𝑴.ensemble)
+    ensemble, anim = forward(ensemble, data, 𝑴.opt, loss_type=𝑴.loss_type, plot_loss=false, n_epochs=n_epochs, τ=τ)
+    𝑴 = FittedEnsemble(ensemble, 𝑴.opt, 𝑴.loss_type)
     return 𝑴
 end
 

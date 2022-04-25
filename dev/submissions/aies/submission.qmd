@@ -1,10 +1,8 @@
 ---
 title: "Overlooked Dynamics in Algorithmic Recourse"
 format: 
-    html: default
-    # pdf:
-    #     documentclass: acmart
-    #     include-in-header: preamble.tex
+    pdf:
+        include-in-header: preamble.tex
 ---
 
 ```{.include}
@@ -13,18 +11,6 @@ sections/cover.qmd
 
 ```{.include}
 sections/support.qmd
-```
-
-\pagebreak
-
-```{.include}
-sections/extended_abstract.qmd
-```
-
-\pagebreak
-
-```{.include}
-sections/vita.qmd
 ```
 
 \pagebreak

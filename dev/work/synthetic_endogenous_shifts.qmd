@@ -7,23 +7,14 @@ jupyter: julia-1.6
 In this notebook we will use toy data to see how endogenous domain shifts and the resulting model shifts can have implications on the validity and cost of algorithmic recourse.
 
 ```{julia}
-using Pkg; Pkg.activate("..")
-```
-
-```{julia}
-include("../src/load.jl")
-using AlgorithmicRecourse
-using CSV, DataFrames
-using LinearAlgebra;
-using Distributions;
-using Images, FileIO;
-using Plots, PlotThemes
+include("dev/utils.jl")
+using CounterfactualExplanations, CSV, DataFrames, LinearAlgebra, Distributions, Images, FileIO, Plots, PlotThemes
+using Base.Filesystem: joinpath
 theme(:wong)
 using Logging
 disable_logging(Logging.Info)
 output_folder = "output/synthetic"
 www_folder = "www/synthetic"
-using Base.Filesystem: joinpath
 ```
 
 ## Single-period
@@ -261,16 +252,16 @@ loss_type = :logitbinarycrossentropy
 run = false
 if run
     K = 50
-    𝓜 = Models.build_ensemble(K,kw=(input_dim=size(X')[1], n_hidden=100));
-    𝓜, anim = Models.forward(𝓜, data, opt, n_epochs=10, plot_every=10, loss_type=loss_type, τ=1.1); # fit the ensemble
-    Models.save_ensemble(𝓜, root=joinpath(output_folder, "ensemble")) # save to disk
+    ensemble = Models.build_ensemble(K,kw=(input_dim=size(X')[1], n_hidden=100));
+    ensemble, anim = Models.forward(ensemble, data, opt, n_epochs=10, plot_every=10, loss_type=loss_type, τ=1.1); # fit the ensemble
+    Models.save_ensemble(ensemble, root=joinpath(output_folder, "ensemble")) # save to disk
     gif(anim, joinpath(www_folder, "ensemble_loss.gif"), fps=25);
 end
 ```
 
 ```{julia}
-𝓜 = Models.load_ensemble(root=joinpath(output_folder, "ensemble"))
-𝑴 = Models.FittedEnsemble(𝓜, opt, loss_type)
+ensemble = Models.load_ensemble(root=joinpath(output_folder, "ensemble"))
+𝑴 = Models.FittedEnsemble(ensemble, opt, loss_type)
 models = (Bayesian=𝑴, Plugin=𝑴ₙₙ);
 ```
 

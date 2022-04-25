@@ -107,9 +107,9 @@ loss_type = :logitbinarycrossentropy
 run = false
 if run
     K = 50
-    𝓜 = Models.build_ensemble(K,kw=(input_dim=size(X)[1], n_hidden=100));
-    𝓜, anim = Models.forward(𝓜, data, opt, n_epochs=30, plot_every=10, loss_type=loss_type); # fit the ensemble
-    Models.save_ensemble(𝓜, root=joinpath(output_folder, "ensemble")) # save to disk
+    ensemble = Models.build_ensemble(K,kw=(input_dim=size(X)[1], n_hidden=100));
+    ensemble, anim = Models.forward(ensemble, data, opt, n_epochs=30, plot_every=10, loss_type=loss_type); # fit the ensemble
+    Models.save_ensemble(ensemble, root=joinpath(output_folder, "ensemble")) # save to disk
     gif(anim, joinpath(www_folder, "ensemble_loss.gif"), fps=25);
 end
 ```
@@ -127,8 +127,8 @@ using BSON: @load
 Prepare ensemble for use with AlgorithmicRecourse.jl:
 
 ```{julia}
-𝓜 = Models.load_ensemble(root=joinpath(output_folder, "ensemble"))
-𝑴 = Models.FittedEnsemble(𝓜, opt, loss_type);
+ensemble = Models.load_ensemble(root=joinpath(output_folder, "ensemble"))
+𝑴 = Models.FittedEnsemble(ensemble, opt, loss_type);
 ```
 
 Prepare grid of variables for experiment:

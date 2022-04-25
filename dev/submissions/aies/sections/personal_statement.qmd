@@ -1,1 +1,12 @@
+---
+format:
+    pdf: default
+---
+
 ## Personal Statement
+
+As a first-year PhD student in computer science with a background in finance and economics, I was very happy to see that AIES offers a student track. I have worked on several projects during the first months of my PhD and while the one I hope to present at AIES is the most mature research project at this point, it is still very much a work in progress. I think that the question I pose about the dynamics of algorithmic recourse is an interesting, albeit still fairly broad and open one. Through my participation in AIES, I would hope to get feedback that helps me refine the research question. As experiments related to the question are now being carried out by my students, the work can be expected to progress further until the actual AIES event and hence I could share more experimental results that may be of interest to the broader community. AIES would also be an opportunity to discuss ideas for potential remedies to the issues this work highlights. 
+
+I also think that my broader PhD research agenda on the intersection of trustworthy AI and the social sciences should be of interest to the AIES community. Thanks to my academic background in economics, finance and data science as well my previous professional experience in monetary policy, I believe that I can contribute insights to a wide range of discussions revolving around the diverse set of topics relevant to AIES. It would be immensely helpful to learn from more experienced colleagues as well as fellow early-stage researchers, who are working on related research questions. At the main conference and the student event I expect to be exposed to new research ideas that I have never thought off, but may well be highly relevant to my own research. I would even hope to potentially find opportunities for future collaborations.
+
+This would be the first student program I have attended, although it is worth mentioning that in the past I have presented research at the European Central Bank (2019), IFABS (2021), NeurIPS (2021) and the Irving Fisher Committee on Central Bank Statistics (2022). Since the main PhD research project that I would like to dicuss is still in its early stages, I have not submitted anything to the main track of AIES. I would hope that following my participation in the student track I can use the feedback to carry the work forward and submit it to the main track next year. 

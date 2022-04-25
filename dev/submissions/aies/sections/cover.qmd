@@ -1,6 +1,9 @@
-## Front matter
+---
+format:
+    pdf: default
+---
 
-### Author
+## Author
 
 - Full Name: {{< var author.name >}}
 - Home page: {{< var author.url >}}
@@ -8,12 +11,12 @@
 - Affiliation URL: {{< var author.affiliation-url >}}
 - Country of citizenship: {{< var author.nationality >}}
 
-### PhD Progress
+## PhD Progress
 
 - Expected graduation date: {{< var phd.graduation-date >}}
 - Years in program: {{< var phd.years >}}
 
-### Research Advisor
+## Research Advisor
 
 - Full Name: {{< var advisor.name >}}
 

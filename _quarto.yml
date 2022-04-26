@@ -7,10 +7,4 @@ filters:
 bibliography: https://raw.githubusercontent.com/pat-alt/bib/main/bib.bib
 date: today
 date-format: long
-author:
-  - name: Patrick Altmeyer
-    affiliation: Delft University of Technology
-    affiliation-url: https://www.tudelft.nl/
-    url: https://www.paltmeyer.com/
-    email: p.altmeyer@tudelft.nl
 

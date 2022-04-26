@@ -4,8 +4,8 @@
 \PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
 %
 \documentclass[
-]{acmconf}
-\usepackage{amsmath,amssymb}
+  sigconf]{acmart}
+\usepackage{amsmath}
 \usepackage{lmodern}
 \usepackage{iftex}
 \ifPDFTeX
@@ -38,7 +38,6 @@
 \IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
 \hypersetup{
   pdftitle={Dynamics in Algorithmic Recourse},
-  pdfauthor={Patrick Altmeyer},
   colorlinks=true,
   linkcolor={blue},
   filecolor={Maroon},
@@ -107,8 +106,24 @@
 \newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
 \newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 
-\ConferenceShortName{AIES '22}
-\ConferenceName{Fifth AAAI/ACM Conference on Artificial Intelligence, Ethics, and Society}
+% \ConferenceShortName{AIES '22}
+% \ConferenceName{Fifth AAAI/ACM Conference on Artificial Intelligence, Ethics, and Society}
+
+\setcopyright{acmcopyright}
+\copyrightyear{2022}
+\acmYear{2022}
+\acmDOI{XXXXXXX.XXXXXXX}
+
+\acmConference[AIES '22]{Fifth AAAI/ACM Conference on Artificial Intelligence, Ethics, and Society}{Oxford, UK}
+
+\author{Patrick Altmeyer}
+\affiliation{%
+  \institution{Delft University of Technology}
+  \city{Delft}
+  \country{The Netherlands}
+}
+\email{p.altmeyer@tudelft.nl}
+\orcid{0000-0003-4726-8613}
 \makeatletter
 \makeatother
 \makeatletter
@@ -170,13 +185,13 @@
 }
 \makeatother
 \subtitle{Trustworthy Artificial Intelligence for Finance and Economics}
-\author{Patrick Altmeyer}
-\date{April 25, 2022}
+\author{}
+\date{April 26, 2022}
 
 \begin{document}
 \maketitle
 
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, breakable, sharp corners, interior hidden, enhanced, borderline west={3pt}{0pt}{shadecolor}, frame hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[enhanced, frame hidden, borderline west={3pt}{0pt}{shadecolor}, breakable, sharp corners, interior hidden, boxrule=0pt]}{\end{tcolorbox}}\fi
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
@@ -186,21 +201,19 @@ adoption in domains outside of computer science including health care,
 bioinformatics and genetics. In finance, economics and other social
 sciences, applications of AI are still relatively limited.
 Decision-making in these fields has traditionally been guided by
-Generalized Linear Models (GLM), which are theoretically founded,
-interpretable and often sufficient to model relationships between
-variables. Model interpretability is crucial in the social sciences
-context, because inference is typically at least as important as
-predictive performance. Decision-makers in the social sciences are also
-typically required to explain their decisions to human stakeholders:
-central bankers, for example, are held accountable by the public for the
-policies they decide on. It is therefore not surprising that
-practitioners and academics in these fields are reluctant to adopt AI
-technologies that ultimately cannot be trusted. Deep learning models,
-for example, are generally considered as black boxes and therefore
-difficult to apply in a context that demands explanations. This PhD
-project is focused on exploring and developing methodologies that
-improve the trustworthiness of AI and thereby enable its application in
-Finance and Economics.
+interpretable models that facilitate explanations. Explainability is
+crucial in the social sciences context, because inference is typically
+at least as important as predictive performance. Decision-makers in the
+social sciences are also typically required to explain their decisions
+to human stakeholders: central bankers, for example, are held
+accountable by the public for the policies they decide on. It is
+therefore not surprising that practitioners and academics in these
+fields are reluctant to adopt AI technologies that cannot be explained.
+Deep neural networks, for example, are generally considered as black
+boxes and therefore not trustworthy in a context that demands
+explanations. This PhD project is focused on exploring and developing
+methodologies that improve the trustworthiness of AI and thereby enable
+its application in Finance and Economics.
 
 The remainder of this extended abstract is structured as follows:
 Section~\ref{sec-main} presents one of the research questions I have
@@ -218,30 +231,30 @@ framework for causal inference, which social scientists are familiar
 with. Counterfactual explanations that involve realistic and actionable
 changes can be used for the purpose of \textbf{Algorithmic Recourse}
 (AR) to help individuals facing adverse decisions. An example relevant
-to the Finance and Econonomics domain is consumer credit: in this
-context AR can be used to guide individuals to improve their credit
-worthiness, should they have previously been denied access to credit
-based on a black-box decision-making system .
+to the Finance and Economics domain is consumer credit: in this context
+AR can be used to guide individuals to improve their credit worthiness,
+should they have previously been denied access to credit based on a
+black-box decision-making system .
 
 Existing work on CE and AR has largely been limited to the static
 setting: given some classifier \(M: \mathcal{X} \mapsto \mathcal{Y}\) we
 are interested in finding close (Wachter, Mittelstadt, and Russell
-2017), actionable (Ustun, Spangher, and Liu 2019), plausible Schut et
-al. (2021), sparse (Schut et al. 2021), diverse (Mothilal, Sharma, and
-Tan 2020) and ideally causally founded counterfactual explanations
-(Karimi, Schölkopf, and Valera 2021) for some individual \(x\). The
-ability of counterfactual explanations to handle dynamics like data and
-model shifts remains a largely unexplored research challenge at this
-point (Verma, Dickerson, and Hines 2020). Only one recent work considers
-the implications of \textbf{exogenous} domain shifts on the validity of
-recourse (Upadhyay, Joshi, and Lakkaraju 2021). The authors propose a
-simple minimax objective, that minimizes the counterfactual loss
-function for a maximal domain and model shift. They show that their
-approach yields more robust counterfactuals than existing approaches.
+2017), actionable (Ustun, Spangher, and Liu 2019), realistic Schut et
+al. (2021), sparse, diverse (Mothilal, Sharma, and Tan 2020) and ideally
+causally founded counterfactual explanations (Karimi, Schölkopf, and
+Valera 2021) for some individual \(x\). The ability of counterfactual
+explanations to handle dynamics like data and model shifts remains a
+largely unexplored research challenge at this point (Verma, Dickerson,
+and Hines 2020). Only one recent work considers the implications of
+\textbf{exogenous} domain shifts on the validity of recourse (Upadhyay,
+Joshi, and Lakkaraju 2021). The authors propose a simple minimax
+objective, that minimizes the counterfactual loss function for a maximal
+domain and model shift. They show that their approach yields more robust
+counterfactuals than existing approaches.
 
 This project investigates \textbf{endogenous} domain and model shifts,
-that is shifts that occur when AR is actually impemented by a proportion
-of individuals and the classifier is updated in response.
+that is shifts that occur when AR is actually implemented by a
+proportion of individuals and the classifier is updated in response.
 Figure~\ref{fig-dynamics} illustrates this idea for a binary problem
 involving a probabilistic classifier and a greedy counterfactual
 generator proposed by Schut et al. (2021): AR leads to a domain shift,
@@ -261,17 +274,16 @@ implemented AR, thereby comprimising the validity of AR.
 To the best of my knowledge this is the first work investigating
 endogenous dynamic in algorithmic recourse. In future experiments I want
 to investigate how this phenomenon plays out across different benchmark
-datasets (including German credit ({``German Credit Data''} 1994),
-Boston Housing ({``Boston Housing Data''} 1993) and COMPAS (Larson et
-al. 2016)). Furthermore, I want to asses to what extent the magnitude
-and direction of domain and model shifts depends on the choice of the
-counterfactual generator. To this end, I am currently supervising a
-group of undergraduate students, who are tackling some of these tasks in
-their final-year research project.
+datasets including German credit, Boston Housing and COMPAS.
+Furthermore, I want to assess to what extent the magnitude and direction
+of domain and model shifts depends on the choice of the counterfactual
+generator. To this end, I am currently supervising a group of
+undergraduate students, who are tackling some of these tasks in their
+final-year research project.
 
 \begin{figure}
 
-{\centering \includegraphics[width=2.60417in,height=\textheight]{www/dynamics.png}
+{\centering \includegraphics[width=\textwidth,height=1.04167in]{.pdf}
 
 }
 
@@ -302,58 +314,23 @@ companion paper are currently pending acceptance for a main talk at
 CE}\label{probabilistic-methods-for-realistic-ce}}
 
 To ensure that the generated explanations are realistic it is important
-to understand which input-output pairs are likely and which are not. To
-quantify their joint likelihood, previous work has either relied on
-generative models or restricted the analysis to probabilistic models
-that incorporate uncertainty in their predictions. While the former
-approach is more versatile since it is applicable to both deterministic
-and probabilistic models, the latter is computationally much more
-efficient. The approach proposed by Schut et al. (2021) and used to
-generate the examples in Figure~\ref{fig-dynamics} falls into the latter
-category. In future work I want to explore how recent advances in
-post-hoc uncertainty quantification, most notably Laplace Redux
-(Daxberger et al. 2021), can be leveraged to generate realistic and
-unambiguous counterfactual explanations for any model.\footnote{For some
-  initial work on this see my Julia implementation of Laplace Redux:
+to understand which input-output pairs are likely and which are not.
+With respect to the work-in-progress presented here, I expect that this
+may help in mitigating endogenous domain and model shifts. To quantify
+the joint likelihood of input-output pairs, previous work has either
+relied on generative models or restricted the analysis to probabilistic
+models that incorporate uncertainty in their predictions. While the
+former approach is more versatile, since it is applicable to both
+deterministic and probabilistic models, the latter is computationally
+much more efficient. The approach proposed by Schut et al. (2021) and
+used to generate the examples in Figure~\ref{fig-dynamics} falls into
+the latter category. In future work, I want to explore how recent
+advances in post-hoc uncertainty quantification, most notably Laplace
+Redux (Daxberger et al. 2021), can be leveraged to generate realistic
+and unambiguous counterfactual explanations for any model.\footnote{For
+  some initial work on this see my Julia implementation of Laplace
+  Redux:
   \href{https://www.paltmeyer.com/BayesLaplace.jl/dev/}{BayesLaplace.jl}.}
-
-\hypertarget{xai-for-time-series-models}{%
-\subsection{XAI for time series
-models}\label{xai-for-time-series-models}}
-
-Datasets in Finance and Economics often involve autoregressive time
-series, which is modelled differently than static, cross-sectional data.
-One popular approach to macroeconomic forecasting, for example, is
-Vector Autoregression (VAR), which involves an interpretable system of
-linear equations. Recent work has shown that machine learning can be
-leveraged in this context to improve forecasting performance, albeit at
-the sacrifice of explainability (Altmeyer, Agusti, and Vidal-Quadras
-Costa 2021).\footnote{For an open-source implementation of our approach
-  see \href{https://github.com/pat-alt/deepvars}{deepvars}: an R package
-  Deep Vector Autoregression}. Through my PhD research I hope to
-ultimately adress that shortfall through explainable AI and
-probabilistic methods.
-
-\hypertarget{counterfactual-explanations}{%
-\subsubsection{Counterfactual
-Explanations}\label{counterfactual-explanations}}
-
-I would like to investigate if and how CE can be used to leverage
-machine learning for time series forecasting without sacrificing
-explainability. In the context of conventional VAR counterfactual
-outcomes are actually well-studied (Kilian and Lütkepohl 2017), which
-makes macroeconomic forecasting and interesting case study. More
-generally though, work on applying CE to black-box models for time
-series data has so far been limited and therefore warrants attention.
-
-\hypertarget{probabilistic-methods}{%
-\subsubsection{Probabilistic Methods}\label{probabilistic-methods}}
-
-I am also interested in seeing if and how Laplace approximation can be
-used for Bayesian deep learning with time series data. I hope that the
-findings from both of these projects can ultimately be used to build
-complex but interpretable time series models for classification and
-forecasting in finance and economics.
 
 \hypertarget{references}{%
 \section*{References}\label{references}}
@@ -361,30 +338,11 @@ forecasting in finance and economics.
 
 \hypertarget{refs}{}
 \begin{CSLReferences}{1}{0}
-\leavevmode\vadjust pre{\hypertarget{ref-altmeyer2021deep}{}}%
-Altmeyer, Patrick, Marc Agusti, and Ignacio Vidal-Quadras Costa. 2021.
-{``Deep Vector Autoregression for Macroeconomic Data.''}
-\url{https://thevoice.bse.eu/wp-content/uploads/2021/07/ds21-project-agusti-et-al.pdf}.
-
-\leavevmode\vadjust pre{\hypertarget{ref-antoran2020getting}{}}%
-Antorán, Javier, Umang Bhatt, Tameem Adel, Adrian Weller, and José
-Miguel Hernández-Lobato. 2020. {``Getting a Clue: A Method for
-Explaining Uncertainty Estimates.''} \emph{arXiv Preprint
-arXiv:2006.06848}.
-
-\leavevmode\vadjust pre{\hypertarget{ref-boston1993}{}}%
-{``Boston Housing Data.''} 1993.
-\url{https://archive.ics.uci.edu/ml/machine-learning-databases/housing/}.
-
 \leavevmode\vadjust pre{\hypertarget{ref-daxberger2021laplace}{}}%
 Daxberger, Erik, Agustinus Kristiadi, Alexander Immer, Runa Eschenhagen,
 Matthias Bauer, and Philipp Hennig. 2021. {``Laplace Redux-Effortless
 Bayesian Deep Learning.''} \emph{Advances in Neural Information
 Processing Systems} 34.
-
-\leavevmode\vadjust pre{\hypertarget{ref-germancredit1994}{}}%
-{``German Credit Data.''} 1994.
-\url{https://archive.ics.uci.edu/ml/datasets/statlog+(german+credit+data)}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-joshi2019towards}{}}%
 Joshi, Shalmali, Oluwasanmi Koyejo, Warut Vijitbenjaronk, Been Kim, and
@@ -397,14 +355,6 @@ Karimi, Amir-Hossein, Bernhard Schölkopf, and Isabel Valera. 2021.
 {``Algorithmic Recourse: From Counterfactual Explanations to
 Interventions.''} In \emph{Proceedings of the 2021 ACM Conference on
 Fairness, Accountability, and Transparency}, 353--62.
-
-\leavevmode\vadjust pre{\hypertarget{ref-kilian2017structural}{}}%
-Kilian, Lutz, and Helmut Lütkepohl. 2017. \emph{Structural Vector
-Autoregressive Analysis}. Cambridge University Press.
-
-\leavevmode\vadjust pre{\hypertarget{ref-compas2016}{}}%
-Larson, Jeff, Surya Mattu, Lauren Kirchner, and Julia Angwin. 2016.
-{``COMPAS.''} \url{https://github.com/propublica/compas-analysis}.
 
 \leavevmode\vadjust pre{\hypertarget{ref-mothilal2020explaining}{}}%
 Mothilal, Ramaravind K, Amit Sharma, and Chenhao Tan. 2020.

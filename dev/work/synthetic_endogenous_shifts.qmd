@@ -19,35 +19,36 @@ www_path = "dev/work/www/synthetic"
 ## Classifiers
 
 ```{julia}
-# Number of points to generate.
-N = 100
-using CounterfactualExplanations.Data
-xs, ys = Data.toy_data_linear(N)
-X = hcat(xs...) # bring into tabular format
+Random.seed!(123)
+using MLJ
+N = 1000
+X, ys = make_blobs(N, 2; centers=2, as_table=false, center_box=(-2 => 2), cluster_std=0.1)
+ys .= ys.==2
+X = X'
+xs = Flux.unstack(X,2)
 data = zip(xs,ys)
+plt = plot()
+plot_data!(plt,X',ys)
 ```
 
 ### Logistic Regression
 
 ```{julia}
 nn = Chain(Dense(2,1))
-λ = 0.5
-sqnorm(x) = sum(abs2, x)
-weight_regularization(λ=λ) = 1/2 * λ^2 * sum(sqnorm, Flux.params(nn))
-loss(x, y) = Flux.Losses.logitbinarycrossentropy(nn(x), y) + weight_regularization();
+loss(x, y) = Flux.Losses.logitbinarycrossentropy(nn(x), y) 
 ```
 
 ```{julia}
 using Flux.Optimise: update!, ADAM
 opt = ADAM()
-epochs = 50
+epochs = 10
 function _forward_nn(nn, data, epochs)
     for epoch = 1:epochs
         for d in data
-            gs = gradient(params(nn)) do
+            gs = gradient(Flux.params(nn)) do
             l = loss(d...)
             end
-            update!(opt, params(nn), gs)
+            update!(opt, Flux.params(nn), gs)
         end
     end
     return nn
@@ -83,8 +84,8 @@ M = NeuralNetwork(nn)
 ```{julia}
 #| echo: false
 # Plot the posterior distribution with a contour plot.
-plt = plot_contour(X',ys,M);
-savefig(plt, joinpath(www_path, "nn_contour.png"))
+plt_nn = plot_contour(X',ys,M;zoom=0);
+savefig(plt_nn, joinpath(www_path, "nn_contour.png"))
 ```
 
 ![](www/nn_contour.png)
@@ -92,6 +93,7 @@ savefig(plt, joinpath(www_path, "nn_contour.png"))
 ### Laplace Redux
 
 ```{julia}
+λ = 0.1
 la = Laplace(nn, λ=λ)
 BayesLaplace.fit!(la, data)
 ```
@@ -122,23 +124,91 @@ Mᴸ = LaplaceNeuralNetwork(la)
 ```{julia}
 #| echo: false
 # Plot the posterior distribution with a contour plot.
-plt = plot_contour(X',ys,Mᴸ);
+plt = plot_contour(X',ys,Mᴸ;zoom=0)
 savefig(plt, joinpath(www_path, "la_contour.png"))
 ```
 
 ![](www/la_contour.png)
 
-## Experiment
+## Single Round
 
 ```{julia}
 # Models:
 models = (Bayesian=Mᴸ, Plugin=M)
-
 # Generators:
-generators = (Bayesian=GreedyGenerator(), Plugin=GenericGenerator())
+generators = (Bayesian=GreedyGenerator(), Plugin=GenericGenerator(ϵ=0.01))
+```
 
+### Generate counterfactual
+
+```{julia}
+cb = false
+γ = 0.75
+mod = Mᴸ
+gen = generators[:Plugin]
+plt_original = plt_nn = plot_contour(X',ys,mod;zoom=0,colorbar=cb,title="(a)")
+```
+
+```{julia}
+counterfactual_data = CounterfactualData(X,ys')
+μ = 0.10
+Random.seed!(123)
+candidates = findall(ys.==0)
+chosen = rand(candidates, Int(round(μ*length(candidates))))
+X′ = copy(X)
+y′ = copy(ys)
+using CounterfactualExplanations.Counterfactuals: counterfactual, counterfactual_label
+for i in chosen
+    x = X[:,i]
+    outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen,γ=γ)
+    X′[:,i] = counterfactual(outcome)
+    y′[i] = counterfactual_label(outcome)
+end
+plt_single = plot_contour(X′',y′,mod;zoom=0,colorbar=cb,title="(b)")
+```
+
+### Retrain
+
+```{julia}
+xs′ = Flux.unstack(X′,2)
+data = zip(xs′,y′)
+mod = retrain(mod, data)
+plt_single_retrained = plot_contour(X′',y′,mod;zoom=0,colorbar=cb,title="(c)")
+```
+
+### Repeat
+
+```{julia}
+i = 2
+while i <= 10
+    counterfactual_data = CounterfactualData(X′,y′')
+    Random.seed!(123)
+    candidates = findall(y′.==0)
+    chosen = rand(candidates, Int(round(μ*length(candidates))))
+    xs′ = Flux.unstack(X′,2)
+    data = zip(xs′,y′)
+    mod = retrain(mod, data)
+    for i in chosen
+        x = X′[:,i]
+        outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen; γ=γ)
+        X′[:,i] = counterfactual(outcome)
+        y′[i] = counterfactual_label(outcome)
+    end
+    i += 1
+end
+plt_single_repeat = plot_contour(X′',y′,mod;zoom=0,colorbar=cb,title="(d)")
+```
+
+```{julia}
+plt = plot(plt_original, plt_single, plt_single_retrained, plt_single_repeat, layout=(1,4), legend=false, axis=nothing, size=(600,165))
+savefig(plt, joinpath(www_path, "poc.png"))
+```
+
+## Experiments
+
+```{julia}
 # Variables:
-μ = [0.01,0.1,0.25]
+μ = [0.05,0.1,0.25]
 γ = [0.50,0.75,0.9]
 grid_ = Experiments.GridVariables(μ, γ)
 n_rounds = 10
@@ -149,7 +219,7 @@ T = 1000
 
 ```{julia}
 # Experiments:
-experiment = Experiments.Experiment(X,ys,models[:Bayesian],target,grid_,n_rounds)
+experiment = Experiments.Experiment(X,ys,models[:Plugin],target,grid_,n_rounds)
 experiment_plugin = Experiments.Experiment(X,ys,models[:Plugin],target,grid_,n_rounds)
 experiments = (experiment, experiment_plugin)
 ```
@@ -166,9 +236,25 @@ end
 ```
 
 ```{julia}
+paths = [Experiments.load_path(joinpath(output_path, string(keys(generators)[j]))) for j ∈ 1:length(generators)]
+```
+
+```{julia}
+function plot_state(path, t; γ=0.75, μ = 0.05, k = 1, length_out=500, size=(150,150), title="")
+    chosen = map(p -> p.γ == γ && p.μ == μ && p.t==t && p.k==k, path)
+    path = path[chosen][1]
+    X = path.X̲'
+    y = vec(path.y̲')
+    plt = plot_contour(X,y,path.𝑴,length_out=length_out,colorbar=cb,title=title)
+    plt = plot(plt, axis=nothing, size=size, legend=false)
+end
+plot_state(paths[2], 1)
+```
+
+```{julia}
 #| eval: false
 using Main.Experiments: plot_path
-paths = [Experiments.load_path(joinpath(output_path, string(keys(generators)[j]))) for j ∈ 1:length(generators)];
+paths = [Experiments.load_path(joinpath(output_path, string(keys(generators)[j]))) for j ∈ 1:length(generators)]
 anim = Experiments.plot_path(paths[1],Γ=γ,𝙈=μ)
 gif(anim,joinpath(www_path,"bayesian.gif"), fps=2)
 anim = Experiments.plot_path(paths[2],Γ=γ,𝙈=μ)
@@ -236,10 +322,10 @@ if run
 
   while epoch <= epochs && !stopping_criterium_reached
     for d in data
-      gs = gradient(Flux.params(nn)) do
+      gs = gradient(Flux.Flux.params(nn)) do
         l = loss(d...)
       end
-      update!(opt, Flux.params(nn), gs)
+      update!(opt, Flux.Flux.params(nn), gs)
     end
     avg_l = vcat(avg_l,avg_loss(data))
     plot!(p1, [0:epoch], avg_l, color=1)
@@ -304,7 +390,7 @@ plot(p1,p2,size=(1000,400))
 
 ```{julia}
 # Experiments:
-experiment = Experiments.Experiment(X',y',models[:Bayesian],target,grid_,n_rounds)
+experiment = Experiments.Experiment(X',y',models[:Plugin],target,grid_,n_rounds)
 experiment_plugin = Experiments.Experiment(X',y',models[:Plugin],target,grid_,n_rounds)
 experiments = (experiment, experiment_plugin);
 ```

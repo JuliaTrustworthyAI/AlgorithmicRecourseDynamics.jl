@@ -1,115 +1,142 @@
 ---
+title: Synthetic data
 jupyter: julia-1.6
 ---
-
-# Endogenous model shifts
 
 In this notebook we will use toy data to see how endogenous domain shifts and the resulting model shifts can have implications on the validity and cost of algorithmic recourse.
 
 ```{julia}
-include("dev/utils.jl")
-using CounterfactualExplanations, CSV, DataFrames, LinearAlgebra, Distributions, Images, FileIO, Plots, PlotThemes
+include("src/load.jl")
+using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, BayesLaplace, LinearAlgebra
 using Base.Filesystem: joinpath
 theme(:wong)
 using Logging
 disable_logging(Logging.Info)
-output_folder = "output/synthetic"
-www_folder = "www/synthetic"
+output_path = "dev/work/output/synthetic"
+www_path = "dev/work/www/synthetic"
 ```
 
-## Single-period
-
-### Training the classifier
-
-We start by training a simple linear classifier: Bayesian Logisitic Regression.
+## Classifiers
 
 ```{julia}
-df = CSV.read("../data/cats_dogs_large.csv", DataFrame);
-y = df[:,:y];
-N = length(y);
-X = Matrix(df[:,Not(:y)]);
-model = Models.bayes_logreg(X,y); # get MAP estimates
-w = model.μ;
+# Number of points to generate.
+N = 100
+using CounterfactualExplanations.Data
+xs, ys = Data.toy_data_linear(N)
+X = hcat(xs...) # bring into tabular format
+data = zip(xs,ys)
 ```
 
-```{julia}
-# Plot data points.
-plt = plot()
-using Main.Experiments: plot_data!
-plot_data!(plt,X,y)
-```
+### Logistic Regression
 
 ```{julia}
-using AlgorithmicRecourse.Models: BayesianLogisticModel, LogisticModel
-𝑴 = BayesianLogisticModel(reshape(model.μ,1,length(model.μ)), model.Σ) # fully Bayesian model
-𝑴_plugin = LogisticModel(reshape(model.μ[2:3],1,2), [model.μ[1]]); # Plugin estimate (non-Bayesian)
-models = (Bayesian=𝑴, Plugin=𝑴_plugin);
+nn = Chain(Dense(2,1))
+λ = 0.5
+sqnorm(x) = sum(abs2, x)
+weight_regularization(λ=λ) = 1/2 * λ^2 * sum(sqnorm, Flux.params(nn))
+loss(x, y) = Flux.Losses.logitbinarycrossentropy(nn(x), y) + weight_regularization();
 ```
 
 ```{julia}
-using Main.Experiments: plot_contour
-p1 = plot_contour(X,y,𝑴,title="Bayesian")
-p2 = plot_contour(X,y,𝑴_plugin,title="Plugin")
-plot(p1,p2,size=(1000,400))
-```
-
-### Generating recourse
-
-Now we will generate and implement algorithmic recourse for a subset of cats.
-
-```{julia}
-generators = (Bayesian=GreedyGenerator(1,500,:logitbinarycrossentropy, nothing), Plugin=GenericGenerator(0.1,0.1,1e-5,:logitbinarycrossentropy,nothing));
-proportion = 0.2
-using StatsBase
-cats = findall(df.y.==0);
-chosen_individuals = StatsBase.sample(cats,Int(round(proportion * length(cats))),replace=false);
-target = 1.0
-γ = 0.90;
-```
-
-```{julia}
-function generate_counterfactuals(generator, 𝑴, target, γ, chosen_individuals; X=X, y=y)
-    X̲ = copy(X)
-    y̲ = copy(y)
-    for i in chosen_individuals
-        x̅ = X[i,:]
-        recourse = generate_recourse(generator, x̅, 𝑴, target, γ);
-        X̲[i,:] = recourse.x̲
-        y̲[i] = recourse.y̲
+using Flux.Optimise: update!, ADAM
+opt = ADAM()
+epochs = 50
+function _forward_nn(nn, data, epochs)
+    for epoch = 1:epochs
+        for d in data
+            gs = gradient(params(nn)) do
+            l = loss(d...)
+            end
+            update!(opt, params(nn), gs)
+        end
     end
-    return X̲, y̲
+    return nn
 end
+_forward_nn(nn, data, epochs)
 ```
 
 ```{julia}
-plt = []
-for i in 1:length(generators)
-    X̲, y̲ = generate_counterfactuals(generators[i], models[i], target, γ, chosen_individuals)
-    pltᵢ = plot_contour(X̲,y̲,models[i],title=keys(generators)[i])
-    plt = vcat(plt, pltᵢ)
+using CounterfactualExplanations.Models
+import CounterfactualExplanations.Models: logits, probs # import functions in order to extend
+import Main.Models: retrain
+
+# Step 1)
+struct NeuralNetwork <: Models.AbstractFittedModel
+    model::Any
 end
-plot(plt..., size = (1000,400))
+
+# Step 2)
+logits(M::NeuralNetwork, X::AbstractArray) = M.model(X)
+probs(M::NeuralNetwork, X::AbstractArray)= σ.(logits(M, X))
+
+# Step 3)
+function retrain(M::NeuralNetwork, data; n_epochs=10, τ=1.0) 
+    nn = M.model
+    nn = _forward_nn(nn, data, n_epochs)
+    M = NeuralNetwork(nn)
+    return M
+end
+
+M = NeuralNetwork(nn)
 ```
 
-### Retraining classifier
-
-Finally, we will retrain the classifier (model shift) and plot the resulting new decision boundary and posterior predictive distribution.
-
 ```{julia}
-plt = []
-for i in 1:length(generators)
-    X̲, y̲ = generate_counterfactuals(generators[i], models[i], target, γ, chosen_individuals)
-    data = Models.prepare_data(X̲', y̲')
-    𝑴 = Models.retrain(models[i], data)
-    pltᵢ = plot_contour(X̲,y̲,𝑴,title=keys(generators)[i])
-    plt = vcat(plt, pltᵢ)
-end
-plot(plt..., size = (1000,400))
+#| echo: false
+# Plot the posterior distribution with a contour plot.
+plt = plot_contour(X',ys,M);
+savefig(plt, joinpath(www_path, "nn_contour.png"))
 ```
 
-## Dynamic
+![](www/nn_contour.png)
+
+### Laplace Redux
 
 ```{julia}
+la = Laplace(nn, λ=λ)
+BayesLaplace.fit!(la, data)
+```
+
+```{julia}
+# Step 1)
+struct LaplaceNeuralNetwork <: Models.AbstractFittedModel
+    la::BayesLaplace.Laplace
+end
+
+# Step 2)
+logits(M::LaplaceNeuralNetwork, X::AbstractArray) = M.la.model(X)
+probs(M::LaplaceNeuralNetwork, X::AbstractArray)= BayesLaplace.predict(M.la, X)
+
+# Step 3)
+function retrain(M::LaplaceNeuralNetwork, data; n_epochs=10, τ=1.0) 
+    nn = M.la.model
+    nn = _forward_nn(nn, data, n_epochs)
+    la = Laplace(nn, λ=λ)
+    BayesLaplace.fit!(la, data)
+    M = LaplaceNeuralNetwork(la)
+    return M
+end
+
+Mᴸ = LaplaceNeuralNetwork(la)
+```
+
+```{julia}
+#| echo: false
+# Plot the posterior distribution with a contour plot.
+plt = plot_contour(X',ys,Mᴸ);
+savefig(plt, joinpath(www_path, "la_contour.png"))
+```
+
+![](www/la_contour.png)
+
+## Experiment
+
+```{julia}
+# Models:
+models = (Bayesian=Mᴸ, Plugin=M)
+
+# Generators:
+generators = (Bayesian=GreedyGenerator(), Plugin=GenericGenerator())
+
 # Variables:
 μ = [0.01,0.1,0.25]
 γ = [0.50,0.75,0.9]
@@ -117,36 +144,35 @@ grid_ = Experiments.GridVariables(μ, γ)
 n_rounds = 10
 n_folds = 5
 target = 1.0
-T = 1000;
+T = 1000
+```
+
+```{julia}
 # Experiments:
-experiment = Experiments.Experiment(X',y',models[:Bayesian],target,grid_,n_rounds)
-experiment_plugin = Experiments.Experiment(X',y',models[:Plugin],target,grid_,n_rounds)
-experiments = (experiment, experiment_plugin);
+experiment = Experiments.Experiment(X,ys,models[:Bayesian],target,grid_,n_rounds)
+experiment_plugin = Experiments.Experiment(X,ys,models[:Plugin],target,grid_,n_rounds)
+experiments = (experiment, experiment_plugin)
 ```
 
 ```{julia}
-run = false
-if run
-    using Random
-    Random.seed!(1234)
-    for j in 1:length(generators)
-        outcome, path = Experiments.run_experiment(experiments[j], generators[j], n_folds, T=T, store_path=true)
-        Experiments.save_path(joinpath(output_folder, string(keys(generators)[j])),path)
-        CSV.write(joinpath(output_folder, string(keys(generators)[j]) * ".csv"), DataFrame(outcome))
-    end
+#| eval: false
+using Random, CSV, DataFrames
+Random.seed!(1234)
+for j in 1:length(generators)
+    outcome, path = Experiments.run_experiment(experiments[j], generators[j], n_folds, T=T, store_path=true)
+    Experiments.save_path(joinpath(output_path, string(keys(generators)[j])),path)
+    CSV.write(joinpath(output_path, string(keys(generators)[j]) * ".csv"), DataFrame(outcome))
 end
 ```
 
 ```{julia}
-run = false
-if run
-    using Main.Experiments: plot_path
-    paths = [Experiments.load_path(joinpath(output_folder, string(keys(generators)[j]))) for j ∈ 1:length(generators)];
-    anim = Experiments.plot_path(paths[1],Γ=γ,𝙈=μ)
-    gif(anim,joinpath(www_folder,"bayesian.gif"), fps=2)
-    anim = Experiments.plot_path(paths[2],Γ=γ,𝙈=μ)
-    gif(anim,joinpath(www_folder,"plugin.gif"), fps=2)
-end
+#| eval: false
+using Main.Experiments: plot_path
+paths = [Experiments.load_path(joinpath(output_path, string(keys(generators)[j]))) for j ∈ 1:length(generators)];
+anim = Experiments.plot_path(paths[1],Γ=γ,𝙈=μ)
+gif(anim,joinpath(www_path,"bayesian.gif"), fps=2)
+anim = Experiments.plot_path(paths[2],Γ=γ,𝙈=μ)
+gif(anim,joinpath(www_path,"plugin.gif"), fps=2)
 ```
 
 For the Bayesian classifier with greedy recourse...
@@ -161,7 +187,7 @@ For the non-Bayesian classifier with generic recourse...
 using Main.Experiments: prepare_results, plot_results
 validity = DataFrame()
 cost = DataFrame()
-files = (Bayesian=joinpath(output_folder, "Bayesian.csv"), Plugin=joinpath(output_folder, "Plugin.csv"))
+files = (Bayesian=joinpath(output_path, "Bayesian.csv"), Plugin=joinpath(output_path, "Plugin.csv"))
 results = map(file -> CSV.read(file, DataFrame), files)
 p_val, p_cost = plot_results(results);
 ```
@@ -231,17 +257,19 @@ if run
 
   end
 
-  gif(anim, joinpath(www_folder, "single_nn.gif"), fps=10)
+  gif(anim, joinpath(www_path
+, "single_nn.gif"), fps=10)
 
-  BSON.@save joinpath(output_folder, "nn.bson") nn
+  BSON.@save joinpath(output_path
+, "nn.bson") nn
 
 end
 ```
 
 ```{julia}
 using BSON: @load
-@load joinpath(output_folder, "nn.bson") nn
-𝑴ₙₙ = Models.FittedNeuralNet(nn, opt, loss);
+@load joinpath(output_path, "nn.bson") nn
+Mₙₙ = Models.FittedNeuralNet(nn, opt, loss);
 ```
 
 Training a deep ensemble...
@@ -254,15 +282,17 @@ if run
     K = 50
     ensemble = Models.build_ensemble(K,kw=(input_dim=size(X')[1], n_hidden=100));
     ensemble, anim = Models.forward(ensemble, data, opt, n_epochs=10, plot_every=10, loss_type=loss_type, τ=1.1); # fit the ensemble
-    Models.save_ensemble(ensemble, root=joinpath(output_folder, "ensemble")) # save to disk
-    gif(anim, joinpath(www_folder, "ensemble_loss.gif"), fps=25);
+    Models.save_ensemble(ensemble, root=joinpath(output_path
+, "ensemble")) # save to disk
+    gif(anim, joinpath(www_path
+, "ensemble_loss.gif"), fps=25);
 end
 ```
 
 ```{julia}
-ensemble = Models.load_ensemble(root=joinpath(output_folder, "ensemble"))
-𝑴 = Models.FittedEnsemble(ensemble, opt, loss_type)
-models = (Bayesian=𝑴, Plugin=𝑴ₙₙ);
+ensemble = Models.load_ensemble(root=joinpath(output_path, "ensemble"))
+M = Models.FittedEnsemble(ensemble, opt, loss_type)
+models = (Bayesian=M, Plugin=Mₙₙ);
 ```
 
 ```{julia}
@@ -286,8 +316,10 @@ if run
     Random.seed!(1234)
     for j in 1:length(generators)
         outcome, path = Experiments.run_experiment(experiments[j], generators[j], n_folds, T=T, store_path=true)
-        Experiments.save_path(joinpath(output_folder, string(keys(generators)[j])),path)
-        CSV.write(joinpath(output_folder, string(keys(generators)[j]) * "_deep.csv"), DataFrame(outcome))
+        Experiments.save_path(joinpath(output_path
+    , string(keys(generators)[j])),path)
+        CSV.write(joinpath(output_path
+    , string(keys(generators)[j]) * "_deep.csv"), DataFrame(outcome))
     end
 end
 ```

@@ -73,15 +73,15 @@ function forward_nn(nn, loss, data, opt; n_epochs=200, plotting=nothing, τ=1.0)
     
 end
 
-using AlgorithmicRecourse
-import AlgorithmicRecourse.Models: logits, probs # import functions in order to extend
+using CounterfactualExplanations
+import CounterfactualExplanations.Models: logits, probs # import functions in order to extend
 
 """
     FittedNeuralNet(ensemble::AbstractArray,opt::Any,loss::Function)
 
-A simple subtype that is compatible with the AlgorithmicRecourse.jl package.
+A simple subtype that is compatible with the CounterfactualExplanations.jl package.
 """
-struct FittedNeuralNet <: AlgorithmicRecourse.Models.FittedModel
+struct FittedNeuralNet <: CounterfactualExplanations.AbstractFittedModel
     nn::Any
     opt::Any
     loss::Function
@@ -177,15 +177,15 @@ function load_ensemble(;root="")
     return ensemble
 end
 
-using AlgorithmicRecourse
-import AlgorithmicRecourse.Models: logits, probs # import functions in order to extend
+using CounterfactualExplanations
+import CounterfactualExplanations.Models: logits, probs # import functions in order to extend
 
 """
     FittedEnsemble(ensemble::AbstractArray,opt::Any,loss_type::Symbol)
 
-A simple subtype that is compatible with the AlgorithmicRecourse.jl package.
+A simple subtype that is compatible with the CounterfactualExplanations.jl package.
 """
-struct FittedEnsemble <: AlgorithmicRecourse.Models.FittedModel
+struct FittedEnsemble <: CounterfactualExplanations.AbstractFittedModel
     ensemble::AbstractArray
     opt::Any
     loss_type::Symbol

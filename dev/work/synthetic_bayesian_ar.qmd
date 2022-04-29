@@ -8,7 +8,7 @@ In this notebook we see how algorithmic recourse can be implemented for Bayesian
 
 ```{julia}
 include("../src/load.jl")
-using AlgorithmicRecourse
+using CounterfactualExplanations
 using CSV;
 using DataFrames;
 using LinearAlgebra;
@@ -103,12 +103,12 @@ The algorithm used to generate recourse in Schut et al. (2021) is based on the J
 ## Generating recourse
 
 ```{julia}
-using AlgorithmicRecourse.Models: BayesianLogisticModel
-𝑴 = BayesianLogisticModel(reshape(model.μ,1,length(model.μ)), model.Σ); # repare for usage with AlgorithmicRecourse.jl
+using CounterfactualExplanations.Models: BayesianLogisticModel
+𝑴 = BayesianLogisticModel(reshape(model.μ,1,length(model.μ)), model.Σ); # repare for usage with CounterfactualExplanations.jl
 x̅ = [50.0, 60.0]; # factual
 using Random
 Random.seed!(1234)
-y̅ = round(AlgorithmicRecourse.Models.probs(𝑴, x̅)[1])
+y̅ = round(CounterfactualExplanations.Models.probs(𝑴, x̅)[1])
 target = ifelse(y̅==1.0,0.0,1.0) # opposite label as target
 γ = ifelse(target==1.0,0.9,0.1); # desired threshold based on target
 ```

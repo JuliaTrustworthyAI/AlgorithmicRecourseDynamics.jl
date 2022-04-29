@@ -6,7 +6,7 @@ jupyter: julia-1.6
 
 ```{julia}
 include("../src/load.jl")
-using AlgorithmicRecourse, MLDatasets, Flux
+using CounterfactualExplanations, MLDatasets, Flux
 using Plots, PlotThemes
 theme(:juno)
 using Logging
@@ -124,7 +124,7 @@ using BSON: @load
 𝑴ₙₙ = Models.FittedNeuralNet(nn, opt, loss);
 ```
 
-Prepare ensemble for use with AlgorithmicRecourse.jl:
+Prepare ensemble for use with CounterfactualExplanations.jl:
 
 ```{julia}
 ensemble = Models.load_ensemble(root=joinpath(output_folder, "ensemble"))

@@ -16,11 +16,11 @@ julia = "1.3, 1.4, 1.5, 1.6"
 
 as specified in 'Project.toml'.
 
-### AlgorithmicRecourse.jl
+### CounterfactualExplanations.jl
 
-There is a companion Julia package to this repository. It is not yet registered, but can be found on [Github](https://github.com/pat-alt/AlgorithmicRecourse.jl). As per above, you should not have to manually installed the package yourself as long as your working within the project environment. But should you anyway want to install the package to use in a different environment you can do that like so:
+There is a companion Julia package to this repository. It is not yet registered, but can be found on [Github](https://github.com/pat-alt/CounterfactualExplanations.jl). As per above, you should not have to manually installed the package yourself as long as your working within the project environment. But should you anyway want to install the package to use in a different environment you can do that like so:
 
 ```julia
 using Pkg
-Pkg.add("https://github.com/pat-alt/AlgorithmicRecourse.jl")
+Pkg.add("https://github.com/pat-alt/CounterfactualExplanations.jl")
 ```

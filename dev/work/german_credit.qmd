@@ -6,7 +6,7 @@ jupyter: julia-1.6
 
 ```{julia}
 include("../src/load.jl")
-using AlgorithmicRecourse
+using CounterfactualExplanations
 using CSV;
 using DataFrames;
 using LinearAlgebra;

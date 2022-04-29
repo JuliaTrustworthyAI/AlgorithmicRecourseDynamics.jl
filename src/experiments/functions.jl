@@ -89,7 +89,7 @@ function run_experiment(experiment::Experiment, generator::CounterfactualExplana
                 # Generate recourse:
                 for i in chosen_individualsₜ
                     x = X[:,i]
-                    outcome = generate_counterfactual(x, experiment.target, counterfactual_data, 𝑴, generator; T=T)
+                    outcome = generate_counterfactual(x, experiment.target, counterfactual_data, 𝑴, generator; T=T, γ=γ)
                     X[:,i] = counterfactual(outcome) # update individuals features
                     y[i] = counterfactual_label(outcome)
                 end

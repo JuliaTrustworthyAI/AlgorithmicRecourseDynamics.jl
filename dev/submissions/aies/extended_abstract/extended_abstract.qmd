@@ -26,7 +26,7 @@ This project investigates **endogenous** domain and model shifts, that is shifts
 
 To the best of my knowledge this is the first work investigating endogenous dynamic in algorithmic recourse. In future experiments I want to investigate how this phenomenon plays out across different benchmark datasets including German credit, Boston Housing and COMPAS. Furthermore, I want to assess to what extent the magnitude and direction of domain and model shifts depends on the choice of the counterfactual generator. To this end, I am currently supervising a group of undergraduate students, who are tackling some of these tasks in their final-year research project. 
 
-![PLACEHOLDER: The dynamics of algorithmic recourse.](){#fig-dynamics fig.pos="h" height=100px}
+![Dynamics in Algorithmic Recourse.](www/poc.png){#fig-dynamics fig.pos="h" width=45%}
 
 ## Related and Future Work {#sec-related}
 

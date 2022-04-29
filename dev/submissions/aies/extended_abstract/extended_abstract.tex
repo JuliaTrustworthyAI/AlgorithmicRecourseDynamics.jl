@@ -45,7 +45,21 @@
   urlcolor={Blue},
   pdfcreator={LaTeX via pandoc}}
 \urlstyle{same} % disable monospaced font for URLs
-\usepackage{longtable,booktabs,array}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\setcounter{secnumdepth}{5}
+% Make \paragraph and \subparagraph free-standing
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
 \usepackage{etoolbox}
@@ -68,10 +82,6 @@
 \makeatletter
 \def\fps@figure{htbp}
 \makeatother
-\setlength{\emergencystretch}{3em} % prevent overfull lines
-\providecommand{\tightlist}{%
-  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\setcounter{secnumdepth}{5}
 \newlength{\cslhangindent}
 \setlength{\cslhangindent}{1.5em}
 \newlength{\csllabelwidth}
@@ -95,6 +105,7 @@
 \newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
 \newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
 \newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+
 % \ConferenceShortName{AIES '22}
 % \ConferenceName{Fifth AAAI/ACM Conference on Artificial Intelligence, Ethics, and Society}
 
@@ -118,11 +129,31 @@
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \AtBeginDocument{%
-\renewcommand*\contentsname{Table of contents}
-\renewcommand*\listfigurename{List of Figures}
-\renewcommand*\listtablename{List of Tables}
-\renewcommand*\figurename{Figure}
-\renewcommand*\tablename{Table}
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
 }
 \@ifpackageloaded{float}{}{\usepackage{float}}
 \floatstyle{ruled}
@@ -133,6 +164,12 @@
 \makeatletter
 \@ifpackageloaded{caption}{}{\usepackage{caption}}
 \@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\makeatletter
+\@ifpackageloaded{tcolorbox}{}{\usepackage[many]{tcolorbox}}
+\makeatother
+\makeatletter
+\@ifundefined{shadecolor}{\definecolor{shadecolor}{rgb}{.97, .97, .97}}
 \makeatother
 \makeatletter
 \makeatother
@@ -149,10 +186,12 @@
 \makeatother
 \subtitle{Trustworthy Artificial Intelligence for Finance and Economics}
 \author{}
-\date{today}
+\date{April 29, 2022}
 
 \begin{document}
 \maketitle
+
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, sharp corners, frame hidden, borderline west={3pt}{0pt}{shadecolor}, interior hidden, enhanced, breakable]}{\end{tcolorbox}}\fi
 
 \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
@@ -163,24 +202,21 @@ bioinformatics and genetics. In finance, economics and other social
 sciences, applications of AI are still relatively limited.
 Decision-making in these fields has traditionally been guided by
 interpretable models that facilitate explanations. Explainability is
-crucial in the social sciences context, because inference is typically
-at least as important as predictive performance. Decision-makers in the
-social sciences are also typically required to explain their decisions
-to human stakeholders: central bankers, for example, are held
-accountable by the public for the policies they decide on. It is
-therefore not surprising that practitioners and academics in these
-fields are reluctant to adopt AI technologies that cannot be explained.
-Deep neural networks, for example, are generally considered as black
-boxes and therefore not trustworthy in a context that demands
-explanations. This PhD project is focused on exploring and developing
-methodologies that improve the trustworthiness of AI and thereby enable
-its application in Finance and Economics.
+crucial in this context, since decision-makers are typically held
+accountable by the public: central banks, for example, are heavily
+scrutinized for the policies they impose. It is therefore not surprising
+that practitioners and academics in these fields are reluctant to adopt
+AI technologies they cannot trust. Deep neural networks, for example,
+are generally considered as black boxes and therefore not trustworthy in
+a context that demands explanations. This PhD project is focused on
+exploring and developing methodologies that improve the trustworthiness
+of AI and thereby enable its application in Finance and Economics.
 
 The remainder of this extended abstract is structured as follows:
 Section~\ref{sec-main} presents one of the research questions I have
 investigated during the first months of my PhD: how do counterfactual
 explanations handle dynamics? Section~\ref{sec-related} places this work
-in the broader context of Trustworthy AI for Finance and Economics.
+in the broader context of my research.
 
 \hypertarget{sec-main}{%
 \section{Dynamics in Algorithmic Recourse}\label{sec-main}}
@@ -191,11 +227,11 @@ intuitive, simple and intrinsically linked to the potential outcome
 framework for causal inference, which social scientists are familiar
 with. Counterfactual explanations that involve realistic and actionable
 changes can be used for the purpose of \textbf{Algorithmic Recourse}
-(AR) to help individuals facing adverse decisions. An example relevant
+(AR) to help individuals who face adverse outcomes. An example relevant
 to the Finance and Economics domain is consumer credit: in this context
-AR can be used to guide individuals to improve their credit worthiness,
-should they have previously been denied access to credit based on a
-black-box decision-making system .
+AR can be used to guide individuals in improving their creditworthiness,
+should they have previously been denied access to credit based on an
+automated decision-making system.
 
 Existing work on CE and AR has largely been limited to the static
 setting: given some classifier \(M: \mathcal{X} \mapsto \mathcal{Y}\) we
@@ -207,40 +243,43 @@ Valera 2021) for some individual \(x\). The ability of counterfactual
 explanations to handle dynamics like data and model shifts remains a
 largely unexplored research challenge at this point (Verma, Dickerson,
 and Hines 2020). Only one recent work considers the implications of
-\textbf{exogenous} domain shifts on the validity of recourse (Upadhyay,
-Joshi, and Lakkaraju 2021). The authors propose a simple minimax
-objective, that minimizes the counterfactual loss function for a maximal
-domain and model shift. They show that their approach yields more robust
-counterfactuals than existing approaches.
+\textbf{exogenous} domain and model shifts (Upadhyay, Joshi, and
+Lakkaraju 2021). The authors propose a simple minimax objective, that
+minimizes the counterfactual loss function for a maximal model shift.
+They show that their approach yields more robust counterfactuals in this
+context than existing approaches.
 
 This project investigates \textbf{endogenous} domain and model shifts,
 that is shifts that occur when AR is actually implemented by a
 proportion of individuals and the classifier is updated in response.
 Figure~\ref{fig-dynamics} illustrates this idea for a binary problem
-involving a probabilistic classifier and a greedy counterfactual
-generator proposed by Schut et al. (2021): AR leads to a domain shift,
-which in turn causes a drastic model shift. As this game of implementing
-AR and updating the classifier is repeated, the decision boundary moves
-in the opposite direction of the original training samples in the target
-class. We consider several aspects of these dynamics as problematic.
-Firstly, as the decision boundary moves in the direction of the
-non-target class, counterfactual paths become shorter: in the loan
-example, individuals that previously would have been denied credit based
-on their input features are suddenly considered as credit worthy.
-Average default risk across all borrowers can therefore be expected to
-increase. Conversely, lenders that anticipate or detect these sorts of
-dynamics may choose to still deny credit to individuals that have
-implemented AR, thereby comprimising the validity of AR.
+involving a probabilistic classifier and the counterfactual generator
+proposed by Wachter, Mittelstadt, and Russell (2017): the implementation
+of AR for a subset of individuals leads to a domain shift (b), which in
+turn triggers a model shift (c). As this game of implementing AR and
+updating the classifier is repeated, the decision boundary moves away
+from training samples that were originally in the target class (d).
+
+These dynamics may be problematic. As the decision boundary moves in the
+direction of the non-target class, counterfactual paths become shorter:
+in the loan example, individuals that previously would have been denied
+credit based on their input features are suddenly considered as
+creditworthy. Average default risk across all borrowers can therefore be
+expected to increase. Conversely, lenders that anticipate such dynamics
+may choose to deny credit to individuals that have implemented AR,
+thereby compromising the validity of AR.
 
 To the best of my knowledge this is the first work investigating
-endogenous dynamic in algorithmic recourse. In future experiments I want
-to investigate how this phenomenon plays out across different benchmark
-datasets including German credit, Boston Housing and COMPAS.
-Furthermore, I want to assess to what extent the magnitude and direction
-of domain and model shifts depends on the choice of the counterfactual
-generator. To this end, I am currently supervising a group of
-undergraduate students, who are tackling some of these tasks in their
-final-year research project.
+endogenous dynamic in AR. Through future experiments I want to
+investigate how this phenomenon plays out across different benchmark
+datasets including German credit, Boston Housing and COMPAS.\footnote{These
+  benchmark datasets have their issues and controversies, which is one
+  of the challenges I would like to discuss at AIES.} Furthermore, I
+want to assess to what extent the magnitude and direction of domain and
+model shifts depends on the choice of the counterfactual generator. To
+this end, I am currently supervising a group of undergraduate students,
+who are tackling some of these tasks in their final-year research
+project.
 
 \begin{figure}
 
@@ -248,7 +287,12 @@ final-year research project.
 
 }
 
-\caption{\label{fig-dynamics}Dynamics in Algorithmic Recourse.}
+\caption{\label{fig-dynamics}Dynamics in Algorithmic Recourse: we have a
+simple Bayesian model trained for binary classification (a); the
+implementation of AR for a random subset of individuals leads to a
+domain shift (b); as the classifier is retrained we observe a model
+shift (c); as this process is repeated, the decision boundary moves away
+from the target class (d).}
 
 \end{figure}
 
@@ -260,37 +304,34 @@ final-year research project.
 
 Until recently there existed only one open-source library that provides
 a unifying approach to generate and benchmark counterfactual
-explanations for models built and trained in Python (Pawelczyk et al.
-2021). To address this limitation I have developed
+explanations for Python models (Pawelczyk et al. 2021). To address this
+limitation I have developed
 \href{https://www.paltmeyer.com/CounterfactualExplanations.jl/stable/}{CounterfactualExplanations.jl}:
 a Julia package that can be used to generate counterfactual explanations
 for models developed and trained not only in Julia, but also in other
-popular programming languages like Python and R. The package and
-companion paper are currently pending acceptance for a main talk at
-\href{https://juliacon.org/2022/}{JuliaCon}.
+popular programming languages. The package and companion paper are
+pending acceptance for a main talk at
+\href{https://juliacon.org/2022/}{JuliaCon '22}.
 
 \hypertarget{probabilistic-methods-for-realistic-ce}{%
 \subsection{Probabilistic Methods for Realistic
 CE}\label{probabilistic-methods-for-realistic-ce}}
 
-To ensure that the generated explanations are realistic it is important
-to understand which input-output pairs are likely and which are not.
-With respect to the work-in-progress presented here, I expect that this
-may help in mitigating endogenous domain and model shifts. To quantify
-the joint likelihood of input-output pairs, previous work has either
-relied on generative models or restricted the analysis to probabilistic
-models that incorporate uncertainty in their predictions. While the
-former approach is more versatile, since it is applicable to both
-deterministic and probabilistic models, the latter is computationally
-much more efficient. The approach proposed by Schut et al. (2021) and
-used to generate the examples in Figure~\ref{fig-dynamics} falls into
-the latter category. In future work, I want to explore how recent
-advances in post-hoc uncertainty quantification, most notably Laplace
-Redux (Daxberger et al. 2021), can be leveraged to generate realistic
-and unambiguous counterfactual explanations for any model.\footnote{For
-  some initial work on this see my Julia implementation of Laplace
-  Redux:
+To ensure that the generated counterfactuals are realistic it helps to
+understand which input-output pairs are likely to occur under the data
+generating process. To this end, previous work has either relied on
+generative models or restricted the analysis to probabilistic
+classifiers that incorporate uncertainty in their predictions. While the
+former approach is more generally applicable, the latter is
+computationally more efficient. In future work, I want to explore how
+recent advances in post-hoc uncertainty quantification, most notably
+Laplace Redux (Daxberger et al. 2021), can be leveraged to generate
+realistic and unambiguous counterfactual explanations for any
+model.\footnote{For some initial work on this see my Julia
+  implementation of Laplace Redux:
   \href{https://www.paltmeyer.com/BayesLaplace.jl/dev/}{BayesLaplace.jl}.}
+With respect to the work-in-progress presented here, I expect that these
+efforts may help in mitigating endogenous domain and model shifts.
 
 \hypertarget{references}{%
 \section*{References}\label{references}}
@@ -356,5 +397,7 @@ Wachter, Sandra, Brent Mittelstadt, and Chris Russell. 2017.
 Decisions and the GDPR.''} \emph{Harv. JL \& Tech.} 31: 841.
 
 \end{CSLReferences}
+
+
 
 \end{document}

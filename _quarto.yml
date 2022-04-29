@@ -5,6 +5,4 @@ filters:
   - quarto
   - lua/abstract-to-meta.lua
 bibliography: https://raw.githubusercontent.com/pat-alt/bib/main/bib.bib
-date: today
-date-format: long
 

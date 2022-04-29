@@ -3,21 +3,19 @@ format:
     pdf: default
 ---
 
-## Author
+## Personal details
 
-- Full Name: {{< var author.name >}}
-- Home page: {{< var author.url >}}
-- Affiliation: {{< var author.affiliation >}}
-- Affiliation URL: {{< var author.affiliation-url >}}
-- Country of citizenship: {{< var author.nationality >}}
+|  | Author | Research Advisor |
+|---------|:--------|:--------|
+| Name     | {{< var author.name >}} | {{< var advisor.name >}} |  
+| Email | {{< var author.email >}} | {{< var advisor.email >}} | 
+| Phone | {{< var author.tel >}} | {{< var advisor.tel >}} | 
+| Home page | {{< var author.url >}} | {{< var advisor.url >}} | 
+| Affiliation | {{< var author.affiliation >}} | {{< var advisor.affiliation >}} | 
+| Affiliation URL | {{< var author.affiliation-url >}} | {{< var advisor.affiliation-url >}} | 
+| Citizenship | {{< var author.nationality >}} | {{< var advisor.nationality >}} | 
+| Expected graduation date | {{< var phd.graduation-date >}} | --- | 
+| Years in program | {{< var phd.years >}} | --- | 
 
-## PhD Progress
-
-- Expected graduation date: {{< var phd.graduation-date >}}
-- Years in program: {{< var phd.years >}}
-
-## Research Advisor
-
-- Full Name: {{< var advisor.name >}}
 
 *Key words*: {{< var keywords >}}

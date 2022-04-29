@@ -1,8 +1,10 @@
 ---
-title: "Overlooked Dynamics in Algorithmic Recourse"
+title: Dynamics in Algorithmic Recourse
+subtitle: Trustworthy Artificial Intelligence for Finance and Economics
 format: 
     pdf:
         include-in-header: preamble.tex
+    
 ---
 
 ```{.include}

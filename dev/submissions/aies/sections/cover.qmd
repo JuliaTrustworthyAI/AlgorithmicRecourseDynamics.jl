@@ -3,7 +3,7 @@ format:
     pdf: default
 ---
 
-## Personal details
+## Personal Details
 
 |  | Author | Research Advisor |
 |---------|:--------|:--------|

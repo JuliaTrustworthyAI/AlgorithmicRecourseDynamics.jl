@@ -2,31 +2,23 @@
 format: gfm
 ---
 
+
+
 \pagebreak
 
-## References {.appendix}
-
-::: {#refs}
-:::
-
-\FloatBarrier
-\pagebreak
-
-## Tables {#tables .appendix}
+# Tables {#tables .appendix}
 
 ...
 
-\FloatBarrier
 \pagebreak
 
-## Figures {#figures .appendix}
+# Figures {#figures .appendix}
 
 ...
 
-\FloatBarrier
 \pagebreak
 
-## Code {#code .appendix}
+# Code {#code .appendix}
 
 ...
 

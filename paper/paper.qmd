@@ -1,24 +1,64 @@
 ---
-title: "Overlooked Dynamics in Algorithmic Recourse"
+title: "Endogenous Dynamics in Algorithmic Recourse"
+author: |
+    \author{\IEEEauthorblockN{Patrick Altmeyer}
+    \IEEEauthorblockA{\textit{Delft University of Technology} \\
+    \textit{EEMCS}\\
+    Delft, Netherlands \\
+    p.altmeyer[at]tudelft.nl}
+    \and
+    \IEEEauthorblockN{Cynthia C. S. Liem}
+    \IEEEauthorblockA{\textit{Delft University of Technology} \\
+    \textit{EEMCS}\\
+    Delft, Netherlands \\
+    c.c.s.liem[at]tudelft.nl}
+    \and
+    \IEEEauthorblockN{3\textsuperscript{rd} Given Name Surname}
+    \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+    \textit{name of organization (of Aff.)}\\
+    City, Country \\
+    email address or ORCID}
+    \and
+    \IEEEauthorblockN{4\textsuperscript{th} Given Name Surname}
+    \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+    \textit{name of organization (of Aff.)}\\
+    City, Country \\
+    email address or ORCID}
+    \and
+    \IEEEauthorblockN{5\textsuperscript{th} Given Name Surname}
+    \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+    \textit{name of organization (of Aff.)}\\
+    City, Country \\
+    email address or ORCID}
+    \and
+    \IEEEauthorblockN{6\textsuperscript{th} Given Name Surname}
+    \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
+    \textit{name of organization (of Aff.)}\\
+    City, Country \\
+    email address or ORCID}
+    }
 format: 
     pdf:
+        documentclass: IEEEtran
+        classoption: conference
         include-in-header: tex/preamble.tex
-        include-before-body: tex/before_body.tex
-    html: default
-link-citations: true
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl
+number-sections: true
+license: "CC BY"
 ---
 
-```{.include}
-sections/abstract.qmd
-```
+{{< include sections/abstract.qmd >}}
 
-```{.include}
-sections/introduction.qmd
-```
+{{< include sections/introduction.qmd >}}
 
-@schut2021generating
+# Acknoledgment {.unnumbered}
 
-```{.include}
-sections/appendix.qmd
-```
+P. A. thanks ...
+
+# References {.unnumbered}
+
+::: {#refs}
+:::
+
+{{< include sections/appendix.qmd >}}
 

@@ -1,26 +1,23 @@
+
 # Algorithmic Recourse
 
-This repository contains all the work produced in relation to my first research topic: the effect of endogenous domain and model shifts on algorithmic recourse.
+## Abstract
 
-## Environment
+Existing work on Counterfactual Explanations (CE) and Algorithmic
+Recourse (AR) has largely been limited to the static setting: given some
+classifier we are interested in finding close, actionable, realistic,
+sparse, diverse and ideally causally founded counterfactuals. The
+ability of CE to handle dynamics like data and model drift remains a
+largely unexplored research challenge at this point. Only one recent
+work considers the implications of exogenous domain and model shifts.
+This project instead focuses on endogenous dynamics, that is shifts that
+occur when AR is actually implemented by a proportion of individuals.
+Early findings suggest that the involved shifts may be large with
+important implications on the validity of AR and the overall
+characteristics of the sample population.
 
-To facilitate reproducibility this repository works with its own environment. When you clone this repo, all its dependencies are already declared in 'Project.toml', so you should not have to install any missing packages manually. 
+![](www/poc.png)
 
-### Compatibility
+## Code
 
-In this project I use Turing.jl for the purpose of Bayesian Deep Learning. Unfortunately, Turing is currently not compatible with the latest version of Julia (1.7).  When using the code contained in this project you are therefore best advised to work in versions 
-
-```toml 
-julia = "1.3, 1.4, 1.5, 1.6"
-```
-
-as specified in 'Project.toml'.
-
-### CounterfactualExplanations.jl
-
-There is a companion Julia package to this repository. It is not yet registered, but can be found on [Github](https://github.com/pat-alt/CounterfactualExplanations.jl). As per above, you should not have to manually installed the package yourself as long as your working within the project environment. But should you anyway want to install the package to use in a different environment you can do that like so:
-
-```julia
-using Pkg
-Pkg.add("https://github.com/pat-alt/CounterfactualExplanations.jl")
-```
+…

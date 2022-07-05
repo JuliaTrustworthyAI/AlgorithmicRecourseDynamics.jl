@@ -1,0 +1,15 @@
+---
+format: gfm
+---
+
+# Algorithmic Recourse
+
+## Abstract
+
+{{< include paper/sections/abstract.qmd >}}
+
+![](www/poc.png)
+
+## Code 
+
+...

@@ -51,6 +51,14 @@ license: "CC BY"
 
 {{< include sections/introduction.qmd >}}
 
+{{< include sections/related.qmd >}}
+
+{{< include sections/methodology.qmd >}}
+
+{{< include sections/empirical.qmd >}}
+
+{{< include sections/discussion.qmd >}}
+
 # Acknoledgment {.unnumbered}
 
 P. A. thanks ...

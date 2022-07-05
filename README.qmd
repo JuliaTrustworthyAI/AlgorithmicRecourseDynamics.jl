@@ -12,4 +12,17 @@ format: gfm
 
 ## Code 
 
+### Python
+
+The bulk of the work for this project was done in Python. The relevant source code is under `/src/python`. Use the command below to install the necessary dependencies.
+
+```{zsh}
+pip install -r src/python/requirements.txt
+```
+
+
+### Julia
+
+Some exploratory work was initially done in Julia. The relevant source code is under `/src/julia`.
+
 ...

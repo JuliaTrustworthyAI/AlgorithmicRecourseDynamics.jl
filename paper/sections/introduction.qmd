@@ -16,5 +16,7 @@ We think that these types of endogenous dynamics may be problematic. Firstly, mo
 
 To the best of our knowledge this is the first work investigating endogenous dynamics in AR. Our contributions to the state of knowledge are two-fold. Firstly, we introduce an experimental framework extending previous work by @pawelczyk2021carla, which allows for benchmarking different counterfactual generators in terms of the endogenous domain and model shifts they introduce. To this end we propose a number of novel evaluation metrics. Secondly, we use this framework to provide the first in-depth analysis of endogenous recourse dynamics induced by various popular counterfactual generators including @wachter2017counterfactual, @joshi2019towards, @mothilal2020explaining and @antoran2020getting. 
 
-The paper is structured as follows: @sec-related ... . 
+We find that ...
+
+The paper is structured as follows: @sec-related places our work in the broader context of related literature. @sec-method presents our methodology and data. @sec-empirical presents our empirical findings which are then discussed in @sec-discussion. We also point to some of the limitations or our work as well as avenues for future research in @sec-limit. Finally, @sec-conclusion concludes.
 

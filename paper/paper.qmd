@@ -2,40 +2,40 @@
 title: "Endogenous Dynamics in Algorithmic Recourse"
 author: |
     \author{\IEEEauthorblockN{Patrick Altmeyer}
-    \IEEEauthorblockA{\textit{Delft University of Technology} \\
-    \textit{EEMCS}\\
+    \IEEEauthorblockA{\textit{EEMCS} \\
+    \textit{Delft University of Technology}\\
     Delft, Netherlands \\
     p.altmeyer[at]tudelft.nl}
     \and
+    \IEEEauthorblockN{Giovan Angela}
+    \IEEEauthorblockA{\textit{EEMCS} \\
+    \textit{Delft University of Technology}\\
+    Delft, Netherlands \\
+    g.j.a.angela[at]student.tudelft.nl}
+    \and
+    \IEEEauthorblockN{Aleksander Buszydlik}
+    \IEEEauthorblockA{\textit{EEMCS} \\
+    \textit{Delft University of Technology}\\
+    Delft, Netherlands \\
+    a.j.buszydlik[at]student.tudelft.nl}
+    \and
+    \IEEEauthorblockN{Karol Dobiczek}
+    \IEEEauthorblockA{\textit{EEMCS} \\
+    \textit{Delft University of Technology}\\
+    Delft, Netherlands \\
+    k.t.dobiczek[at]student.tudelft.nl}
+    \and
     \IEEEauthorblockN{Cynthia C. S. Liem}
-    \IEEEauthorblockA{\textit{Delft University of Technology} \\
-    \textit{EEMCS}\\
+    \IEEEauthorblockA{\textit{EEMCS} \\
+    \textit{Delft University of Technology}\\
     Delft, Netherlands \\
     c.c.s.liem[at]tudelft.nl}
     \and
-    \IEEEauthorblockN{3\textsuperscript{rd} Given Name Surname}
-    \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-    \textit{name of organization (of Aff.)}\\
-    City, Country \\
-    email address or ORCID}
-    \and
-    \IEEEauthorblockN{4\textsuperscript{th} Given Name Surname}
-    \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-    \textit{name of organization (of Aff.)}\\
-    City, Country \\
-    email address or ORCID}
-    \and
-    \IEEEauthorblockN{5\textsuperscript{th} Given Name Surname}
-    \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-    \textit{name of organization (of Aff.)}\\
-    City, Country \\
-    email address or ORCID}
-    \and
-    \IEEEauthorblockN{6\textsuperscript{th} Given Name Surname}
-    \IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
-    \textit{name of organization (of Aff.)}\\
-    City, Country \\
-    email address or ORCID}
+    \IEEEauthorblockN{Arie van Deursen}
+    \IEEEauthorblockA{\textit{EEMCS} \\
+    \textit{Delft University of Technology}\\
+    Delft, Netherlands \\
+    arie.vandeursen[at]tudelft.nl}
     }
 format: 
     pdf:
@@ -61,9 +61,14 @@ license: "CC BY"
 
 {{< include sections/limitations.qmd >}}
 
-# Acknoledgment {.unnumbered}
+{{< include sections/conclusion.qmd >}}
+
+# Acknowledgment {.unnumbered}
 
 P. A. thanks ...
+
+\pagebreak
+\FloatBarrier
 
 # References {.unnumbered}
 

@@ -59,6 +59,8 @@ license: "CC BY"
 
 {{< include sections/discussion.qmd >}}
 
+{{< include sections/limitations.qmd >}}
+
 # Acknoledgment {.unnumbered}
 
 P. A. thanks ...

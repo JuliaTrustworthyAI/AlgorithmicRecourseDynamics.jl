@@ -20,6 +20,10 @@ The bulk of the work for this project was done in Python. The relevant source co
 pip install -r src/python/requirements.txt
 ```
 
+#### Trouble-shooting
+
+The CARLA library used for benchmarking was built in Python 3.7, but we are using other dependencies that require Python >=3.8. For the work done here we have used
+
 
 ### Julia
 

@@ -45,6 +45,7 @@ format:
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl
 number-sections: true
 license: "CC BY"
+link-citations: true
 ---
 
 {{< include sections/abstract.qmd >}}

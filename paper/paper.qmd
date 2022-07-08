@@ -30,12 +30,6 @@ author: |
     \textit{Delft University of Technology}\\
     Delft, Netherlands \\
     c.c.s.liem[at]tudelft.nl}
-    \and
-    \IEEEauthorblockN{Arie van Deursen}
-    \IEEEauthorblockA{\textit{EEMCS} \\
-    \textit{Delft University of Technology}\\
-    Delft, Netherlands \\
-    arie.vandeursen[at]tudelft.nl}
     }
 format: 
     pdf:

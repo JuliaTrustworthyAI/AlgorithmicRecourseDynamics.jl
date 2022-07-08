@@ -30,6 +30,6 @@ In the context of algorithmic recourse, domain and model shifts were first broug
 
 ## Benchmarking Counterfactual Generators {#sec-related-benchmark}
 
-...
+Despite the large and growing number of approaches to counterfactual search there have been surprisingly few benchmark studies that compare different methodologies. This may be partially due to limited software availability in this space. Recent work has started to address this gap: firstly, @de2021framework run a large benchmarking study using different algorithmic aproaches and numerous tabular datasets; secondly, @pawelczyk2021carla introduce a Python framework that can be used to apply and benchmark different methodology; finally, @altmeyer2022CounterfactualExplanations provides an extensible and language-agnostic implementation in Julia. For the experiments conducted in this work we relied on the latter. 
 
 

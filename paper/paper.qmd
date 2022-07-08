@@ -1,7 +1,8 @@
 ---
 title: "Endogenous Dynamics in Algorithmic Recourse"
 author: |
-    \author{\IEEEauthorblockN{Patrick Altmeyer}
+    \author{
+    \IEEEauthorblockN{Patrick Altmeyer}
     \IEEEauthorblockA{\textit{EEMCS} \\
     \textit{Delft University of Technology}\\
     Delft, Netherlands \\

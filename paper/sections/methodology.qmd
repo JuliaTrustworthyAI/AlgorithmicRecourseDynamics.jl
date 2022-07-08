@@ -6,13 +6,9 @@ In the following we first set out a generalized framework for gradient-based cou
 
 In this work we have chosen to focus on a number of gradient-based counterfactual generators to investigate the endogenous dynamics we introduced in @sec-intro. Gradient-based counterfactual search is well-suited for differentiable black-box models like deep neural networks. We can restate @eq-solution in a more general form that encompasses most gradient-based approaches to counterfactual search:
 
-[AGREE ON NOTATION]
-
 $$
 \begin{aligned}
-\mathbf{s}^\prime &= \arg \min_{\mathbf{s}^\prime \in \mathcal{S}} \left(  {\left\{\ell(M(f(s_k^\prime)),t)\right\}_K}^\mathsf{T} \mathbf{1}_K + \lambda {\left\{h(f(s_k^\prime)) \right\}_K}^\mathsf{T} \mathbf{1}_K \right) \\
-&= \arg \min_{\mathbf{s}^\prime \in \mathcal{S}} \left\{ \left(\ell . ((M\circ f).(\mathbf{s}^\prime),t) + \lambda (h \circ f).(\mathbf{s}^\prime)\right)^\mathsf{T} \mathbf{1}_K \right\} \\
-&= \arg \min_{\mathbf{s}^\prime \in \mathcal{S}} \left\{ \sum_{k=1}^{K} {\ell(M(f(s_k^\prime)),t)}+ \lambda {h(f(s_k^\prime)) }  \right\}
+\mathbf{s}^\prime &= \arg \min_{\mathbf{s}^\prime \in \mathcal{S}} \left\{ \sum_{k=1}^{K} {\ell(M(f(s_k^\prime)),t)}+ \lambda {h(f(s_k^\prime)) }  \right\}
 \end{aligned}
 $$ {#eq-general}
 

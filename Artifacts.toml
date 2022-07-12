@@ -1,0 +1,7 @@
+[data]
+git-tree-sha1 = "dfb86f21bf1092d7c3956207bee66ec705a8b689"
+lazy = true
+
+    [[data.download]]
+    sha256 = "80f10c1ce403798377f0ac1c2ca463375870ca7934c448eb1f079017c238b237"
+    url = "https://github.com/pat-alt/algorithmic_recourse_dynamics/releases/download/artifacts/data.tar.gz"

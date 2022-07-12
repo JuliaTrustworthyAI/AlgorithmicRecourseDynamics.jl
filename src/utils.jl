@@ -4,7 +4,7 @@
 Sets up the directory to save computational outputs and returns the path.
 """
 function output_dir(dir="")
-    root_ = "output"
+    root_ = "dev/artifacts/upload/output"
     if !isdir(root_)
         mkdir(root_)
     end
@@ -18,7 +18,7 @@ end
 Sets up the directory to save images and returns the path.
 """
 function www_dir(dir="")
-    root_ = "www"
+    root_ = "dev/artifacts/upload/www"
     if !isdir(root_)
         mkdir(root_)
     end

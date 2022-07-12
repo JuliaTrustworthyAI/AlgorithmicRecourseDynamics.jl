@@ -1,8 +1,8 @@
-PWD /Users/FA31DU/Documents/code/algorithmic_recourse_dynamics/dev/submissions/aies/extended_abstract
+PWD /Users/FA31DU/Documents/code/AlgorithmicRecourseDynamics.jl/dev/submissions/aies/extended_abstract
 INPUT /usr/local/texlive/2022/texmf.cnf
 INPUT /usr/local/texlive/2022/texmf-dist/web2c/texmf.cnf
 INPUT /usr/local/texlive/2022/texmf-var/web2c/pdftex/pdflatex.fmt
-INPUT /Users/FA31DU/Documents/code/algorithmic_recourse_dynamics/dev/submissions/aies/extended_abstract/extended_abstract.tex
+INPUT /Users/FA31DU/Documents/code/AlgorithmicRecourseDynamics.jl/dev/submissions/aies/extended_abstract/extended_abstract.tex
 OUTPUT extended_abstract.log
 INPUT /usr/local/texlive/2022/texmf-dist/tex/latex/hyperref/hyperref.sty
 INPUT /usr/local/texlive/2022/texmf-dist/tex/latex/hyperref/hyperref.sty

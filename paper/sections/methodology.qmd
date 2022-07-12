@@ -46,7 +46,7 @@ We have chosen to work with both synthetic and real-world datasets. Using synthe
 
 ### Synthetic data
 
-We use 6 synthetic binary classification datasets consisting of 200-400 samples grouped in normally-distributed clusters.^[To see how the data is generated see here: [https://github.com/pat-alt/algorithmic_recourse_dynamics/blob/main/notebooks/synthetic_datasets.ipynb](https://github.com/pat-alt/algorithmic_recourse_dynamics/blob/main/notebooks/synthetic_datasets.ipynb)] The datasets are presented in @fig-synthetic-data (see also Appendix A for a formal description). Samples from the negative class are marked in blue while samples of the positive class are marked in orange.
+We use 6 synthetic binary classification datasets consisting of 200-400 samples grouped in normally-distributed clusters.^[To see how the data is generated see here: [https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/blob/main/notebooks/synthetic_datasets.ipynb](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/blob/main/notebooks/synthetic_datasets.ipynb)] The datasets are presented in @fig-synthetic-data (see also Appendix A for a formal description). Samples from the negative class are marked in blue while samples of the positive class are marked in orange.
 
 ![PLACEHOLDER: A visualization of the synthetic classification datasets used in our experiments.](www/synthetic_data.png){#fig-synthetic-data}
 

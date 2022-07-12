@@ -2,7 +2,7 @@
 format: gfm
 ---
 
-# Algorithmic Recourse
+# AlgorithmicRecourseDynamics.jl
 
 ## Abstract
 

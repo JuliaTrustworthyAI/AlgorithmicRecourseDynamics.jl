@@ -6,7 +6,7 @@ jupyter: julia-1.7
 In this notebook we will use toy data to see how endogenous domain shifts and the resulting model shifts can have implications on the validity and cost of algorithmic recourse.
 
 ```{julia}
-include("src/AlgorithmicRecourseDynamics.jl")
+include("dev/utils.jl")
 using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
 theme(:wong)
 output_path = output_dir("synthetic")

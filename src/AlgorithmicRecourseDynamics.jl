@@ -3,6 +3,9 @@ module AlgorithmicRecourseDynamics
 # Load modules:
 include("utils.jl")
 
+include("data/Data.jl")
+using .Data
+
 include("models/Models.jl")
 using .Models
 
@@ -11,5 +14,8 @@ using .Metrics
 
 include("experiments/Experiments.jl")
 using .Experiments
+
+include("post_processing/PostProcessing.jl")
+using .PostProcessing
 
 end

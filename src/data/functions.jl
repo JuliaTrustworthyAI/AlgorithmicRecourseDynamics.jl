@@ -1,3 +1,5 @@
+using Pkg.Artifacts
+
 function download_artifacts()
     data_dir = artifact"data"
 end

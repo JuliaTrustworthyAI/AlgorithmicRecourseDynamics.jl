@@ -70,13 +70,11 @@ function run_experiment(experiment::Experiment, generator::CounterfactualExplana
             
             for t in 1:experiment.n_rounds
 
-                # Data: 
-                data = Models.prepare_data(X,y)
                 counterfactual_data = CounterfactualData(X,y')
                 
                 # Classifier:
                 if t > 1
-                    𝑴 = Models.retrain(experiment.𝑴, data, τ=τ)
+                    𝑴 = Models.train(experiment.𝑴, counterfactual_data; τ=τ)
                 else
                     𝑴 = experiment.𝑴
                 end
@@ -130,5 +128,27 @@ function run_experiment(experiment::Experiment, generator::CounterfactualExplana
 
     return output, path
 
+end
+
+using BSON
+"""
+    save_path(root,path)
+
+Helper function to save `path` output from `run_experiment` to BSON.
+"""
+function save_path(root,path)
+    bson(root * "_path.bson",Dict(i => path[i] for i ∈ 1:length(path)))
+end
+
+using BSON
+"""
+    load_path(root,path)
+
+Helper function to load `path` output.
+"""
+function load_path(root)
+    dict = BSON.load(root * "_path.bson")
+    path = [dict[i] for i ∈ 1:length(dict)]
+    return path
 end
 

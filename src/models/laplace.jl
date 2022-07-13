@@ -14,7 +14,7 @@ using Parameters
 @with_kw struct LaplaceModelParams 
     loss::Symbol = :logitbinarycrossentropy
     opt::Symbol = :Adam
-    n_epochs::Int = 200
+    n_epochs::Int = 10
     λ::Real = 1
     H₀::Union{Nothing, AbstractMatrix} = nothing
 end
@@ -27,7 +27,7 @@ using CounterfactualExplanations
 
 Wrapper function to retrain `LaplaceModel`.
 """
-function train(M::LaplaceModel, data::CounterfactualData; kwargs...)
+function train(M::LaplaceModel, data::CounterfactualData; τ=nothing, kwargs...)
 
     args = LaplaceModelParams(; kwargs...)
 

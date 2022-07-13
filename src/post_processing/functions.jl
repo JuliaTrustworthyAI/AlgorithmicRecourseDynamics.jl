@@ -60,27 +60,7 @@ function plot_results(results::NamedTuple; title="", id_vars=[:t, :μ, :γ])
 
 end
 
-using BSON
-"""
-    save_path(root,path)
 
-Helper function to save `path` output from `run_experiment` to BSON.
-"""
-function save_path(root,path)
-    bson(root * "_path.bson",Dict(i => path[i] for i ∈ 1:length(path)))
-end
-
-using BSON
-"""
-    load_path(root,path)
-
-Helper function to load `path` output.
-"""
-function load_path(root)
-    dict = BSON.load(root * "_path.bson")
-    path = [dict[i] for i ∈ 1:length(dict)]
-    return path
-end
 
 using Plots
 """

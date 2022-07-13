@@ -2,7 +2,7 @@ using Parameters
 @with_kw struct FluxModelParams 
     loss::Symbol = :logitbinarycrossentropy
     opt::Symbol = :Adam
-    n_epochs::Int = 200 
+    n_epochs::Int = 10
 end
 
 using Flux
@@ -13,7 +13,7 @@ using CounterfactualExplanations
 
 Wrapper function to retrain `FluxModel`.
 """
-function train(M::FluxModel, data::CounterfactualData; kwargs...)
+function train(M::FluxModel, data::CounterfactualData; τ=nothing, kwargs...)
 
     args = FluxModelParams(; kwargs...)
 
@@ -35,7 +35,7 @@ function train(M::FluxModel, data::CounterfactualData; kwargs...)
 end
 
 using Statistics
-function forward!(model, data; loss::Symbol, opt::Symbol, n_epochs::Int=200)
+function forward!(model, data; loss::Symbol, opt::Symbol, n_epochs::Int=10)
 
     # Loss:
     loss_(x, y) = getfield(Flux.Losses, loss)(model(x), y) 

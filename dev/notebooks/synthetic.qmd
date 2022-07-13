@@ -130,7 +130,8 @@ while i <= 10
     Random.seed!(123)
     candidates = findall(y′.==0)
     chosen = rand(candidates, Int(round(μ*length(candidates))))
-    mod = Models.train(mod, counterfactual_data′; n_epochs=n_epochs)
+    H₀ = mod.model.H # use posterior as new prior
+    mod = Models.train(mod, counterfactual_data′; n_epochs=n_epochs, H₀=H₀)
     for i in chosen
         x = X′[:,i]
         outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen; γ=γ)
@@ -147,15 +148,18 @@ plt = plot(plt_original, plt_single, plt_single_retrained, plt_single_repeat, la
 savefig(plt, joinpath(www_path, "poc.png"))
 ```
 
+![](../artifacts/upload/www/synthetic/poc.png)
+
 ## Experiments
 
 ```{julia}
+using AlgorithmicRecourseDynamics.Experiments
 # Variables:
 μ = [0.05,0.1,0.25]
 γ = [0.50,0.75,0.9]
 grid_ = Experiments.GridVariables(μ, γ)
-n_rounds = 10
-n_folds = 5
+n_rounds = 5
+n_folds = 1
 target = 1.0
 T = 1000
 ```

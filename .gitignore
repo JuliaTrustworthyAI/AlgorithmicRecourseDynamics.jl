@@ -32,4 +32,4 @@ Manifest.toml
 /.quarto/
 
 /dev/artifacts/upload
-/dev/python/
+/dev/python

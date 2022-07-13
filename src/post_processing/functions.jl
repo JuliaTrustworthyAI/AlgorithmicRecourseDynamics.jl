@@ -84,31 +84,6 @@ end
 
 using Plots
 """
-    plot_data!(plt,X,y)
-
-Helper function to plut features coloured by label.
-"""
-function plot_data!(plt,X,y)
-    Plots.scatter!(plt, X[y.==1.0,1],X[y.==1.0,2], color=1, clim = (0,1), label="y=1")
-    Plots.scatter!(plt, X[y.==0.0,1],X[y.==0.0,2], color=0, clim = (0,1), label="y=0")
-end
-
-using Plots, CounterfactualExplanations
-"""
-    plot_contour(X,y,𝑴;clegend=true,title="",length_out=100)
-
-Helper function to plot contour of predictive probabilities.
-"""
-function plot_contour(X,y,𝑴;clegend=true,title="",length_out=100)
-    x_range = collect(range(minimum(X[:,1]),stop=maximum(X[:,1]),length=length_out))
-    y_range = collect(range(minimum(X[:,2]),stop=maximum(X[:,2]),length=length_out))
-    Z = [CounterfactualExplanations.Models.probs(𝑴,[x, y])[1] for x=x_range, y=y_range]
-    plt = contourf(x_range, y_range, Z', color=:viridis, legend=clegend, title=title, linewidth=0)
-    plot_data!(plt,X,y)
-end
-
-using Plots
-"""
     plot_path(path;γ,μ,k=1,length_out=500)
 
 Generates and returns an animation for a counterfactual `path` returned by `run_experiment`.

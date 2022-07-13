@@ -3,10 +3,16 @@ title: Experiments with Synthetic Data
 jupyter: julia-1.7
 ---
 
+```{julia}
+using Pkg; Pkg.activate("dev")
+```
+
+
 In this notebook we will use toy data to see how endogenous domain shifts and the resulting model shifts can have implications on the validity and cost of algorithmic recourse.
 
 ```{julia}
 include("dev/utils.jl")
+using AlgorithmicRecourseDynamics
 using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
 theme(:wong)
 output_path = output_dir("synthetic")
@@ -16,7 +22,7 @@ www_path = www_dir("synthetic")
 ## Classifiers
 
 ```{julia}
-Random.seed!(123)
+Random.seed!(1234)
 using MLJ
 N = 1000
 X, ys = make_blobs(N, 2; centers=2, as_table=false, center_box=(-2 => 2), cluster_std=0.1)
@@ -24,116 +30,60 @@ ys .= ys.==2
 X = X'
 xs = Flux.unstack(X,2)
 data = zip(xs,ys)
-plt = plot()
-plot_data!(plt,X',ys)
+counterfactual_data = CounterfactualData(X,ys')
 ```
 
 ### Logistic Regression
 
 ```{julia}
-nn = Chain(Dense(2,1))
-loss(x, y) = Flux.Losses.logitbinarycrossentropy(nn(x), y) 
+using Flux
+model = Chain(Dense(2,1))
+M = FluxModel(model)
+```
+
+
+```{julia}
+n_epochs = 10
+using AlgorithmicRecourseDynamics.Models
+M = Models.train(M,counterfactual_data; n_epochs=n_epochs)
 ```
 
 ```{julia}
-using Flux.Optimise: update!, ADAM
-opt = ADAM()
-epochs = 10
-function _forward_nn(nn, data, epochs)
-    for epoch = 1:epochs
-        for d in data
-            gs = gradient(Flux.params(nn)) do
-            l = loss(d...)
-            end
-            update!(opt, Flux.params(nn), gs)
-        end
-    end
-    return nn
-end
-_forward_nn(nn, data, epochs)
-```
-
-```{julia}
-using CounterfactualExplanations.Models
-import CounterfactualExplanations.Models: logits, probs # import functions in order to extend
-import Main.Models: retrain
-
-# Step 1)
-struct NeuralNetwork <: Models.AbstractFittedModel
-    model::Any
-end
-
-# Step 2)
-logits(M::NeuralNetwork, X::AbstractArray) = M.model(X)
-probs(M::NeuralNetwork, X::AbstractArray)= σ.(logits(M, X))
-
-# Step 3)
-function retrain(M::NeuralNetwork, data; n_epochs=10, τ=1.0) 
-    nn = M.model
-    nn = _forward_nn(nn, data, n_epochs)
-    M = NeuralNetwork(nn)
-    return M
-end
-
-M = NeuralNetwork(nn)
-```
-
-```{julia}
-#| echo: false
-# Plot the posterior distribution with a contour plot.
-plt_nn = plot_contour(X',ys,M;zoom=0);
+plt_nn = plot(M,counterfactual_data;zoom=0)
 savefig(plt_nn, joinpath(www_path, "nn_contour.png"))
 ```
 
-![](www/nn_contour.png)
+![](../artifacts/upload/www/synthetic/nn_contour.png)
 
 ### Laplace Redux
 
 ```{julia}
 λ = 0.1
-la = Laplace(nn, λ=λ)
-BayesLaplace.fit!(la, data)
+model_laplace = Laplace(M.model, λ=λ)
+LaplaceRedux.fit!(model_laplace, data)
 ```
 
 ```{julia}
-# Step 1)
-struct LaplaceNeuralNetwork <: Models.AbstractFittedModel
-    la::BayesLaplace.Laplace
-end
-
-# Step 2)
-logits(M::LaplaceNeuralNetwork, X::AbstractArray) = M.la.model(X)
-probs(M::LaplaceNeuralNetwork, X::AbstractArray)= BayesLaplace.predict(M.la, X)
-
-# Step 3)
-function retrain(M::LaplaceNeuralNetwork, data; n_epochs=10, τ=1.0) 
-    nn = M.la.model
-    nn = _forward_nn(nn, data, n_epochs)
-    la = Laplace(nn, λ=λ)
-    BayesLaplace.fit!(la, data)
-    M = LaplaceNeuralNetwork(la)
-    return M
-end
-
-Mᴸ = LaplaceNeuralNetwork(la)
+M_laplace = Models.LaplaceModel(model_laplace)
 ```
 
 ```{julia}
-#| echo: false
-# Plot the posterior distribution with a contour plot.
-plt = plot_contour(X',ys,Mᴸ;zoom=0)
-savefig(plt, joinpath(www_path, "la_contour.png"))
+plt_laplace = plot(M_laplace, counterfactual_data;zoom=0)
+savefig(plt_laplace, joinpath(www_path, "la_contour.png"))
 ```
 
-![](www/la_contour.png)
+![](../artifacts/upload/www/synthetic/la_contour.png)
 
 ## Single Round
 
 ```{julia}
 # Models:
-models = (Bayesian=Mᴸ, Plugin=M)
+models = (Bayesian=M_laplace, Plugin=M)
 # Generators:
-generators = (Bayesian=GreedyGenerator(), Plugin=GenericGenerator(ϵ=0.01))
+generators = (
+    Bayesian=GreedyGenerator(loss=:logitbinarycrossentropy), 
+    Plugin=GenericGenerator(loss=:logitbinarycrossentropy,ϵ=0.01)
+)
 ```
 
 ### Generate counterfactual
@@ -141,13 +91,12 @@ generators = (Bayesian=GreedyGenerator(), Plugin=GenericGenerator(ϵ=0.01))
 ```{julia}
 cb = false
 γ = 0.75
-mod = Mᴸ
+mod = M_laplace
 gen = generators[:Plugin]
-plt_original = plt_nn = plot_contour(X',ys,mod;zoom=0,colorbar=cb,title="(a)")
+plt_original = plot(mod,counterfactual_data;zoom=0,colorbar=false,title="(a)")
 ```
 
 ```{julia}
-counterfactual_data = CounterfactualData(X,ys')
 μ = 0.10
 Random.seed!(123)
 candidates = findall(ys.==0)
@@ -161,16 +110,15 @@ for i in chosen
     X′[:,i] = counterfactual(outcome)
     y′[i] = counterfactual_label(outcome)
 end
-plt_single = plot_contour(X′',y′,mod;zoom=0,colorbar=cb,title="(b)")
+counterfactual_data′ = CounterfactualData(X′,y′')
+plt_single = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title="(b)")
 ```
 
 ### Retrain
 
 ```{julia}
-xs′ = Flux.unstack(X′,2)
-data = zip(xs′,y′)
-mod = retrain(mod, data)
-plt_single_retrained = plot_contour(X′',y′,mod;zoom=0,colorbar=cb,title="(c)")
+mod = Models.train(mod, counterfactual_data′; n_epochs=n_epochs)
+plt_single_retrained = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title="(c)")
 ```
 
 ### Repeat
@@ -178,13 +126,11 @@ plt_single_retrained = plot_contour(X′',y′,mod;zoom=0,colorbar=cb,title="(c)
 ```{julia}
 i = 2
 while i <= 10
-    counterfactual_data = CounterfactualData(X′,y′')
+    counterfactual_data′ = CounterfactualData(X′,y′')
     Random.seed!(123)
     candidates = findall(y′.==0)
     chosen = rand(candidates, Int(round(μ*length(candidates))))
-    xs′ = Flux.unstack(X′,2)
-    data = zip(xs′,y′)
-    mod = retrain(mod, data)
+    mod = Models.train(mod, counterfactual_data′; n_epochs=n_epochs)
     for i in chosen
         x = X′[:,i]
         outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen; γ=γ)
@@ -193,7 +139,7 @@ while i <= 10
     end
     i += 1
 end
-plt_single_repeat = plot_contour(X′',y′,mod;zoom=0,colorbar=cb,title="(d)")
+plt_single_repeat = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title="(d)")
 ```
 
 ```{julia}

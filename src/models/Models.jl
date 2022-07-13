@@ -1,8 +1,9 @@
 module Models
 
-include("optimization.jl")
-include("bayes_logreg.jl")
-include("deep_ensemble.jl")
-include("functions.jl")
+# Models:
+include("mlp.jl")
+include("laplace.jl")
+
+export LaplaceModel
 
 end

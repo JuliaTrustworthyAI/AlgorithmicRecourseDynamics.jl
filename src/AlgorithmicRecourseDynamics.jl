@@ -7,13 +7,10 @@ using .Data
 include("models/Models.jl")
 using .Models
 
-include("metrics/Metrics.jl")
-using .Metrics
-
 include("experiments/Experiments.jl")
 using .Experiments
 
-include("post_processing/PostProcessing.jl")
-using .PostProcessing
+include("evaluation/Evaluation.jl")
+using .Evaluation
 
 end

@@ -104,11 +104,11 @@ The algorithm used to generate recourse in Schut et al. (2021) is based on the J
 
 ```{julia}
 using CounterfactualExplanations.Models: BayesianLogisticModel
-𝑴 = BayesianLogisticModel(reshape(model.μ,1,length(model.μ)), model.Σ); # repare for usage with CounterfactualExplanations.jl
+M = BayesianLogisticModel(reshape(model.μ,1,length(model.μ)), model.Σ); # repare for usage with CounterfactualExplanations.jl
 x̅ = [50.0, 60.0]; # factual
 using Random
 Random.seed!(1234)
-y̅ = round(CounterfactualExplanations.Models.probs(𝑴, x̅)[1])
+y̅ = round(CounterfactualExplanations.Models.probs(M, x̅)[1])
 target = ifelse(y̅==1.0,0.0,1.0) # opposite label as target
 γ = ifelse(target==1.0,0.9,0.1); # desired threshold based on target
 ```
@@ -119,8 +119,8 @@ greedy = GreedyGenerator(1,30,:logitbinarycrossentropy,nothing)
 ```
 
 ```{julia}
-recourse_generic = generate_recourse(generic, x̅, 𝑴, target, γ) # generate recourse
-recourse_greedy = generate_recourse(greedy, x̅, 𝑴, target, γ);
+recourse_generic = generate_recourse(generic, x̅, M, target, γ) # generate recourse
+recourse_greedy = generate_recourse(greedy, x̅, M, target, γ);
 ```
 
 ```{julia}

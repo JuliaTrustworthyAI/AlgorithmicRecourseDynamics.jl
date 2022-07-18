@@ -22,7 +22,6 @@ www_path = www_dir("synthetic")
 ## Classifiers
 
 ```{julia}
-Random.seed!(1234)
 using MLJ
 N = 1000
 X, ys = make_blobs(N, 2; centers=2, as_table=false, center_box=(-2 => 2), cluster_std=0.1)
@@ -98,7 +97,6 @@ plt_original = plot(mod,counterfactual_data;zoom=0,colorbar=false,title="(a)")
 
 ```{julia}
 μ = 0.10
-Random.seed!(123)
 candidates = findall(ys.==0)
 chosen = rand(candidates, Int(round(μ*length(candidates))))
 X′ = copy(X)
@@ -108,7 +106,7 @@ for i in chosen
     x = X[:,i]
     outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen,γ=γ)
     X′[:,i] = counterfactual(outcome)
-    y′[i] = counterfactual_label(outcome)
+    y′[i] = first(counterfactual_label(outcome))
 end
 counterfactual_data′ = CounterfactualData(X′,y′')
 plt_single = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title="(b)")
@@ -127,7 +125,6 @@ plt_single_retrained = plot(mod,counterfactual_data′;zoom=0,colorbar=false,tit
 i = 2
 while i <= 10
     counterfactual_data′ = CounterfactualData(X′,y′')
-    Random.seed!(123)
     candidates = findall(y′.==0)
     chosen = rand(candidates, Int(round(μ*length(candidates))))
     H₀ = mod.model.H # use posterior as new prior
@@ -136,7 +133,7 @@ while i <= 10
         x = X′[:,i]
         outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen; γ=γ)
         X′[:,i] = counterfactual(outcome)
-        y′[i] = counterfactual_label(outcome)
+        y′[i] = first(counterfactual_label(outcome))
     end
     i += 1
 end
@@ -157,7 +154,7 @@ using AlgorithmicRecourseDynamics.Experiments
 # Variables:
 μ = [0.05,0.1,0.25]
 γ = [0.50,0.75,0.9]
-grid_ = Experiments.GridVariables(μ, γ)
+grid_ = Experiments.GridVariables(models, generators, μ, γ)
 n_rounds = 5
 n_folds = 1
 target = 1.0
@@ -192,7 +189,7 @@ function plot_state(path, t; γ=0.75, μ = 0.05, k = 1, length_out=500, size=(15
     path = path[chosen][1]
     X = path.X̲'
     y = vec(path.y̲')
-    plt = plot_contour(X,y,path.𝑴,length_out=length_out,colorbar=cb,title=title)
+    plt = plot_contour(X,y,path.M,length_out=length_out,colorbar=cb,title=title)
     plt = plot(plt, axis=nothing, size=size, legend=false)
 end
 plot_state(paths[2], 1)

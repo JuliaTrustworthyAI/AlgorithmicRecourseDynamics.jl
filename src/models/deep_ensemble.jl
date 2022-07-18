@@ -88,29 +88,29 @@ struct FittedNeuralNet <: CounterfactualExplanations.AbstractFittedModel
 end
 
 """
-    logits(𝑴::FittedNeuralNet, X::AbstractArray)
+    logits(M::FittedNeuralNet, X::AbstractArray)
 
 A method (extension) that computes predicted logits for a single deep neural network.
 """
-logits(𝑴::FittedNeuralNet, X::AbstractArray) = 𝑴.nn(X)
+logits(M::FittedNeuralNet, X::AbstractArray) = M.nn(X)
 
 """
-    probs(𝑴::FittedNeuralNet, X::AbstractArray)
+    probs(M::FittedNeuralNet, X::AbstractArray)
 
 A method (extension) that computes predicted probabilities for a single deep neural network.
 """
-probs(𝑴::FittedNeuralNet, X::AbstractArray) = Flux.σ.(logits(𝑴, X))
+probs(M::FittedNeuralNet, X::AbstractArray) = Flux.σ.(logits(M, X))
 
 """
-    retrain(𝑴::FittedNeuralNet, data; n_epochs=10)
+    retrain(M::FittedNeuralNet, data; n_epochs=10)
 
 Retrains a fitted a neural network for (new) data.
 """
-function retrain(𝑴::FittedNeuralNet, data; n_epochs=10, τ=1.0) 
-    nn = 𝑴.nn
-    nn = forward_nn(nn, 𝑴.loss, data, 𝑴.opt, n_epochs=n_epochs, τ=τ)
-    𝑴 = FittedNeuralNet(nn, 𝑴.opt, 𝑴.loss)
-    return 𝑴
+function retrain(M::FittedNeuralNet, data; n_epochs=10, τ=1.0) 
+    nn = M.nn
+    nn = forward_nn(nn, M.loss, data, M.opt, n_epochs=n_epochs, τ=τ)
+    M = FittedNeuralNet(nn, M.opt, M.loss)
+    return M
 end
 
 using Statistics
@@ -192,28 +192,28 @@ struct FittedEnsemble <: CounterfactualExplanations.AbstractFittedModel
 end
 
 """
-    logits(𝑴::FittedEnsemble, X::AbstractArray)
+    logits(M::FittedEnsemble, X::AbstractArray)
 
 A method (extension) that computes predicted logits for a deep ensemble.
 """
-logits(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([nn(X) for nn in 𝑴.ensemble],1)),dims=1)
+logits(M::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([nn(X) for nn in M.ensemble],1)),dims=1)
 
 """
-    probs(𝑴::FittedEnsemble, X::AbstractArray)
+    probs(M::FittedEnsemble, X::AbstractArray)
 
 A method (extension) that computes predicted probabilities for a deep ensemble.
 """
-probs(𝑴::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([σ.(nn(X)) for nn in 𝑴.ensemble],1)),dims=1)
+probs(M::FittedEnsemble, X::AbstractArray) = mean(Flux.flatten(Flux.stack([σ.(nn(X)) for nn in M.ensemble],1)),dims=1)
 
 """
-    retrain(𝑴::FittedEnsemble, data; n_epochs=10) 
+    retrain(M::FittedEnsemble, data; n_epochs=10) 
 
 Retrains a fitted deep ensemble for (new) data.
 """
-function retrain(𝑴::FittedEnsemble, data; n_epochs=10, τ=1.0) 
-    ensemble = copy(𝑴.ensemble)
-    ensemble, anim = forward(ensemble, data, 𝑴.opt, loss_type=𝑴.loss_type, plot_loss=false, n_epochs=n_epochs, τ=τ)
-    𝑴 = FittedEnsemble(ensemble, 𝑴.opt, 𝑴.loss_type)
-    return 𝑴
+function retrain(M::FittedEnsemble, data; n_epochs=10, τ=1.0) 
+    ensemble = copy(M.ensemble)
+    ensemble, anim = forward(ensemble, data, M.opt, loss_type=M.loss_type, plot_loss=false, n_epochs=n_epochs, τ=τ)
+    M = FittedEnsemble(ensemble, M.opt, M.loss_type)
+    return M
 end
 

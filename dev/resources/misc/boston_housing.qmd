@@ -121,14 +121,14 @@ end
 ```{julia}
 using BSON: @load
 @load joinpath(output_folder, "nn.bson") nn
-𝑴ₙₙ = Models.FittedNeuralNet(nn, opt, loss);
+Mₙₙ = Models.FittedNeuralNet(nn, opt, loss);
 ```
 
 Prepare ensemble for use with CounterfactualExplanations.jl:
 
 ```{julia}
 ensemble = Models.load_ensemble(root=joinpath(output_folder, "ensemble"))
-𝑴 = Models.FittedEnsemble(ensemble, opt, loss_type);
+M = Models.FittedEnsemble(ensemble, opt, loss_type);
 ```
 
 Prepare grid of variables for experiment:
@@ -147,7 +147,7 @@ T = 1000;
 
 ```{julia}
 # Experiment:
-experiment = Experiments.Experiment(X,y,𝑴ₙₙ,target,grid_,n_rounds);
+experiment = Experiments.Experiment(X,y,Mₙₙ,target,grid_,n_rounds);
 ```
 
 ```{julia}
@@ -192,7 +192,7 @@ insertcols!(cost₀, :generator => "Generic");
 
 ```{julia}
 # Experiment:
-experiment = Experiments.Experiment(X,y,𝑴,target,grid_,n_rounds);
+experiment = Experiments.Experiment(X,y,M,target,grid_,n_rounds);
 ```
 
 ```{julia}

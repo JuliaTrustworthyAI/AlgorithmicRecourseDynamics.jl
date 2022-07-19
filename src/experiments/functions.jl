@@ -1,7 +1,7 @@
 using CounterfactualExplanations
 
 using Parameters
-@with_kw mutable struct FixedParamters
+@with_kw mutable struct FixedParameters
     n_rounds::Int = 5
     n_folds::Int = 5
     seed::Union{Nothing, Int} = nothing
@@ -9,34 +9,43 @@ using Parameters
     μ::AbstractFloat = 0.05
     γ::AbstractFloat = 0.75
     intersect_::Bool = true
+    τ::AbstractFloat = 1.0
 end
 
 mutable struct Experiment
     data::CounterfactualExplanations.CounterfactualData
     target::Number
-    grid::AbstractArray
-    fixed_parameters::Union{Nothing,FixedParamters}
+    recourse_systems::AbstractArray
+    system_identifiers::Base.Iterators.ProductIterator
+    fixed_parameters::Union{Nothing,FixedParameters}
 end
 
+"""
+    Experiment(data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple)
+
+
+"""
 function Experiment(data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple)
     
     # Set up grid
     grid = Base.Iterators.product(models, generators)
-    grid = map(grid) do vars
-        model = vars[1]
+    recourse_systems = map(grid) do vars
+        newdata = deepcopy(data)
+        model = vars[1] # initial model is owned by the recourse systems
+        newmodel = deepcopy(model)
         generator = vars[2]
-        recourse_system = RecourseSystem(data, model, generator)
-        grid_element = Dict(
-            :model => model,
-            :recourse_system => recourse_system
-        )
-        return grid_element
+        recourse_system = RecourseSystem(newdata, newmodel, generator, model)
+        return recourse_system
     end
 
+    # Add system identifiers:
+    system_identifiers = Base.Iterators.product(keys(models), keys(generators))
+
     experiment = Experiment(
-        data,
+        data, # initial data is owned by the experiment, shared across recourse systems
         target,
-        grid,
+        recourse_systems,
+        system_identifiers,
         nothing
     )
 
@@ -55,6 +64,7 @@ mutable struct RecourseSystem
     data::CounterfactualExplanations.CounterfactualData
     model::CounterfactualExplanations.AbstractFittedModel
     generator::CounterfactualExplanations.Generators.AbstractGenerator
+    initial_model::CounterfactualExplanations.AbstractFittedModel
 end
 
 using StatsBase
@@ -66,9 +76,8 @@ function choose_individuals(experiment::Experiment; intersect_::Bool=true)
     args = experiment.fixed_parameters
     target, μ = experiment.target, args.μ
 
-    candidates = map(experiment.grid) do x
-        recourse_system = x[:recourse_system]
-        findall(vec(recourse_system.data.y .!= target))
+    candidates = map(experiment.recourse_systems) do x
+        findall(vec(x.data.y .!= target))
     end
 
     if intersect_
@@ -91,119 +100,35 @@ end
 using CounterfactualExplanations.DataPreprocessing: unpack
 using CounterfactualExplanations
 using CounterfactualExplanations.Counterfactuals: counterfactual, counterfactual_label
+using ..Models
 """
 
 """
-function update!(experiment::Experiment, system::RecourseSystem, chosen_individuals::AbstractVector)
+function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen_individuals::AbstractVector)
     
     # Recourse System:
-    counterfactual_data = system.data
+    counterfactual_data = recourse_system.data
     X, y = unpack(counterfactual_data)
-    M = system.model
-    generator = system.generator
+    M = recourse_system.model
+    generator = recourse_system.generator
+
+    # Experiment:
+    args = experiment.fixed_parameters
+    T, γ, τ = args.T, args.γ, args.τ
+    target = experiment.target
 
     # Generate recourse:
     for i in chosen_individuals
         x = X[:,i]
-        outcome = generate_counterfactual(x, experiment.target, counterfactual_data, M, generator; T=experiment.T, γ=experiment.γ)
+        outcome = generate_counterfactual(x, target, counterfactual_data, M, generator; T=T, γ=γ)
         X[:,i] = counterfactual(outcome) # update individuals' features
-        y[:,i] = first(counterfactual_label(outcome)) # update individuals' predicted label
+        y[:,i] .= first(counterfactual_label(outcome)) # update individuals' predicted label
     end
 
     # Update data and classifier:
-    system.newdata = CounterfactualData(X,y)
-    system.newmodel = AlgorithmicRecourseDynamics.Models.train(system.newmodel, counterfactual_data; τ=experiment.τ)
+    recourse_system.data = CounterfactualData(X,y)
+    recourse_system.model = Models.train(M, counterfactual_data; τ=τ)
 end
 
 
-
-using Random, StatsBase, LinearAlgebra, Flux
-"""
-    run_experiment(experiment::Experiment, generator::CounterfactualExplanations.AbstractGenerator, n_folds=5; seed=nothing, T=1000)
-
-A wrapper function that runs the experiment for endogenous models shifts.
-"""
-function run_experiment(experiment::Experiment; store_path=true, fixed_parameters...)
-
-    # Load fixed hyperparameters:
-    args = FixedParamters(fixed_parameters...)
-    experiment.fixed_parameters = args
-    K, N, γ, μ, intersect_ = args.n_folds, args.n_rounds, args.γ, args.μ, args.intersect_
-    M = length(experiment.grid)
-
-    # Setup:
-    if !isnothing(experiment.seed)
-        Random.seed!(experiment.seed)
-    end
-
-    # Pre-allocate memory:
-    output = []
-
-    for k in 1:K
-        for n in 1:N
-
-            # Choose individuals that shall receive recourse:
-            chosen_individuals = choose_individuals(experiment; intersect_=intersect_)
-
-            for m in 1:M
-                
-                element = experiment.grid[m]
-                chosen_individuals_m = chosen_individuals[m]
-                recourse_system = element[:recourse_system]
-
-                # Update experiment
-                update!(recourse_system, experiment, chosen_individuals_m)
-
-                # Evaluate:
-                eval_ = evaluate_system(recourse_system, experiment)
-
-                # Store:
-                if store_path
-                    output_ = (
-                        eval_ = eval_,
-                        m = m,
-                        k = k,
-                        n = n,
-                        recourse_system = recourse_system
-                    )
-                else
-                    output_ = (
-                        eval_ = eval_,
-                        m = m,
-                        k = k,
-                        n = n
-                    )
-                end
-
-                output = vcat(output, output_)
-               
-            end
-        end
-    end
-
-    return output
-
-end
-
-using BSON
-"""
-    save_path(root,path)
-
-Helper function to save `path` output from `run_experiment` to BSON.
-"""
-function save_path(root,path)
-    bson(root * "_path.bson",Dict(i => path[i] for i ∈ 1:length(path)))
-end
-
-using BSON
-"""
-    load_path(root,path)
-
-Helper function to load `path` output.
-"""
-function load_path(root)
-    dict = BSON.load(root * "_path.bson")
-    path = [dict[i] for i ∈ 1:length(dict)]
-    return path
-end
 

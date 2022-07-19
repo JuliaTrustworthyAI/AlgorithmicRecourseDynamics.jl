@@ -52,7 +52,6 @@ function forward!(model, data; loss::Symbol, opt::Symbol, n_epochs::Int=10)
             end
             update!(opt_, Flux.params(model), gs)
         end
-        @info "Epoch $epoch. Average loss: $(avg_loss(data))" 
     end
 
 end

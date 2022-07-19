@@ -80,8 +80,9 @@ savefig(plt_laplace, joinpath(www_path, "la_contour.png"))
 models = (Bayesian=M_laplace, Plugin=M)
 # Generators:
 generators = (
-    Bayesian=GreedyGenerator(loss=:logitbinarycrossentropy), 
-    Plugin=GenericGenerator(loss=:logitbinarycrossentropy,ϵ=0.01)
+    Greedy=GreedyGenerator(loss=:logitbinarycrossentropy), 
+    Generic=GenericGenerator(loss=:logitbinarycrossentropy),
+    REVISE=REVISEGenerator(loss=:logitbinarycrossentropy)
 )
 ```
 
@@ -91,7 +92,7 @@ generators = (
 cb = false
 γ = 0.75
 mod = M_laplace
-gen = generators[:Plugin]
+gen = generators[:Greedy]
 plt_original = plot(mod,counterfactual_data;zoom=0,colorbar=false,title="(a)")
 ```
 
@@ -151,14 +152,22 @@ savefig(plt, joinpath(www_path, "poc.png"))
 
 ```{julia}
 using AlgorithmicRecourseDynamics.Experiments
-# Variables:
-μ = [0.05,0.1,0.25]
-γ = [0.50,0.75,0.9]
-grid_ = Experiments.GridVariables(models, generators, μ, γ)
-n_rounds = 5
-n_folds = 1
+using AlgorithmicRecourseDynamics.Experiments: Experiment
 target = 1.0
+experiment = Experiment(counterfactual_data, target, models, generators)
+```
+
+```{julia}
+# Variables:
+μ = 0.1
+γ = 0.75
+n_rounds = 10
+n_folds = 5
 T = 1000
+```
+
+```{julia}
+run_experiment(experiment; n_rounds=n_rounds, μ=μ, n_folds=n_folds, γ=γ, T=T)
 ```
 
 ```{julia}

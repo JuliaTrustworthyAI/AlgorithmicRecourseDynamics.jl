@@ -20,7 +20,7 @@ end
 	mmd(AbstractKernel(γ), x, y, n)
 MMD with Gaussian kernel of bandwidth `γ` using at most `n` samples
 """
-function mmd(x::AbstractArray, y::AbstractArray, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; compute_p::Union{Nothing,Int}=10000)
+function mmd(x::AbstractArray, y::AbstractArray, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; compute_p::Union{Nothing,Int}=1000)
     mmd_ = MMD(k, dist)(x, y)
     if !isnothing(compute_p)
         mmd_null = mmd_null_dist(x, y, k, dist; l=compute_p)
@@ -30,7 +30,7 @@ function mmd(x::AbstractArray, y::AbstractArray, k::AbstractKernel=GaussianKerne
     end
     return mmd_, p_val
 end
-mmd(x::AbstractArray, y::AbstractArray, n::Int, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; compute_p::Union{Nothing,Int}=10000) = mmd(samplecolumns(x,n), samplecolumns(y,n), k, dist, compute_p)
+mmd(x::AbstractArray, y::AbstractArray, n::Int, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; compute_p::Union{Nothing,Int}=1000) = mmd(samplecolumns(x,n), samplecolumns(y,n), k, dist; compute_p=compute_p)
 
 using Random: shuffle
 """
@@ -39,15 +39,18 @@ using Random: shuffle
 Calculates the MMD for a set of permutations of samples from the two distributions to measure whether the shift should be considered significant. This works under the assumption that if samples `x` and `y` come from the same distribution (under the null hypothesis), then the MMD of permutations of these samples should be similar to MMD(x, y)
 
 """
-function mmd_null_dist(x::AbstractArray, y::AbstractArray, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; l=10000)
+function mmd_null_dist(x::AbstractArray, y::AbstractArray, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; l=1000)
 
     n = size(x,2)
     mmd_null = zeros(l)
+    Z = hcat(x,y)
 
-    for i in 1:l
-        z = hcat(x,y)[:,shuffle(1:end)]
-        mmd_null[i] = mmd(z[:,1:n],z[:,(n+1):end])
+    bootstrap = function()
+        z = Z[:,shuffle(1:end)]
+        mmd(z[:,1:n],z[:,(n+1):end],k,dist;compute_p=nothing)[1]
     end
+    
+    mmd_null = map(x -> bootstrap(), mmd_null)
 
     return mmd_null
     

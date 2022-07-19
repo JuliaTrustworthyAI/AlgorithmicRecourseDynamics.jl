@@ -23,13 +23,13 @@ function run_experiment(experiment::Experiment; store_path=true, fixed_parameter
 
     # Pre-allocate memory:
     output = DataFrame()
-    chosen_individuals = zeros(size(experiment.recourse_systems))
 
     fold_iter = ProgressBar(1:K)
     round_iter = ProgressBar(1:N)
     system_iter = ProgressBar(1:M)
     for k in fold_iter
         set_description(fold_iter, string("Fold $k out of $K"))
+        chosen_individuals = zeros(size(experiment.recourse_systems))
         for n in round_iter
             set_description(round_iter, string("Round $n out of $N"))
 

@@ -1,53 +1,60 @@
 using Random, StatsBase, LinearAlgebra, Flux
-using .Experiments: Experiment, FixedParameters, choose_individuals, update!
+using .Experiments: Experiment, FixedParameters, choose_individuals, update!, set_up_system_grid!
 using .Evaluation: evaluate_system
 using DataFrames
-using ProgressBars
+using ProgressMeter
+using Logging
+
+is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
+
 """
     run_experiment(experiment::Experiment, generator::CounterfactualExplanations.AbstractGenerator, n_folds=5; seed=nothing, T=1000)
 
 A wrapper function that runs the experiment for endogenous models shifts.
 """
-function run_experiment(experiment::Experiment; store_path=true, fixed_parameters...)
+function run_experiment(experiment::Experiment; store_path=true, forward=false, show_progress=!is_logging(stderr), fixed_parameters...)
 
     # Load fixed hyperparameters:
     args = FixedParameters(;fixed_parameters...)
     experiment.fixed_parameters = args
     K, N, intersect_ = args.n_folds, args.n_rounds, args.intersect_
-    M = length(experiment.recourse_systems)
+    M = length(experiment.system_identifiers)
 
     # Setup:
     if !isnothing(args.seed)
         Random.seed!(args.seed)
     end
+    if !forward
+        set_up_system_grid!(experiment, K)
+    else
+        @assert !isnothing(experiment.recourse_systems) "Cannot forward an experiment that has never been run."
+    end
 
     # Pre-allocate memory:
     output = DataFrame()
 
-    fold_iter = ProgressBar(1:K)
-    round_iter = ProgressBar(1:N)
-    system_iter = ProgressBar(1:M)
-    for k in fold_iter
-        set_description(fold_iter, string("Fold $k out of $K"))
-        chosen_individuals = zeros(size(experiment.recourse_systems))
-        for n in round_iter
-            set_description(round_iter, string("Round $n out of $N"))
-
+    p_fold = Progress(K; desc="Progress on folds:", showspeed=true, enabled=show_progress, output = stderr)
+    p_round = Progress(N; desc="Progress on rounds:", showspeed=true, enabled=show_progress, output = stderr)
+    # p_system = Progress(M; desc="Progress on systems:", showspeed=true, enabled=show_progress, output = stderr)
+    for k in 1:K
+        @info "Fold $k"
+        recourse_systems = experiment.recourse_systems[k]
+        chosen_individuals = zeros(size(recourse_systems))
+        for n in 1:N
+            @info "Round $n"
             # Choose individuals that shall receive recourse:
-            chosen_individuals_n = choose_individuals(experiment; intersect_=intersect_)
+            chosen_individuals_n = choose_individuals(experiment, recourse_systems; intersect_=intersect_)
             chosen_individuals = map((x,y) -> union(x,y),chosen_individuals,chosen_individuals_n)
-
-            Threads.@threads for m in system_iter
-                set_description(system_iter, string("Recourse System $m out of $M (on thread $(Threads.threadid()))"))
-                recourse_system = experiment.recourse_systems[m]
+            Threads.@threads for m in 1:M
+                recourse_system = recourse_systems[m]
                 chosen_individuals_m = chosen_individuals_n[m]
-
-                # Update experiment
-                update!(experiment, recourse_system, chosen_individuals_m)
-
+                recourse_systems[m].chosen_individuals = chosen_individuals[m]
+                with_logger(NullLogger()) do
+                    # Update experiment
+                    update!(experiment, recourse_system, chosen_individuals_m)
+                end
                 # Evaluate:
                 evaluation = evaluate_system(recourse_system, experiment)
-
                 # Store results:
                 evaluation.k .= k
                 evaluation.n .= n
@@ -55,17 +62,13 @@ function run_experiment(experiment::Experiment; store_path=true, fixed_parameter
                 evaluation.generator .= collect(experiment.system_identifiers)[m][2]
                 evaluation.n_individuals .= length(chosen_individuals[m])
                 evaluation.pct_total .= length(chosen_individuals[m])/size(experiment.data.y,2)
-
                 output = vcat(output, evaluation)
-                
+                # next!(p_system)
             end
-
-            println("Output for fold $k, round $n:")
-            println(output[(output.k .== k) .& (output.n .== n),:])
-
+            next!(p_round, showvalues = [(:output, output[(output.k .== k) .& (output.n .== n),:])])
         end
+        next!(p_fold)
     end
-
     return output
 
 end

@@ -15,9 +15,11 @@ end
 mutable struct Experiment
     data::CounterfactualExplanations.CounterfactualData
     target::Number
-    recourse_systems::AbstractArray
+    recourse_systems::Union{Nothing,AbstractArray}
     system_identifiers::Base.Iterators.ProductIterator
     fixed_parameters::Union{Nothing,FixedParameters}
+    models::NamedTuple
+    generators::NamedTuple
 end
 
 """
@@ -27,31 +29,40 @@ end
 """
 function Experiment(data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple)
     
-    # Set up grid
-    grid = Base.Iterators.product(models, generators)
-    recourse_systems = map(grid) do vars
-        newdata = deepcopy(data)
-        model = vars[1] # initial model is owned by the recourse systems
-        newmodel = deepcopy(model)
-        generator = vars[2]
-        recourse_system = RecourseSystem(newdata, newmodel, generator, model)
-        return recourse_system
-    end
-
     # Add system identifiers:
     system_identifiers = Base.Iterators.product(keys(models), keys(generators))
 
     experiment = Experiment(
         data, # initial data is owned by the experiment, shared across recourse systems
         target,
-        recourse_systems,
+        nothing,
         system_identifiers,
-        nothing
+        nothing,
+        models,
+        generators
     )
 
     return experiment
 end
 
+function set_up_system_grid!(experiment::Experiment, K::Int=1)
+
+    data = experiment.data
+    grid = Base.Iterators.product(experiment.models, experiment.generators)
+    
+    # Set up systems grid
+    recourse_systems = map(1:K) do k
+        recourse_systems = map(grid) do vars
+            newdata = deepcopy(data)
+            model = vars[1] # initial model is owned by the recourse systems
+            newmodel = deepcopy(model)
+            generator = vars[2]
+            recourse_system = RecourseSystem(newdata, newmodel, generator, model, nothing)
+            return recourse_system
+        end
+    end
+    experiment.recourse_systems = recourse_systems
+end
 
 using CounterfactualExplanations
 
@@ -65,6 +76,7 @@ mutable struct RecourseSystem
     model::CounterfactualExplanations.AbstractFittedModel
     generator::CounterfactualExplanations.Generators.AbstractGenerator
     initial_model::CounterfactualExplanations.AbstractFittedModel
+    chosen_individuals::Union{Nothing,AbstractArray}
 end
 
 using StatsBase
@@ -72,11 +84,11 @@ using StatsBase
     choose_individuals(system::RecourseSystem, target::Number)
     
 """
-function choose_individuals(experiment::Experiment; intersect_::Bool=true)
+function choose_individuals(experiment::Experiment, recourse_systems::AbstractArray; intersect_::Bool=true)
     args = experiment.fixed_parameters
     target, μ = experiment.target, args.μ
 
-    candidates = map(experiment.recourse_systems) do x
+    candidates = map(recourse_systems) do x
         findall(vec(x.data.y .!= target))
     end
 

@@ -12,7 +12,7 @@ is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true
 
 A wrapper function that runs the experiment for endogenous models shifts.
 """
-function run_experiment(experiment::Experiment; store_path=true, forward=false, show_progress=!is_logging(stderr), fixed_parameters...)
+function run_experiment(experiment::Experiment; evaluate_every=10, store_path=true, forward=false, show_progress=!is_logging(stderr), fixed_parameters...)
 
     # Load fixed hyperparameters:
     args = FixedParameters(;fixed_parameters...)
@@ -34,14 +34,12 @@ function run_experiment(experiment::Experiment; store_path=true, forward=false, 
     output = DataFrame()
 
     p_fold = Progress(K; desc="Progress on folds:", showspeed=true, enabled=show_progress, output = stderr)
-    p_round = Progress(N; desc="Progress on rounds:", showspeed=true, enabled=show_progress, output = stderr)
-    # p_system = Progress(M; desc="Progress on systems:", showspeed=true, enabled=show_progress, output = stderr)
+    @info "Running experiment ..."
     for k in 1:K
-        @info "Fold $k"
         recourse_systems = experiment.recourse_systems[k]
         chosen_individuals = zeros(size(recourse_systems))
+        p_round = Progress(N; desc="Progress on rounds:", showspeed=true, enabled=show_progress, output = stderr)
         for n in 1:N
-            @info "Round $n"
             # Choose individuals that shall receive recourse:
             chosen_individuals_n = choose_individuals(experiment, recourse_systems; intersect_=intersect_)
             chosen_individuals = map((x,y) -> union(x,y),chosen_individuals,chosen_individuals_n)
@@ -54,18 +52,23 @@ function run_experiment(experiment::Experiment; store_path=true, forward=false, 
                     update!(experiment, recourse_system, chosen_individuals_m)
                 end
                 # Evaluate:
-                evaluation = evaluate_system(recourse_system, experiment)
-                # Store results:
-                evaluation.k .= k
-                evaluation.n .= n
-                evaluation.model .= collect(experiment.system_identifiers)[m][1]
-                evaluation.generator .= collect(experiment.system_identifiers)[m][2]
-                evaluation.n_individuals .= length(chosen_individuals[m])
-                evaluation.pct_total .= length(chosen_individuals[m])/size(experiment.data.y,2)
-                output = vcat(output, evaluation)
-                # next!(p_system)
+                if n % evaluate_every == 0 
+                    evaluation = evaluate_system(recourse_system, experiment)
+                    # Store results:
+                    evaluation.k .= k
+                    evaluation.n .= n
+                    evaluation.model .= collect(experiment.system_identifiers)[m][1]
+                    evaluation.generator .= collect(experiment.system_identifiers)[m][2]
+                    evaluation.n_individuals .= length(chosen_individuals[m])
+                    evaluation.pct_total .= length(chosen_individuals[m])/size(experiment.data.y,2)
+                    output = vcat(output, evaluation)
+                end
             end
-            next!(p_round, showvalues = [(:output, output[(output.k .== k) .& (output.n .== n),:])])
+            if size(output,1) > 0
+                next!(p_round, showvalues = [(:Fold, k), (:Round, n), (:output, output[(output.k .== k) .& (output.n .== n),:])])
+            else
+                next!(p_round, showvalues = [(:Fold, k), (:Round, n)])
+            end
         end
         next!(p_fold)
     end

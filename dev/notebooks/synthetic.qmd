@@ -158,7 +158,8 @@ loss = :logitbinarycrossentropy
 generators = (
     Greedy=GreedyGenerator(loss=loss), 
     Generic=GenericGenerator(loss=loss),
-    REVISE=REVISEGenerator(loss=loss)
+    REVISE=REVISEGenerator(loss=loss),
+    DICE=DiCEGenerator(loss=loss)
 )
 ```
 
@@ -167,7 +168,7 @@ generators = (
 using AlgorithmicRecourseDynamics.Experiments
 using AlgorithmicRecourseDynamics.Experiments: Experiment
 target = 1.0
-experiment = Experiment(counterfactual_data, target, models, generators)
+experiment = Experiment(counterfactual_data, target, models, generators, 5)
 ```
 
 ```{julia}
@@ -175,12 +176,16 @@ experiment = Experiment(counterfactual_data, target, models, generators)
 μ = 0.1
 γ = 0.75
 n_rounds = 10
-n_folds = 5
+n_folds = 1
 T = 1000
 ```
 
 ```{julia}
 output = run_experiment(experiment; n_rounds=n_rounds, μ=μ, n_folds=n_folds, γ=γ, T=T)
+```
+
+
+```{julia}
 using CSV, BSON
 CSV.write(joinpath(output_path,"synthetic_data.csv"), output)
 BSON.@save joinpath(output_path,"synthetic_data.bson") output

@@ -20,6 +20,7 @@ mutable struct Experiment
     fixed_parameters::Union{Nothing,FixedParameters}
     models::NamedTuple
     generators::NamedTuple
+    num_counterfactuals::Int
 end
 
 """
@@ -27,7 +28,7 @@ end
 
 
 """
-function Experiment(data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple)
+function Experiment(data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple, num_counterfactuals::Int=1)
     
     # Add system identifiers:
     system_identifiers = Base.Iterators.product(keys(models), keys(generators))
@@ -39,7 +40,8 @@ function Experiment(data::CounterfactualExplanations.CounterfactualData, target:
         system_identifiers,
         nothing,
         models,
-        generators
+        generators,
+        num_counterfactuals
     )
 
     return experiment
@@ -132,9 +134,12 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
     # Generate recourse:
     for i in chosen_individuals
         x = X[:,i]
-        outcome = generate_counterfactual(x, target, counterfactual_data, M, generator; T=T, γ=γ)
-        X[:,i] = counterfactual(outcome) # update individuals' features
-        y[:,i] .= first(counterfactual_label(outcome)) # update individuals' predicted label
+        outcome = generate_counterfactual(x, target, counterfactual_data, M, generator; T=T, γ=γ, num_counterfactuals=experiment.num_counterfactuals)
+        X′ = counterfactual(outcome)
+        y′ = counterfactual_label(outcome)
+        idx = rand(1:experiment.num_counterfactuals) # randomly draw from generated counterfactuals
+        X[:,i] = selectdim(X′,3,idx) # update individuals' features
+        y[:,i] .= selectdim(y′,3,idx) # update individuals' predicted label
     end
 
     # Update data and classifier:

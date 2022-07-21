@@ -31,7 +31,7 @@ function run_experiment(experiment::Experiment; evaluate_every=10, store_path=tr
     end
 
     # Pre-allocate memory:
-    output = DataFrame()
+    output = [DataFrame() for i in 1:M]
 
     p_fold = Progress(K; desc="Progress on folds:", showspeed=true, enabled=show_progress, output = stderr)
     @info "Running experiment ..."
@@ -61,17 +61,17 @@ function run_experiment(experiment::Experiment; evaluate_every=10, store_path=tr
                     evaluation.generator .= collect(experiment.system_identifiers)[m][2]
                     evaluation.n_individuals .= length(chosen_individuals[m])
                     evaluation.pct_total .= length(chosen_individuals[m])/size(experiment.data.y,2)
-                    output = vcat(output, evaluation)
+                    output[m] = vcat(output[m], evaluation)
                 end
             end
-            if size(output,1) > 0
-                next!(p_round, showvalues = [(:Fold, k), (:Round, n), (:output, output[(output.k .== k) .& (output.n .== n),:])])
-            else
-                next!(p_round, showvalues = [(:Fold, k), (:Round, n)])
-            end
+            next!(p_round, showvalues = [(:Fold, k), (:Round, n)])
         end
         next!(p_fold)
     end
+
+    # Collect output:
+    output = reduce(vcat, output)
+
     return output
 
 end

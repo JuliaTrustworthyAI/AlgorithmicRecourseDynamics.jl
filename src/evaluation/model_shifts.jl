@@ -49,7 +49,7 @@ function decisiveness(experiment::Experiment, recourse_system::RecourseSystem)
 
     _classes = sort(unique(y))
     _classes = Int.(_classes)
-    metric = map(cls -> (abs(norm(proba.-0.5) - norm(new_proba.-0.5)), nothing, cls), _classes)
+    metric = map(cls -> (abs(norm(proba.-0.5) - norm(new_proba.-0.5)), missing, cls), _classes)
 
     return metric_to_dataframe(metric, :decisiveness, :model)
 end
@@ -70,7 +70,7 @@ function disagreement(experiment::Experiment, recourse_system::RecourseSystem)
 
     _classes = sort(unique(y))
     _classes = Int.(_classes)
-    metric = map(cls -> (sum(argmax(proba,dims=1) .== argmax(new_proba,dims=1))/size(X,2), nothing, cls), _classes)
+    metric = map(cls -> (sum(argmax(proba,dims=1) .!= argmax(new_proba,dims=1))/size(X,2), missing, cls), _classes)
 
     return metric_to_dataframe(metric, :disagreement, :model)
 end

@@ -132,15 +132,16 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
     target = experiment.target
 
     # Generate recourse:
-    for i in chosen_individuals
-        x = X[:,i]
-        outcome = generate_counterfactual(x, target, counterfactual_data, M, generator; T=T, γ=γ, num_counterfactuals=experiment.num_counterfactuals)
-        X′ = counterfactual(outcome)
-        y′ = counterfactual_label(outcome)
-        idx = rand(1:experiment.num_counterfactuals) # randomly draw from generated counterfactuals
-        X[:,i] = selectdim(X′,3,idx) # update individuals' features
-        y[:,i] .= selectdim(y′,3,idx) # update individuals' predicted label
-    end
+    factuals = select_factual(counterfactual_data,chosen_individuals)
+    results = generate_counterfactual(
+        factuals, target, counterfactual_data, M, generator; 
+        T=T, γ=γ, num_counterfactuals=experiment.num_counterfactuals
+    );
+    indices_ = rand(1:experiment.num_counterfactuals,length(results)) # randomly draw from generated counterfactuals
+    X′ = reduce(hcat,@.(selectdim(counterfactual(results),3,indices_)))
+    y′ = reduce(hcat,@.(selectdim(counterfactual_label(results),3,indices_)))
+    X[:,chosen_individuals] = X′
+    y[:,chosen_individuals] = y′
 
     # Update data and classifier:
     recourse_system.data = CounterfactualData(X,y)

@@ -1,0 +1,33 @@
+---
+title: Experiments with Real-World Data
+jupyter: julia-1.7
+---
+
+```{julia}
+using Pkg; Pkg.activate("dev")
+```
+
+```{julia}
+include("dev/utils.jl")
+using AlgorithmicRecourseDynamics
+using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
+theme(:wong)
+output_path = output_dir("real_world")
+www_path = www_dir("real_world")
+```
+
+## Models 
+
+```{julia}
+# Models:
+model = Models.build_mlp()
+λ = 0.1
+model_laplace = Laplace(model, λ=λ)
+M = FluxModel(model)
+M_laplace = LaplaceReduxModel(model_laplace)
+models = Dict(:laplace=>M_laplace, :mlp=>M)
+```
+
+## Generators
+
+

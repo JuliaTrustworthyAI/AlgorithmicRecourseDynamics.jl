@@ -19,174 +19,86 @@ output_path = output_dir("synthetic")
 www_path = www_dir("synthetic")
 ```
 
-## Classifiers
-
-```{julia}
-using MLJ
-N = 1000
-X, ys = make_blobs(N, 2; centers=2, as_table=false, center_box=(-2 => 2), cluster_std=0.1)
-ys .= ys.==2
-X = X'
-xs = Flux.unstack(X,2)
-data = zip(xs,ys)
-counterfactual_data = CounterfactualData(X,ys')
-```
-
-### Logistic Regression
-
-```{julia}
-using Flux
-model = Chain(Dense(2,1))
-M = FluxModel(model)
-```
-
-
-```{julia}
-n_epochs = 10
-using AlgorithmicRecourseDynamics.Models
-M = Models.train(M,counterfactual_data; n_epochs=n_epochs)
-```
-
-```{julia}
-plt_nn = plot(M,counterfactual_data;zoom=0)
-savefig(plt_nn, joinpath(www_path, "nn_contour.png"))
-```
-
-![](../artifacts/upload/www/synthetic/nn_contour.png)
-
-### Laplace Redux
-
-```{julia}
-λ = 0.1
-model_laplace = Laplace(M.model, λ=λ)
-LaplaceRedux.fit!(model_laplace, data)
-```
-
-```{julia}
-M_laplace = Models.LaplaceModel(model_laplace)
-```
-
-```{julia}
-plt_laplace = plot(M_laplace, counterfactual_data;zoom=0)
-savefig(plt_laplace, joinpath(www_path, "la_contour.png"))
-```
-
-![](../artifacts/upload/www/synthetic/la_contour.png)
-
-## Single Round
-
-```{julia}
-# Models:
-models = (Bayesian=M_laplace, Plugin=M)
-# Generators:
-generators = (
-    Greedy=GreedyGenerator(loss=:logitbinarycrossentropy), 
-    Generic=GenericGenerator(loss=:logitbinarycrossentropy),
-    REVISE=REVISEGenerator(loss=:logitbinarycrossentropy)
-)
-```
-
-### Generate counterfactual
-
-```{julia}
-cb = false
-γ = 0.75
-mod = M_laplace
-gen = generators[:Greedy]
-plt_original = plot(mod,counterfactual_data;zoom=0,colorbar=false,title="(a)")
-```
-
-```{julia}
-μ = 0.10
-candidates = findall(ys.==0)
-chosen = rand(candidates, Int(round(μ*length(candidates))))
-X′ = copy(X)
-y′ = copy(ys)
-using CounterfactualExplanations.Counterfactuals: counterfactual, counterfactual_label
-for i in chosen
-    x = X[:,i]
-    outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen,γ=γ)
-    X′[:,i] = counterfactual(outcome)
-    y′[i] = first(counterfactual_label(outcome))
-end
-counterfactual_data′ = CounterfactualData(X′,y′')
-plt_single = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title="(b)")
-```
-
-### Retrain
-
-```{julia}
-mod = Models.train(mod, counterfactual_data′; n_epochs=n_epochs)
-plt_single_retrained = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title="(c)")
-```
-
-### Repeat
-
-```{julia}
-i = 2
-while i <= 10
-    counterfactual_data′ = CounterfactualData(X′,y′')
-    candidates = findall(y′.==0)
-    chosen = rand(candidates, Int(round(μ*length(candidates))))
-    H₀ = mod.model.H # use posterior as new prior
-    mod = Models.train(mod, counterfactual_data′; n_epochs=n_epochs, H₀=H₀)
-    for i in chosen
-        x = X′[:,i]
-        outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen; γ=γ)
-        X′[:,i] = counterfactual(outcome)
-        y′[i] = first(counterfactual_label(outcome))
-    end
-    i += 1
-end
-plt_single_repeat = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title="(d)")
-```
-
-```{julia}
-plt = plot(plt_original, plt_single, plt_single_retrained, plt_single_repeat, layout=(1,4), legend=false, axis=nothing, size=(600,165))
-savefig(plt, joinpath(www_path, "poc.png"))
-```
-
-![](../artifacts/upload/www/synthetic/poc.png)
-
 ## Experiments
 
+### Data
+
 ```{julia}
-# Models:
-models = (Bayesian=M_laplace, Plugin=M)
-# Generators:
-loss = :logitbinarycrossentropy
-generators = (
-    Greedy=GreedyGenerator(loss=loss), 
-    Generic=GenericGenerator(loss=loss),
-    REVISE=REVISEGenerator(loss=loss),
-    DICE=DiCEGenerator(loss=loss)
-)
+catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic()
 ```
 
-
 ```{julia}
+using AlgorithmicRecourseDynamics.Models
+using Flux
 using AlgorithmicRecourseDynamics.Experiments
 using AlgorithmicRecourseDynamics.Experiments: Experiment
-target = 1.0
-experiment = Experiment(counterfactual_data, target, models, generators, 5)
-```
-
-```{julia}
-# Variables:
-μ = 0.1
-γ = 0.75
-n_rounds = 10
-n_folds = 1
-T = 1000
-```
-
-```{julia}
-output = run_experiment(experiment; n_rounds=n_rounds, μ=μ, n_folds=n_folds, γ=γ, T=T)
-```
-
-
-```{julia}
 using CSV, BSON
-CSV.write(joinpath(output_path,"synthetic_data.csv"), output)
-BSON.@save joinpath(output_path,"synthetic_data.bson") output
+
+function _run_one()
+    @info "Starting $(key)"
+
+    # Models:
+    model = Models.build_mlp()
+    λ = 0.1
+    model_laplace = Laplace(model, λ=λ)
+    M = FluxModel(model)
+    M_laplace = LaplaceReduxModel(model_laplace)
+    models = (Bayesian=M_laplace, Plugin=M)
+
+    # Pretrain:
+    data_train, data_test = Models.train_test_split(counterfactual_data)
+    models = map(model -> Models.train(model, data_train; n_epochs=100), models)
+
+    # Generators:
+    generators = (
+        Greedy=GreedyGenerator(), 
+        Generic=GenericGenerator(),
+        REVISE=REVISEGenerator(),
+        DICE=DiCEGenerator()
+    )
+
+    # Variables:
+    μ = 0.1
+    γ = 0.75
+    n_rounds = 10
+    n_folds = 5
+    T = 1000
+    target = 1.0
+    experiment = Experiment(data_train, data_test, target, models, generators, 5)
+
+    # Run:
+    output = run_experiment(experiment; evaluate_every=2, n_rounds=n_rounds, μ=μ, n_folds=n_folds, γ=γ, T=T)
+
+    CSV.write(joinpath(output_path,"output_$(key).csv"), output)
+    BSON.@save joinpath(output_path,"output_$(key).bson") output
+    BSON.@save joinpath(output_path,"experiment_$(key).bson") experiment
+
+    @info "Successfully saved $(key)"
+
+    return output, experiment
+end
+
+import AlgorithmicRecourseDynamics: run_experiment
+function run_experiment(catalogue::Dict)
+    output = [_run_one() for (key,counterfactual_data) in catalogue]
+    return output
+end
 ```
+
+```{julia}
+choices = [:linearly_separable, :overlapping, :plus_shaped, :balanced_positive_clusters]
+data_sets = filter(p -> p[1] in choices, catalogue)
+run_experiment(data_sets)
+```
+
+```{julia}
+BSON.@load joinpath(output_path,"output_linearly_separable.bson") output
+```
+
+```{julia}
+output[output.name.==:mmd_grid,:]
+```
+
+
+
+

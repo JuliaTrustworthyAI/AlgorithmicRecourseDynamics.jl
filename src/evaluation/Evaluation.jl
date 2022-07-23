@@ -7,21 +7,32 @@ using ..Experiments
 using ..Experiments: Experiment, RecourseSystem
 const MetricOrFun = Union{PreMetric,Function}
 
-include("utils.jl")
+abstract type AbstractMetric end
+
 include("kernels.jl")
 include("mmd.jl")
 include("domain_shifts.jl")
 include("model_shifts.jl")
 
 using DataFrames
-function evaluate_system(recourse_system::RecourseSystem, experiment::Experiment; n=1000)
-    vcat(
+function evaluate_system(recourse_system::RecourseSystem, experiment::Experiment; to_dataframe=true, n=1000)
+    
+    metrics = [
         mmd_domain(experiment, recourse_system; n=n),
         mmd_model(experiment, recourse_system; n=n),
         mmd_model(experiment, recourse_system; n=n, grid_search=true),
         disagreement(experiment, recourse_system),
-        decisiveness(experiment, recourse_system)
-    )
+        decisiveness(experiment, recourse_system),
+        fscore(experiment, recourse_system)
+    ]
+
+    if to_dataframe
+        metrics = reduce(vcat,map(DataFrame, metrics))
+    end
+
+    return metrics
 end
+
+export evaluate_system
 
 end

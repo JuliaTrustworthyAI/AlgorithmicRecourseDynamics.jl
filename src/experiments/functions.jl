@@ -1,4 +1,4 @@
-using CounterfactualExplanations
+using CounterfactualExplanations, DataFrames
 
 using Parameters
 @with_kw mutable struct FixedParameters
@@ -14,6 +14,8 @@ end
 
 mutable struct Experiment
     data::CounterfactualExplanations.CounterfactualData
+    train_data::CounterfactualExplanations.CounterfactualData
+    test_data::CounterfactualExplanations.CounterfactualData
     target::Number
     recourse_systems::Union{Nothing,AbstractArray}
     system_identifiers::Base.Iterators.ProductIterator
@@ -23,18 +25,28 @@ mutable struct Experiment
     num_counterfactuals::Int
 end
 
+using CounterfactualExplanations.DataPreprocessing
 """
     Experiment(data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple)
 
 
 """
-function Experiment(data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple, num_counterfactuals::Int=1)
+function Experiment(
+    train_data::CounterfactualExplanations.CounterfactualData, test_data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple, num_counterfactuals::Int=1
+)
     
     # Add system identifiers:
     system_identifiers = Base.Iterators.product(keys(models), keys(generators))
 
+    # Full data:
+    X_train, y_train = DataPreprocessing.unpack(train_data)
+    X_test, y_test = DataPreprocessing.unpack(train_data)
+    data = CounterfactualData(hcat(X_train, X_test), hcat(y_train, y_test))
+
     experiment = Experiment(
-        data, # initial data is owned by the experiment, shared across recourse systems
+        data, # initial data is owned by the experiment, shared across recourse systems,
+        train_data,
+        test_data,
         target,
         nothing,
         system_identifiers,
@@ -49,17 +61,17 @@ end
 
 function set_up_system_grid!(experiment::Experiment, K::Int=1)
 
-    data = experiment.data
+    data = experiment.train_data
     grid = Base.Iterators.product(experiment.models, experiment.generators)
     
     # Set up systems grid
     recourse_systems = map(1:K) do k
-        recourse_systems = map(grid) do vars
+        map(grid) do vars
             newdata = deepcopy(data)
             model = vars[1] # initial model is owned by the recourse systems
             newmodel = deepcopy(model)
             generator = vars[2]
-            recourse_system = RecourseSystem(newdata, newmodel, generator, model, nothing)
+            recourse_system = RecourseSystem(newdata, newmodel, generator, model, nothing, DataFrame())
             return recourse_system
         end
     end
@@ -79,6 +91,7 @@ mutable struct RecourseSystem
     generator::CounterfactualExplanations.Generators.AbstractGenerator
     initial_model::CounterfactualExplanations.AbstractFittedModel
     chosen_individuals::Union{Nothing,AbstractArray}
+    benchmark::DataFrame
 end
 
 using StatsBase
@@ -143,10 +156,14 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
     X[:,chosen_individuals] = X′
     y[:,chosen_individuals] = y′
 
-    # Update data and classifier:
+    # Update data, classifier and benchmark:
     recourse_system.data = CounterfactualData(X,y)
     recourse_system.model = Models.train(M, counterfactual_data; τ=τ)
+    recourse_system.benchmark = vcat(recourse_system.benchmark, CounterfactualExplanations.Benchmark.benchmark(results))
+
 end
+
+
 
 
 

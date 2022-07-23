@@ -3,6 +3,7 @@ using Parameters
     loss::Symbol = :logitbinarycrossentropy
     opt::Symbol = :Adam
     n_epochs::Int = 10
+    data_loader::Function = data_loader
 end
 
 using Flux
@@ -18,7 +19,8 @@ function train(M::FluxModel, data::CounterfactualData; τ=nothing, kwargs...)
     args = FluxModelParams(; kwargs...)
 
     # Prepare data:
-    data = data_loader(data)
+    data = args.data_loader(data)
+
     # Training:
     model = M.model
     forward!(
@@ -27,8 +29,6 @@ function train(M::FluxModel, data::CounterfactualData; τ=nothing, kwargs...)
         opt = args.opt,
         n_epochs = args.n_epochs
     )
-    # Declare type:
-    M = FluxModel(model)
 
     return M
     
@@ -56,8 +56,7 @@ function forward!(model, data; loss::Symbol, opt::Symbol, n_epochs::Int=10)
 
 end
 
-using MLDataUtils
-
+using MLUtils
 """
     data_loader(data::CounterfactualData)
 
@@ -65,7 +64,7 @@ Prepares data for training.
 """
 function data_loader(data::CounterfactualData)
     X, y = CounterfactualExplanations.DataPreprocessing.unpack(data)
-    xs = Flux.unstack(X,2) 
+    xs = MLUtils.unstack(X,dims=2) 
     data = zip(xs,y)
     return data
 end

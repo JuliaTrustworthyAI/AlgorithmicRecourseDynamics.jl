@@ -4,6 +4,6 @@ module Models
 include("mlp.jl")
 include("laplace.jl")
 
-export LaplaceModel
+include("utils.jl")
 
 end

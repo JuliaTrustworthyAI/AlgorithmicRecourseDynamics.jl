@@ -1,18 +1,22 @@
-using Random, StatsBase, LinearAlgebra, Flux
-using .Experiments: Experiment, FixedParameters, choose_individuals, update!, set_up_system_grid!
+using .Experiments: Experiment, FixedParameters, set_up_system_grid!, update!
 using .Evaluation: evaluate_system
+using Random, StatsBase, LinearAlgebra, Flux
 using DataFrames
 using ProgressMeter
 using Logging
+using Statistics
+using CounterfactualExplanations
 
 is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
 
 """
-    run_experiment(experiment::Experiment, generator::CounterfactualExplanations.AbstractGenerator, n_folds=5; seed=nothing, T=1000)
+    run!(experiment::Experiment, generator::CounterfactualExplanations.AbstractGenerator, n_folds=5; seed=nothing, T=1000)
 
 A wrapper function that runs the experiment for endogenous models shifts.
 """
-function run_experiment(experiment::Experiment; evaluate_every=10, store_path=true, forward=false, show_progress=!is_logging(stderr), fixed_parameters...)
+function run!(
+    experiment::Experiment; evaluate_every=10, n_boostrap=1000, forward=false, show_progress=!is_logging(stderr), fixed_parameters...
+)
 
     # Load fixed hyperparameters:
     args = FixedParameters(;fixed_parameters...)
@@ -53,14 +57,20 @@ function run_experiment(experiment::Experiment; evaluate_every=10, store_path=tr
                 end
                 # Evaluate:
                 if n % evaluate_every == 0 
-                    evaluation = evaluate_system(recourse_system, experiment)
+                    evaluation = evaluate_system(recourse_system, experiment, n=n_boostrap)
                     # Store results:
                     evaluation.k .= k
                     evaluation.n .= n
                     evaluation.model .= collect(experiment.system_identifiers)[m][1]
                     evaluation.generator .= collect(experiment.system_identifiers)[m][2]
                     evaluation.n_individuals .= length(chosen_individuals[m])
-                    evaluation.pct_total .= length(chosen_individuals[m])/size(experiment.data.y,2)
+                    evaluation.pct_total .= length(chosen_individuals[m])/size(experiment.train_data.y,2)
+                    # Add recourse measures:
+                    bmk = mapcols(mean, recourse_system.benchmark)
+                    evaluation.success_rate .= bmk.success_rate
+                    evaluation.distance .= bmk.distance
+                    evaluation.redundancy .= bmk.redundancy
+
                     output[m] = vcat(output[m], evaluation)
                 end
             end
@@ -76,25 +86,69 @@ function run_experiment(experiment::Experiment; evaluate_every=10, store_path=tr
 
 end
 
-using BSON
-"""
-    save_path(root,path)
 
-Helper function to save `path` output from `run_experiment` to BSON.
-"""
-function save_path(root,path)
-    bson(root * "_path.bson",Dict(i => path[i] for i ∈ 1:length(path)))
+using DataFrames, CSV, BSON
+function run_experiment(
+    data::CounterfactualData,
+    models::Dict{Symbol, CounterfactualExplanations.Models.AbstractFittedModel},
+    generators::Dict{Symbol, CounterfactualExplanations.Generators.AbstractGenerator};
+    target::Int=1,
+    num_counterfactuals::Int=5,
+    pre_train_models::Union{Nothing, Int}=100,
+    save_path::Union{Nothing,String}=nothing,
+    save_name::Union{Nothing,String}=nothing,
+    kwargs...
+)
+
+    @info "Starting experiment"
+
+    # Data:
+    data_train, data_test = Models.train_test_split(data)
+
+    # Pretrain:
+    if !isnothing(pre_train_models)
+        models = map(model -> Models.train(model, data_train; n_epochs=pre_train_models), models)
+    end
+
+    # Run:
+    experiment = Experiment(data_train, data_test, target, models, generators, num_counterfactuals)
+    output = run!(experiment; evaluate_every=evaluate_every, kwargs...)
+
+    # Save to disk:
+    if !isnothing(save_path)
+        save_name = isnothing(save_name) ? "experiment" : "experiment_$(save_name)"
+        mkpath(joinpath(save_path,save_name))
+        CSV.write(joinpath(save_path,"output.csv"), output)
+        BSON.@save joinpath(save_path,"output.bson") output
+        BSON.@save joinpath(save_path,"experiment.bson") experiment
+    end
+
+    @info "Completed experiment."
+    
 end
 
-using BSON
-"""
-    load_path(root,path)
+function run_experiments(
+    catalogue::Dict{Symbol, CounterfactualData},
+    models::Dict{Symbol, CounterfactualExplanations.Models.AbstractFittedModel},
+    generators::Dict{Symbol, CounterfactualExplanations.Generators.AbstractGenerator};
+    target::Int=1,
+    num_counterfactuals::Int=5,
+    pre_train_models::Union{Nothing, Int}=100,
+    save_path::Union{Nothing,String}=nothing,
+    kwargs...
+)
 
-Helper function to load `path` output.
-"""
-function load_path(root)
-    dict = BSON.load(root * "_path.bson")
-    path = [dict[i] for i ∈ 1:length(dict)]
-    return path
+    run_single(data, save_name) = run_experiment(
+        data, models, generators;
+        target=target, num_counterfactuals=num_counterfactuals,
+        pre_train_models=pre_train_models,
+        save_path=save_path,
+        save_name=save_name,
+        kwargs...
+    )
+
+    output = [run_single(data,name) for (name,data) in catalogue]
+    
+    return output
 end
 

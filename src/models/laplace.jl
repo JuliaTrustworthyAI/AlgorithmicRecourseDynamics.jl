@@ -1,20 +1,12 @@
 using LaplaceRedux
 import CounterfactualExplanations.Models: logits, probs # import functions in order to extend
 
-# Step 1)
-struct LaplaceModel <: CounterfactualExplanations.Models.AbstractDifferentiableJuliaModel
-    model::Laplace
-end
-
-# Step 2)
-logits(M::LaplaceModel, X::AbstractArray) = M.model.model(X)
-probs(M::LaplaceModel, X::AbstractArray)= LaplaceRedux.predict(M.model, X)
-
 using Parameters
 @with_kw struct LaplaceModelParams 
     loss::Symbol = :logitbinarycrossentropy
     opt::Symbol = :Adam
     n_epochs::Int = 10
+    data_loader::Function = data_loader
     λ::Real = 1
     H₀::Union{Nothing, AbstractMatrix} = nothing
 end
@@ -25,14 +17,15 @@ using CounterfactualExplanations
 """
     train(M::LaplaceModel, data::CounterfactualData; kwargs...)
 
-Wrapper function to retrain `LaplaceModel`.
+Wrapper function to retrain `LaplaceReduxModel`.
 """
-function train(M::LaplaceModel, data::CounterfactualData; τ=nothing, kwargs...)
+function train(M::LaplaceReduxModel, data::CounterfactualData; τ=nothing, kwargs...)
 
     args = LaplaceModelParams(; kwargs...)
 
     # Prepare data:
-    data = data_loader(data)
+    data = args.data_loader(data)
+    
     # Training:
     model = M.model.model
     forward!(
@@ -45,9 +38,7 @@ function train(M::LaplaceModel, data::CounterfactualData; τ=nothing, kwargs...)
     # Fit Laplace:
     la = Laplace(model, λ=args.λ, H₀=args.H₀)
     LaplaceRedux.fit!(la, data)
-
-    # Declare type:
-    M = LaplaceModel(la)
+    M = LaplaceReduxModel(la)
 
     return M
     

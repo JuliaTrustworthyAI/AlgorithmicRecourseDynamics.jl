@@ -43,3 +43,21 @@ function train(M::LaplaceReduxModel, data::CounterfactualData; τ=nothing, kwarg
     return M
     
 end
+
+using CounterfactualExplanations.Models: LaplaceReduxModel
+function LaplaceReduxModel(data::CounterfactualData;λ=0.1,kwargs...)
+    X, y = CounterfactualExplanations.DataPreprocessing.unpack(data)
+    input_dim = size(X,1)
+    output_dim = length(unique(y))
+    output_dim = output_dim==2 ? output_dim=1 : output_dim # adjust in case binary
+    model = build_mlp(;input_dim=input_dim, output_dim=output_dim,kwargs...)
+    model = Laplace(model, λ=λ)
+
+    if output_dim==1
+        M = LaplaceReduxModel(model; likelihood=:classification_binary)
+    else
+        M = LaplaceReduxModel(model; likelihood=:classification_multi)
+    end
+
+    return M
+end

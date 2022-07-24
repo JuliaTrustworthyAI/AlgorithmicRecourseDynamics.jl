@@ -20,8 +20,8 @@ mutable struct Experiment
     recourse_systems::Union{Nothing,AbstractArray}
     system_identifiers::Base.Iterators.ProductIterator
     fixed_parameters::Union{Nothing,FixedParameters}
-    models::NamedTuple
-    generators::NamedTuple
+    models::Union{NamedTuple,Dict}
+    generators::Union{NamedTuple,Dict}
     num_counterfactuals::Int
 end
 
@@ -32,7 +32,7 @@ using CounterfactualExplanations.DataPreprocessing
 
 """
 function Experiment(
-    train_data::CounterfactualExplanations.CounterfactualData, test_data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple, num_counterfactuals::Int=1
+    train_data::CounterfactualExplanations.CounterfactualData, test_data::CounterfactualExplanations.CounterfactualData, target::Number, models::Union{NamedTuple,Dict}, generators::Union{NamedTuple,Dict}, num_counterfactuals::Int=1
 )
     
     # Add system identifiers:
@@ -62,7 +62,7 @@ end
 function set_up_system_grid!(experiment::Experiment, K::Int=1)
 
     data = experiment.train_data
-    grid = Base.Iterators.product(experiment.models, experiment.generators)
+    grid = Base.Iterators.product(values(experiment.models), values(experiment.generators))
     
     # Set up systems grid
     recourse_systems = map(1:K) do k

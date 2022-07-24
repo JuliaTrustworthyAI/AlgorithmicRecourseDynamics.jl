@@ -6,4 +6,6 @@ include("laplace.jl")
 
 include("utils.jl")
 
+abstract type AbstractTrainableModel end
+
 end

@@ -1,4 +1,4 @@
-using .Experiments: Experiment, FixedParameters, set_up_system_grid!, update!
+using .Experiments: Experiment, FixedParameters, set_up_system_grid!, update!, choose_individuals
 using .Evaluation: evaluate_system
 using Random, StatsBase, LinearAlgebra, Flux
 using DataFrames
@@ -90,11 +90,12 @@ end
 using DataFrames, CSV, BSON
 function run_experiment(
     data::CounterfactualData,
-    models::Dict{Symbol, CounterfactualExplanations.Models.AbstractFittedModel},
-    generators::Dict{Symbol, CounterfactualExplanations.Generators.AbstractGenerator};
+    models::Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},
+    generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
     target::Int=1,
     num_counterfactuals::Int=5,
-    pre_train_models::Union{Nothing, Int}=100,
+    evaluate_every::Int=2,
+    pre_train_models::Union{Nothing,Int}=100,
     save_path::Union{Nothing,String}=nothing,
     save_name::Union{Nothing,String}=nothing,
     kwargs...
@@ -107,11 +108,11 @@ function run_experiment(
 
     # Pretrain:
     if !isnothing(pre_train_models)
-        models = map(model -> Models.train(model, data_train; n_epochs=pre_train_models), models)
+        map!(model -> Models.train(model, data_train; n_epochs=pre_train_models), values(models))
     end
 
     # Run:
-    experiment = Experiment(data_train, data_test, target, models, generators, num_counterfactuals)
+    experiment = Experiment(data_train, data_test, target, models, deepcopy(generators), num_counterfactuals)
     output = run!(experiment; evaluate_every=evaluate_every, kwargs...)
 
     # Save to disk:
@@ -127,12 +128,41 @@ function run_experiment(
     
 end
 
-function run_experiments(
-    catalogue::Dict{Symbol, CounterfactualData},
-    models::Dict{Symbol, CounterfactualExplanations.Models.AbstractFittedModel},
-    generators::Dict{Symbol, CounterfactualExplanations.Generators.AbstractGenerator};
+function run_experiment(
+    data::CounterfactualData,
+    models::Vector{Symbol},
+    generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
     target::Int=1,
     num_counterfactuals::Int=5,
+    evaluate_every::Int=2,
+    pre_train_models::Union{Nothing,Int}=100,
+    save_path::Union{Nothing,String}=nothing,
+    save_name::Union{Nothing,String}=nothing,
+    kwargs...
+)   
+
+    available_models = [:FluxModel, :LaplaceReduxModel]
+    @assert all(map(model -> model in available_models, models)) "`models` can only be $(available_models)"
+
+    models = Dict([(model,getfield(AlgorithmicRecourseDynamics.Models, model)(data)) for model in models])
+
+    run_experiment(
+        data, models, generators;
+        target=target,num_counterfactuals=num_counterfactuals,pre_train_models=100,
+        save_path=save_path,save_name=save_name,evaluate_every=evaluate_every,
+        kwargs...
+    )
+
+end
+
+
+function run_experiments(
+    catalogue::Dict{Symbol, CounterfactualData},
+    models::Union{Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}},
+    generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
+    target::Int=1,
+    num_counterfactuals::Int=5,
+    evaluate_every::Int=2,
     pre_train_models::Union{Nothing, Int}=100,
     save_path::Union{Nothing,String}=nothing,
     kwargs...
@@ -141,13 +171,14 @@ function run_experiments(
     run_single(data, save_name) = run_experiment(
         data, models, generators;
         target=target, num_counterfactuals=num_counterfactuals,
+        evaluate_every=evaluate_every,
         pre_train_models=pre_train_models,
         save_path=save_path,
         save_name=save_name,
         kwargs...
     )
 
-    output = [run_single(data,name) for (name,data) in catalogue]
+    output = [run_single(data,string(name)) for (name,data) in catalogue]
     
     return output
 end

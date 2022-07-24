@@ -4,6 +4,7 @@ using CSV, DataFrames, CounterfactualExplanations
 function load_synthetic()
     data_dir = joinpath(artifact"data","data/synthetic")
     files = readdir(data_dir)
+    files = files[contains.(files,".csv")]
     data = map(files) do file
         df = CSV.read(joinpath(data_dir, file), DataFrame)
         X = convert(Matrix, hcat(df.feature1,df.feature2)')
@@ -18,9 +19,11 @@ end
 function load_real_world()
     data_dir = joinpath(artifact"data","data/real_world")
     files = readdir(data_dir)
+    files = files[contains.(files,".csv")]
     data = map(files) do file
         df = CSV.read(joinpath(data_dir, file), DataFrame)
-        X = convert(Matrix, hcat(df.feature1,df.feature2)')
+        X = Matrix(df[:,Not(:target)])
+        X = reshape(X,size(X,2),size(X,1))
         y = convert(Matrix, df.target')
         data = CounterfactualData(X,y)
         (Symbol(replace(file, ".csv" => "")) => data)

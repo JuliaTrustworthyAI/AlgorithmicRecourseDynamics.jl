@@ -16,18 +16,27 @@ output_path = output_dir("real_world")
 www_path = www_dir("real_world")
 ```
 
-## Models 
-
 ```{julia}
-# Models:
-model = Models.build_mlp()
-λ = 0.1
-model_laplace = Laplace(model, λ=λ)
-M = FluxModel(model)
-M_laplace = LaplaceReduxModel(model_laplace)
-models = Dict(:laplace=>M_laplace, :mlp=>M)
+catalogue = AlgorithmicRecourseDynamics.Data.load_real_world()
+choices = [:german_credit_numerical, :give_me_some_credit_balanced]
+data_sets = filter(p -> p[1] in choices, catalogue)
 ```
 
-## Generators
+```{julia}
+models = [:FluxModel, :LaplaceReduxModel]
+generators = Dict(
+    :Greedy=>GreedyGenerator(), 
+    :Generic=>GenericGenerator(),
+    :REVISE=>REVISEGenerator(),
+    :DICE=>DiCEGenerator()
+)
+```
+
+```{julia}
+run_experiments(data_sets,models,generators)
+```
+
+
+
 
 

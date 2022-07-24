@@ -81,29 +81,65 @@ nn = build_mlp()
 ```
 
 """
-function build_mlp(;input_dim=2,n_hidden=32,output_dim=1,batch_norm=false,dropout=false,activation=Flux.relu)
+function build_mlp(;
+    input_dim::Int=2,n_hidden::Int=32,n_layers::Int=2,output_dim::Int=1,
+    batch_norm::Bool=false,dropout::Bool=false,activation=Flux.relu
+)
+
+    @assert n_layers >= 2 "Need at least two layers."
     
     if batch_norm
+
+        hidden_ = repeat([Dense(n_hidden,n_hidden),BatchNorm(n_hidden,activation)],n_layers-2)
+
         model = Chain(
             Dense(input_dim, n_hidden),
             BatchNorm(n_hidden, activation),
+            hidden_...,
             Dense(n_hidden, output_dim),
             BatchNorm(output_dim)
         )  
+
     elseif dropout
+
+        hidden_ = repeat([Dense(n_hidden,n_hidden,activation),Dropout(0.1)],n_layers-2)
+
         model = Chain(
             Dense(input_dim, n_hidden, activation),
             Dropout(0.1),
+            hidden_...,
             Dense(n_hidden, output_dim)
         )  
     else
+
+        hidden_ = repeat([Dense(n_hidden,n_hidden,activation)],n_layers-2)
+
         model = Chain(
             Dense(input_dim, n_hidden, activation),
+            hidden_...,
             Dense(n_hidden, output_dim)
         )  
+
     end
 
     return model
 
+end
+
+import CounterfactualExplanations.Models: FluxModel
+function FluxModel(data::CounterfactualData;kwargs...)
+    X, y = CounterfactualExplanations.DataPreprocessing.unpack(data)
+    input_dim = size(X,1)
+    output_dim = length(unique(y))
+    output_dim = output_dim==2 ? output_dim=1 : output_dim # adjust in case binary
+    model = build_mlp(;input_dim=input_dim, output_dim=output_dim,kwargs...)
+
+    if output_dim==1
+        M = FluxModel(model; likelihood=:classification_binary)
+    else
+        M = FluxModel(model; likelihood=:classification_multi)
+    end
+
+    return M
 end
 

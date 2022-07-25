@@ -86,6 +86,10 @@ function run!(
 
 end
 
+struct ExperimentResults 
+    output::DataFrame
+    experiment::Experiment
+end
 
 using DataFrames, CSV, BSON
 function run_experiment(
@@ -115,16 +119,22 @@ function run_experiment(
     experiment = Experiment(data_train, data_test, target, models, deepcopy(generators), num_counterfactuals)
     output = run!(experiment; evaluate_every=evaluate_every, kwargs...)
 
+    @info "Completed experiment."
+
+    results = Experiment(output,experiment)
+
     # Save to disk:
     if !isnothing(save_path)
         save_name = isnothing(save_name) ? "experiment" : "experiment_$(save_name)"
-        mkpath(joinpath(save_path,save_name))
+        save_path = joinpath(save_path,save_name)
+        mkpath(save_path)
         CSV.write(joinpath(save_path,"output.csv"), output)
         BSON.@save joinpath(save_path,"output.bson") output
         BSON.@save joinpath(save_path,"experiment.bson") experiment
+        BSON.@save joinpath(save_path,"results.bson") results
     end
 
-    @info "Completed experiment."
+    return results
     
 end
 
@@ -146,12 +156,14 @@ function run_experiment(
 
     models = Dict([(model,getfield(AlgorithmicRecourseDynamics.Models, model)(data)) for model in models])
 
-    run_experiment(
+    output = run_experiment(
         data, models, generators;
         target=target,num_counterfactuals=num_counterfactuals,pre_train_models=100,
         save_path=save_path,save_name=save_name,evaluate_every=evaluate_every,
         kwargs...
     )
+
+    return output
 
 end
 

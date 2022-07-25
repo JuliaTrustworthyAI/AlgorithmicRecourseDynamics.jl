@@ -16,6 +16,8 @@ using .Evaluation
 export evaluate_system
 
 include("base.jl")
-export run_experiment, run_experiments
+export run_experiment, run_experiments, ExperimentResults 
+
+include("plotting.jl")
 
 end

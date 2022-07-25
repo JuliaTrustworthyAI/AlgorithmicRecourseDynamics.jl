@@ -43,7 +43,7 @@ function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=10
     new_M = recourse_system.model
     new_proba = probs(new_M, X)
 
-    value, p_value = mmd(proba, new_proba, n; kwargs...)
+    value, p_value = mmd(proba, new_proba, 1000; compute_p=n, kwargs...)
     metric_name = grid_search ? :mmd_grid : :mmd
 
     metric = ModelMetric(value,p_value,metric_name)

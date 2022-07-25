@@ -18,7 +18,7 @@ www_path = www_dir("real_world")
 
 ```{julia}
 catalogue = AlgorithmicRecourseDynamics.Data.load_real_world()
-choices = [:german_credit_numerical, :give_me_some_credit_balanced]
+choices = [:give_me_some_credit_balanced]
 data_sets = filter(p -> p[1] in choices, catalogue)
 ```
 
@@ -33,8 +33,13 @@ generators = Dict(
 ```
 
 ```{julia}
-run_experiments(data_sets,models,generators)
+results = run_experiments(data_sets,models,generators;save_path=output_path,evaluate_every=10,n_rounds=50)
 ```
+
+```{julia}
+[plot(res) for res in results]
+```
+
 
 
 

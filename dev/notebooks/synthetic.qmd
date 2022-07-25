@@ -7,9 +7,6 @@ jupyter: julia-1.7
 using Pkg; Pkg.activate("dev")
 ```
 
-
-In this notebook we will use toy data to see how endogenous domain shifts and the resulting model shifts can have implications on the validity and cost of algorithmic recourse.
-
 ```{julia}
 include("dev/utils.jl")
 using AlgorithmicRecourseDynamics
@@ -19,85 +16,30 @@ output_path = output_dir("synthetic")
 www_path = www_dir("synthetic")
 ```
 
-## Experiments
-
-### Data
-
 ```{julia}
 catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic()
-```
-
-```{julia}
-using AlgorithmicRecourseDynamics.Models
-using Flux
-using AlgorithmicRecourseDynamics.Experiments
-using AlgorithmicRecourseDynamics.Experiments: Experiment
-using CSV, BSON
-
-function _run_one()
-    @info "Starting $(key)"
-
-    # Models:
-    model = Models.build_mlp()
-    λ = 0.1
-    model_laplace = Laplace(model, λ=λ)
-    M = FluxModel(model)
-    M_laplace = LaplaceReduxModel(model_laplace)
-    models = (Bayesian=M_laplace, Plugin=M)
-
-    # Pretrain:
-    data_train, data_test = Models.train_test_split(counterfactual_data)
-    models = map(model -> Models.train(model, data_train; n_epochs=100), models)
-
-    # Generators:
-    generators = (
-        Greedy=GreedyGenerator(), 
-        Generic=GenericGenerator(),
-        REVISE=REVISEGenerator(),
-        DICE=DiCEGenerator()
-    )
-
-    # Variables:
-    μ = 0.1
-    γ = 0.75
-    n_rounds = 10
-    n_folds = 5
-    T = 1000
-    target = 1.0
-    experiment = Experiment(data_train, data_test, target, models, generators, 5)
-
-    # Run:
-    output = run_experiment(experiment; evaluate_every=2, n_rounds=n_rounds, μ=μ, n_folds=n_folds, γ=γ, T=T)
-
-    CSV.write(joinpath(output_path,"output_$(key).csv"), output)
-    BSON.@save joinpath(output_path,"output_$(key).bson") output
-    BSON.@save joinpath(output_path,"experiment_$(key).bson") experiment
-
-    @info "Successfully saved $(key)"
-
-    return output, experiment
-end
-
-import AlgorithmicRecourseDynamics: run_experiment
-function run_experiment(catalogue::Dict)
-    output = [_run_one() for (key,counterfactual_data) in catalogue]
-    return output
-end
-```
-
-```{julia}
 choices = [:linearly_separable, :overlapping, :plus_shaped, :balanced_positive_clusters]
 data_sets = filter(p -> p[1] in choices, catalogue)
-run_experiment(data_sets)
 ```
 
 ```{julia}
-BSON.@load joinpath(output_path,"output_linearly_separable.bson") output
+models = [:FluxModel, :LaplaceReduxModel]
+generators = Dict(
+    :Greedy=>GreedyGenerator(), 
+    :Generic=>GenericGenerator(),
+    :REVISE=>REVISEGenerator(),
+    :DICE=>DiCEGenerator()
+)
 ```
 
 ```{julia}
-output[output.name.==:mmd_grid,:]
+results = run_experiments(data_sets,models,generators;save_path=output_path,evaluate_every=10,n_rounds=50)
 ```
+
+```{julia}
+[plot(res) for res in results]
+```
+
 
 
 

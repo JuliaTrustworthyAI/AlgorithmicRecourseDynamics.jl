@@ -2,7 +2,7 @@ using CounterfactualExplanations, DataFrames
 
 using Parameters
 @with_kw mutable struct FixedParameters
-    n_rounds::Int = 5
+    n_rounds::Int = 10
     n_folds::Int = 5
     seed::Union{Nothing, Int} = nothing
     T::Int = 1000
@@ -151,8 +151,10 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
         T=T, γ=γ, num_counterfactuals=experiment.num_counterfactuals
     );
     indices_ = rand(1:experiment.num_counterfactuals,length(results)) # randomly draw from generated counterfactuals
+
     X′ = reduce(hcat,@.(selectdim(counterfactual(results),3,indices_)))
     y′ = reduce(hcat,@.(selectdim(counterfactual_label(results),3,indices_)))
+    
     X[:,chosen_individuals] = X′
     y[:,chosen_individuals] = y′
 

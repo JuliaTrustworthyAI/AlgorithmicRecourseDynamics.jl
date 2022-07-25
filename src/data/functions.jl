@@ -23,7 +23,7 @@ function load_real_world()
     data = map(files) do file
         df = CSV.read(joinpath(data_dir, file), DataFrame)
         X = Matrix(df[:,Not(:target)])
-        X = reshape(X,size(X,2),size(X,1))
+        X = permutedims(X)
         y = convert(Matrix, df.target')
         data = CounterfactualData(X,y)
         (Symbol(replace(file, ".csv" => "")) => data)

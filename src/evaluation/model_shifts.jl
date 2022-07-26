@@ -17,6 +17,22 @@ function DataFrame(metric::ModelMetric)
     return df  
 end
 
+using LinearAlgebra
+function perturbation(experiment::Experiment, recourse_system::RecourseSystem)
+
+    # Initial:
+    M = recourse_system.initial_model
+    # New:
+    new_M = recourse_system.model
+
+    value = perturbation(M, new_M)
+
+    metric = ModelMetric(value,missing,:perturbation)
+
+    return metric
+
+end
+
 using CounterfactualExplanations
 using CounterfactualExplanations.Models: probs
 using CounterfactualExplanations.DataPreprocessing: unpack

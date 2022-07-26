@@ -1,0 +1,68 @@
+---
+title: Experiments with Credit Data
+jupyter: julia-1.7
+---
+
+```{julia}
+using Pkg; Pkg.activate("dev")
+```
+
+```{julia}
+include("dev/utils.jl")
+using AlgorithmicRecourseDynamics
+using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LinearAlgebra
+theme(:wong)
+output_path = output_dir("mnist")
+www_path = www_dir("mnist")
+```
+
+
+```{julia}
+using Flux
+using CounterfactualExplanations.Data: mnist_data, mnist_model, mnist_ensemble, mnist_vae
+X, ys = mnist_data()
+model = mnist_model()
+ensemble = mnist_ensemble()
+vae = mnist_vae()
+```
+
+```{julia}
+n_per_class = 100
+test_ratio = 0.2
+train_data = CounterfactualData(X,ys)
+using AlgorithmicRecourseDynamics.Models: undersample
+train_data = undersample(train_data, n_per_class)
+train_data.generative_model = vae
+using MLDatasets
+test_data = MNIST(:test)
+X_test, y_test = test_data[:]
+X_test = Flux.flatten(X_test)
+y_test = Flux.onehotbatch(y_test,0:9)
+test_data = undersample(CounterfactualData(X_test, y_test),Int(round(n_per_class*test_ratio)))
+```
+
+
+```{julia}
+M = FluxModel(model, :classification_multi)
+M_ens = FluxEnsemble(ensemble, :classification_multi)
+models = Dict(:FluxModel => M, :FluxEnsemble => M_ens)
+generators = Dict(
+    :Greedy=>GreedyGenerator(), 
+    :Generic=>GenericGenerator(),
+    :REVISE=>REVISEGenerator(),
+    # :DICE=>DiCEGenerator(),
+)
+```
+
+```{julia}
+experiment = set_up_experiment(train_data,test_data,models,generators;target=5)
+```
+
+```{julia}
+n_evaluations = 1
+n_rounds = 5
+evaluate_every = Int(round(n_rounds/n_evaluations))
+using Serialization
+results = run_experiment(experiment;save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds)
+Serialization.serialize(joinpath(output_path,"results.bson"),results)
+```

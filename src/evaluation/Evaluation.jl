@@ -3,6 +3,8 @@ module Evaluation
 using Distances
 using StatsBase
 using LinearAlgebra
+using ..Models
+import ..Models: perturbation
 using ..Experiments
 using ..Experiments: Experiment, RecourseSystem
 const MetricOrFun = Union{PreMetric,Function}
@@ -19,6 +21,7 @@ function evaluate_system(recourse_system::RecourseSystem, experiment::Experiment
     
     metrics = [
         mmd_domain(experiment, recourse_system; n=n),
+        perturbation(experiment, recourse_system),
         mmd_model(experiment, recourse_system; n=n),
         mmd_model(experiment, recourse_system; n=n, grid_search=true),
         disagreement(experiment, recourse_system),

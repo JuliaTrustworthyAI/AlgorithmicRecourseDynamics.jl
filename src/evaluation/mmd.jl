@@ -30,7 +30,10 @@ function mmd(x::AbstractArray, y::AbstractArray, k::AbstractKernel=GaussianKerne
     end
     return mmd_, p_val
 end
-mmd(x::AbstractArray, y::AbstractArray, n::Int, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; compute_p::Union{Nothing,Int}=1000) = mmd(samplecolumns(x,n), samplecolumns(y,n), k, dist; compute_p=compute_p)
+function mmd(x::AbstractArray, y::AbstractArray, n::Int, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; compute_p::Union{Nothing,Int}=1000)
+    n = minimum([size(x,2),n])
+    mmd(samplecolumns(x,n), samplecolumns(y,n), k, dist; compute_p=compute_p)
+end
 
 using Random: shuffle
 """

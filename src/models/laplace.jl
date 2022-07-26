@@ -19,7 +19,7 @@ using CounterfactualExplanations
 
 Wrapper function to retrain `LaplaceReduxModel`.
 """
-function train(M::LaplaceReduxModel, data::CounterfactualData; τ=nothing, kwargs...)
+function train(M::LaplaceReduxModel, data::CounterfactualData; kwargs...)
 
     args = LaplaceModelParams(; kwargs...)
 
@@ -60,4 +60,13 @@ function LaplaceReduxModel(data::CounterfactualData;λ=0.1,kwargs...)
     end
 
     return M
+end
+
+
+using LinearAlgebra, Flux, Statistics
+function perturbation(model::LaplaceReduxModel, new_model::LaplaceReduxModel; agg=mean)
+    mlp = model.model
+    new_mlp = new_model.model
+    Δ = agg(norm.(collect(Flux.params(new_mlp)) .- collect(Flux.params(mlp))))
+    return Δ
 end

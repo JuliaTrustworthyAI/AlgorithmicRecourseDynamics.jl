@@ -6,6 +6,7 @@ using ProgressMeter
 using Logging
 using Statistics
 using CounterfactualExplanations
+using Serialization
 
 is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
 
@@ -86,15 +87,186 @@ function run!(
 
 end
 
+"""
+    set_up_experiment(
+        data::CounterfactualData,
+        models::Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},
+        generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
+        target::Int=1,
+        num_counterfactuals::Int=5,
+        pre_train_models::Union{Nothing,Int}=100,
+        kwargs...
+    )
+    
+Sets up one experiment for the provided data, models and generators.
+"""
+function set_up_experiment(
+    data_train::CounterfactualData,
+    data_test::CounterfactualData,
+    models::Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},
+    generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
+    target::Int=1,
+    num_counterfactuals::Int=5,
+    kwargs...
+)
+
+    experiment = Experiment(data_train, data_test, target, models, deepcopy(generators), num_counterfactuals)
+
+    # Sanity check:
+    @info "Initial model scores:"
+    println(experiment.initial_model_scores)
+
+    return experiment
+    
+end
+
+"""
+    set_up_experiment(
+        data::CounterfactualData,
+        models::Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},
+        generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
+        target::Int=1,
+        num_counterfactuals::Int=5,
+        pre_train_models::Union{Nothing,Int}=100,
+        kwargs...
+    )
+    
+Sets up one experiment for the provided data, models and generators.
+"""
+function set_up_experiment(
+    data::CounterfactualData,
+    models::Vector{Symbol},
+    generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
+    model_params::NamedTuple=(batch_norm=false,dropout=false,activation=Flux.relu),
+    target::Int=1,
+    num_counterfactuals::Int=5,
+    pre_train_models::Union{Nothing,Int}=100,
+    kwargs...
+)
+
+    available_models = [:LogisticRegression, :FluxModel, :FluxEnsemble, :LaplaceReduxModel]
+    @assert all(map(model -> model in available_models, models)) "`models` can only be $(available_models)"
+
+    models = Dict([(model,getfield(AlgorithmicRecourseDynamics.Models, model)(data; model_params...)) for model in models])
+
+    # Data:
+    data_train, data_test = Models.train_test_split(data)
+
+    # Pretrain:
+    if !isnothing(pre_train_models)
+        map!(model -> Models.train(model, data_train; n_epochs=pre_train_models, kwargs...), values(models))
+    end
+
+    experiment = Experiment(data_train, data_test, target, models, deepcopy(generators), num_counterfactuals)
+
+    # Sanity check:
+    @info "Initial model scores:"
+    println(experiment.initial_model_scores)
+    
+    return experiment
+
+end
+
+
+"""
+    function set_up_experiments(
+        catalogue::Dict{Symbol, CounterfactualData},
+        models::Union{Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}},
+        generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
+        target::Int=1,
+        num_counterfactuals::Int=5,
+        pre_train_models::Union{Nothing, Int}=100,
+        kwargs...
+    )
+
+Sets up multiple experiments.
+"""
+function set_up_experiments(
+    catalogue::Dict{Symbol, CounterfactualData},
+    models::Union{Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}},
+    generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
+    target::Int=1,
+    num_counterfactuals::Int=5,
+    pre_train_models::Union{Nothing, Int}=100,
+    kwargs...
+)
+    set_up_single(data) = set_up_experiment(
+        data, models, generators;
+        target=target, num_counterfactuals=num_counterfactuals,
+        pre_train_models=pre_train_models,
+        kwargs...
+    )
+
+    experiments = Dict(key => set_up_single(data) for (key,data) in catalogue)
+
+    return experiments
+end
+
 struct ExperimentResults 
     output::DataFrame
     experiment::Experiment
 end
 
 using DataFrames, CSV, BSON
+"""
+    run_experiment(
+        experiment::Experiment; evaluate_every::Int=2,
+        save_path::Union{Nothing,String}=nothing,
+        save_name::Union{Nothing,String}=nothing,
+        kwargs...
+    )
+
+Runs a given experiment and saves the results if specified.
+"""
+function run_experiment(
+    experiment::Experiment; 
+    evaluate_every::Int=2,
+    save_path::Union{Nothing,String}=nothing,
+    save_name::Union{Nothing,String}=nothing,
+    kwargs...
+)
+    @info "Starting experiment"
+
+    # Run:
+    output = run!(experiment; evaluate_every=evaluate_every, kwargs...)
+
+    @info "Completed experiment."
+
+    results = ExperimentResults(output,experiment)
+
+    # Save to disk:
+    if !isnothing(save_path)
+        save_name = isnothing(save_name) ? "experiment" : "experiment_$(save_name)"
+        save_path = joinpath(save_path,save_name)
+        mkpath(save_path)
+        CSV.write(joinpath(save_path,"output.csv"), output)
+        Serialization.serialize(joinpath(save_path,"output.jls"), output)
+        Serialization.serialize(joinpath(save_path,"experiment.jls"), experiment)
+        Serialization.serialize(joinpath(save_path,"results.jls"), results)
+    end
+
+    return results
+end
+
+"""
+    run_experiment(
+        data::CounterfactualData,
+        models::Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},
+        generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
+        target::Int=1,
+        num_counterfactuals::Int=5,
+        evaluate_every::Int=2,
+        pre_train_models::Union{Nothing,Int}=100,
+        save_path::Union{Nothing,String}=nothing,
+        save_name::Union{Nothing,String}=nothing,
+        kwargs...
+    )
+
+Sets up one experiment for the provided data, models and generators and then runs it. Saves results if specified. Models and generators need to be supplied as dictionaries, where values need to be of type `CounterfactualExplanations.Models.AbstractFittedModel` and `CounterfactualExplanations.Generators.AbstractGenerator`, respectively.
+"""
 function run_experiment(
     data::CounterfactualData,
-    models::Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},
+    models::Union{Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}},
     generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
     target::Int=1,
     num_counterfactuals::Int=5,
@@ -105,23 +277,19 @@ function run_experiment(
     kwargs...
 )
 
+    experiment = set_up_experiment(
+        data,models,generators;
+        target=target,num_counterfactuals=num_counterfactuals,pre_train_models=pre_train_models
+    )
+
     @info "Starting experiment"
 
-    # Data:
-    data_train, data_test = Models.train_test_split(data)
-
-    # Pretrain:
-    if !isnothing(pre_train_models)
-        map!(model -> Models.train(model, data_train; n_epochs=pre_train_models), values(models))
-    end
-
     # Run:
-    experiment = Experiment(data_train, data_test, target, models, deepcopy(generators), num_counterfactuals)
     output = run!(experiment; evaluate_every=evaluate_every, kwargs...)
 
     @info "Completed experiment."
 
-    results = Experiment(output,experiment)
+    results = ExperimentResults(output,experiment)
 
     # Save to disk:
     if !isnothing(save_path)
@@ -129,45 +297,61 @@ function run_experiment(
         save_path = joinpath(save_path,save_name)
         mkpath(save_path)
         CSV.write(joinpath(save_path,"output.csv"), output)
-        BSON.@save joinpath(save_path,"output.bson") output
-        BSON.@save joinpath(save_path,"experiment.bson") experiment
-        BSON.@save joinpath(save_path,"results.bson") results
+        Serialization.serialize(joinpath(save_path,"output.jls"), output)
+        Serialization.serialize(joinpath(save_path,"experiment.jls"), experiment)
+        Serialization.serialize(joinpath(save_path,"results.jls"), results)
     end
 
     return results
     
 end
 
-function run_experiment(
-    data::CounterfactualData,
-    models::Vector{Symbol},
-    generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
-    target::Int=1,
-    num_counterfactuals::Int=5,
-    evaluate_every::Int=2,
-    pre_train_models::Union{Nothing,Int}=100,
-    save_path::Union{Nothing,String}=nothing,
-    save_name::Union{Nothing,String}=nothing,
-    kwargs...
-)   
-
-    available_models = [:FluxModel, :LaplaceReduxModel]
-    @assert all(map(model -> model in available_models, models)) "`models` can only be $(available_models)"
-
-    models = Dict([(model,getfield(AlgorithmicRecourseDynamics.Models, model)(data)) for model in models])
-
-    output = run_experiment(
-        data, models, generators;
-        target=target,num_counterfactuals=num_counterfactuals,pre_train_models=100,
-        save_path=save_path,save_name=save_name,evaluate_every=evaluate_every,
+"""
+    function run_experiments(
+        experiments::Dict{Symbol, Experiment};
+        evaluate_every::Int=2,
+        save_path::Union{Nothing,String}=nothing,
         kwargs...
     )
 
-    return output
+Runs multiple provided experiments.
+"""
+function run_experiments(
+    experiments::Dict{Symbol, Experiment};
+    evaluate_every::Int=2,
+    save_path::Union{Nothing,String}=nothing,
+    kwargs...
+)
 
+    run_single(experiment, name) = run_experiment(
+        experiment;
+        evaluate_every=evaluate_every,
+        save_path=save_path,
+        save_name=name,
+        kwargs...
+    )
+
+    output = Dict(name => run_single(experiment,string(name)) for (name,experiment) in experiments)
+
+    return output
+    
 end
 
+"""
+    run_experiments(
+        catalogue::Dict{Symbol, CounterfactualData},
+        models::Union{Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}},
+        generators::Dict{Symbol, <: CounterfactualExplanations.Generators.AbstractGenerator};
+        target::Int=1,
+        num_counterfactuals::Int=5,
+        evaluate_every::Int=2,
+        pre_train_models::Union{Nothing, Int}=100,
+        save_path::Union{Nothing,String}=nothing,
+        kwargs...
+    )
 
+Sets up and runs experiments for multiple data sets.
+"""
 function run_experiments(
     catalogue::Dict{Symbol, CounterfactualData},
     models::Union{Dict{Symbol, <: CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}},
@@ -190,7 +374,7 @@ function run_experiments(
         kwargs...
     )
 
-    output = [run_single(data,string(name)) for (name,data) in catalogue]
+    output = Dict(name => run_single(data,string(name)) for (name,data) in catalogue)
     
     return output
 end

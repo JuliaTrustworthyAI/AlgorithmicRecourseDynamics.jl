@@ -14,7 +14,7 @@ using CounterfactualExplanations
 
 Wrapper function to retrain `FluxModel`.
 """
-function train(M::FluxModel, data::CounterfactualData; τ=nothing, kwargs...)
+function train(M::FluxModel, data::CounterfactualData; kwargs...)
 
     args = FluxModelParams(; kwargs...)
 
@@ -35,7 +35,7 @@ function train(M::FluxModel, data::CounterfactualData; τ=nothing, kwargs...)
 end
 
 using Statistics
-function forward!(model, data; loss::Symbol, opt::Symbol, n_epochs::Int=10)
+function forward!(model::Flux.Chain, data; loss::Symbol, opt::Symbol, n_epochs::Int=10)
 
     # Loss:
     loss_(x, y) = getfield(Flux.Losses, loss)(model(x), y) 
@@ -56,19 +56,6 @@ function forward!(model, data; loss::Symbol, opt::Symbol, n_epochs::Int=10)
 
 end
 
-using MLUtils
-"""
-    data_loader(data::CounterfactualData)
-
-Prepares data for training.
-"""
-function data_loader(data::CounterfactualData)
-    X, y = CounterfactualExplanations.DataPreprocessing.unpack(data)
-    xs = MLUtils.unstack(X,dims=2) 
-    data = zip(xs,y)
-    return data
-end
-
 """
     build_mlp()
 
@@ -83,12 +70,20 @@ nn = build_mlp()
 """
 function build_mlp(;
     input_dim::Int=2,n_hidden::Int=32,n_layers::Int=2,output_dim::Int=1,
-    batch_norm::Bool=false,dropout::Bool=false,activation=Flux.relu
+    batch_norm::Bool=false,dropout::Bool=false,activation=Flux.relu,
+    p_dropout=0.25
 )
 
-    @assert n_layers >= 2 "Need at least two layers."
-    
-    if batch_norm
+    @assert n_layers >= 1 "Need at least one layer."
+
+    if n_layers == 1
+
+        @assert output_dim==1 "Expected output dimension of 1 for logisitic regression, got $output_dim."
+
+        # Logistic regression:
+        model = Chain(Dense(input_dim, output_dim))
+
+    elseif batch_norm
 
         hidden_ = repeat([Dense(n_hidden,n_hidden),BatchNorm(n_hidden,activation)],n_layers-2)
 
@@ -102,11 +97,11 @@ function build_mlp(;
 
     elseif dropout
 
-        hidden_ = repeat([Dense(n_hidden,n_hidden,activation),Dropout(0.1)],n_layers-2)
+        hidden_ = repeat([Dense(n_hidden,n_hidden,activation),Dropout(p_dropout)],n_layers-2)
 
         model = Chain(
             Dense(input_dim, n_hidden, activation),
-            Dropout(0.1),
+            Dropout(p_dropout),
             hidden_...,
             Dense(n_hidden, output_dim)
         )  
@@ -142,4 +137,28 @@ function FluxModel(data::CounterfactualData;kwargs...)
 
     return M
 end
+
+
+function LogisticRegression(data::CounterfactualData;kwargs...)
+    X, y = CounterfactualExplanations.DataPreprocessing.unpack(data)
+    input_dim = size(X,1)
+    output_dim = length(unique(y))
+    output_dim = output_dim==2 ? output_dim=1 : output_dim # adjust in case binary
+    @assert output_dim==1 "Logistic model not applicable to multi-dimensional output."
+
+    model = build_mlp(;input_dim=input_dim, output_dim=output_dim,n_layers=1, kwargs...)
+    M = FluxModel(model; likelihood=:classification_binary)
+
+    return M
+end
+
+using LinearAlgebra, Flux, Statistics
+function perturbation(model::FluxModel, new_model::FluxModel; agg=mean)
+    mlp = model.model
+    new_mlp = new_model.model
+    Δ = agg(norm.(collect(Flux.params(new_mlp)) .- collect(Flux.params(mlp))))
+    return Δ
+end
+
+
 

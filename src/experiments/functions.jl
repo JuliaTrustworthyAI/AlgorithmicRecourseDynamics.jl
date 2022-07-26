@@ -9,7 +9,6 @@ using Parameters
     μ::AbstractFloat = 0.05
     γ::AbstractFloat = 0.75
     intersect_::Bool = true
-    τ::AbstractFloat = 1.0
 end
 
 mutable struct Experiment
@@ -23,6 +22,7 @@ mutable struct Experiment
     models::Union{NamedTuple,Dict}
     generators::Union{NamedTuple,Dict}
     num_counterfactuals::Int
+    initial_model_scores::Vector
 end
 
 using CounterfactualExplanations.DataPreprocessing
@@ -43,6 +43,9 @@ function Experiment(
     X_test, y_test = DataPreprocessing.unpack(train_data)
     data = CounterfactualData(hcat(X_train, X_test), hcat(y_train, y_test))
 
+    # Initial scores:
+    initial_model_scores = [(name,Models.model_evaluation(model,test_data)) for (name,model) in pairs(models)]
+
     experiment = Experiment(
         data, # initial data is owned by the experiment, shared across recourse systems,
         train_data,
@@ -53,7 +56,8 @@ function Experiment(
         nothing,
         models,
         generators,
-        num_counterfactuals
+        num_counterfactuals,
+        initial_model_scores
     )
 
     return experiment
@@ -94,7 +98,7 @@ mutable struct RecourseSystem
     benchmark::DataFrame
 end
 
-using StatsBase
+using StatsBase, Flux
 """
     choose_individuals(system::RecourseSystem, target::Number)
     
@@ -104,7 +108,14 @@ function choose_individuals(experiment::Experiment, recourse_systems::AbstractAr
     target, μ = experiment.target, args.μ
 
     candidates = map(recourse_systems) do x
-        findall(vec(x.data.y .!= target))
+        n_classes = size(x.data.y,1)
+        if n_classes == 1
+            cand_ = findall(vec(x.data.y) .!= target)
+        else
+            y = Flux.onecold(x.data.y,1:n_classes)
+            cand_ = findall(vec(y) .!= target)
+        end
+        return cand_
     end
 
     if intersect_
@@ -141,7 +152,7 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
 
     # Experiment:
     args = experiment.fixed_parameters
-    T, γ, τ = args.T, args.γ, args.τ
+    T, γ = args.T, args.γ
     target = experiment.target
 
     # Generate recourse:
@@ -150,6 +161,7 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
         factuals, target, counterfactual_data, M, generator; 
         T=T, γ=γ, num_counterfactuals=experiment.num_counterfactuals
     );
+    
     indices_ = rand(1:experiment.num_counterfactuals,length(results)) # randomly draw from generated counterfactuals
 
     X′ = reduce(hcat,@.(selectdim(counterfactual(results),3,indices_)))
@@ -158,9 +170,15 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
     X[:,chosen_individuals] = X′
     y[:,chosen_individuals] = y′
 
+    # Generative model:
+    gen_mod = deepcopy(counterfactual_data.generative_model)
+    if !isnothing(gen_mod)
+        CounterfactualExplanations.GenerativeModels.retrain!(gen_mod, X, y)
+    end
+
     # Update data, classifier and benchmark:
-    recourse_system.data = CounterfactualData(X,y)
-    recourse_system.model = Models.train(M, counterfactual_data; τ=τ)
+    recourse_system.data = CounterfactualData(X,y;generative_model=gen_mod)
+    recourse_system.model = Models.train(M, counterfactual_data)
     recourse_system.benchmark = vcat(recourse_system.benchmark, CounterfactualExplanations.Benchmark.benchmark(results))
 
 end

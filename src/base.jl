@@ -72,7 +72,7 @@ function run!(
         # Initial evaluation:
         for m in 1:M
             output_initial = collect_output(experiment, recourse_systems[m], nothing, k, 0, m, n_bootstrap=nothing)
-            output[m] = vcat(output[m], output_initial)
+            output[m] = vcat(output[m], output_initial, cols=:union)
         end
         # Recursion over N rounds:
         chosen_individuals = zeros(size(recourse_systems))

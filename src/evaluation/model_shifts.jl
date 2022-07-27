@@ -43,12 +43,12 @@ using StatsBase
 
 Calculates the MMD on the probabilities of classification assigned by the model to the set of (all) instances. Allows to quantify the model shift.
 """
-function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=1000, grid_search=false, kwargs...)
+function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=1000, grid_search=false, n_samples=1000, kwargs...)
     
     X, _ = unpack(experiment.data)
 
     if grid_search
-        X = reduce(hcat,[map(x -> rand(range(x..., length=100)), extrema(X, dims=2)) for i in 1:n])
+        X = reduce(hcat,[map(x -> rand(range(x..., length=100)), extrema(X, dims=2)) for i in 1:n_samples])
     end
     
     # Initial:
@@ -59,7 +59,7 @@ function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=10
     new_M = recourse_system.model
     new_proba = probs(new_M, X)
 
-    value, p_value = mmd(proba, new_proba, 1000; compute_p=n, kwargs...)
+    value, p_value = mmd(proba, new_proba, n_samples; compute_p=n, kwargs...)
     metric_name = grid_search ? :mmd_grid : :mmd
 
     metric = ModelMetric(value,p_value,metric_name)
@@ -120,25 +120,28 @@ function fscore(experiment::Experiment, recourse_system::RecourseSystem)
 
     X, y = unpack(experiment.test_data)
     m = MulticlassFScore()
-    binary = length(unique(y)) == 2
+    binary = recourse_system.initial_model.likelihood == :classification_binary
+
+    function compute_fscore(model) 
+        if binary
+            proba = reduce(hcat, map(x -> binary ? [1-x,x] : x, probs(model,X)))
+            ŷ = Flux.onecold(proba, 0:1)
+        else
+            y = Flux.onecold(y,1:size(y,1))
+            ŷ = Flux.onecold(probs(M,X), sort(unique(y)))
+        end
+        fscore = m(ŷ, vec(y))
+        return fscore
+    end
 
     # Initial:
     M = recourse_system.initial_model
-    proba = reduce(hcat, map(x -> length(x) == 1 ? [x,1-x] : x, probs(M,X)))
-    ŷ = Flux.onecold(proba, 1:size(proba,2))
-    if binary
-        ŷ .-= 1
-    end
-    fscore = m(ŷ, vec(y))
+    fscore = compute_fscore(M)
+    @assert fscore == recourse_system.initial_score 
 
     # New:
     new_M = recourse_system.model
-    new_proba = reduce(hcat, map(x -> length(x) == 1 ? [x,1-x] : x, probs(new_M,X)))
-    new_ŷ = Flux.onecold(new_proba, 1:size(new_proba,2))
-    if binary
-        new_ŷ .-= 1
-    end
-    new_fscore = m(new_ŷ, vec(y))
+    new_fscore = compute_fscore(new_M)
 
     value = new_fscore - fscore    
 

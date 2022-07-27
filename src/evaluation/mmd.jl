@@ -1,48 +1,51 @@
 export MMD, mmd, mmd_null_dist, mmd_significance
 
+using KernelFunctions
+default_kernel = with_lengthscale(KernelFunctions.GaussianKernel(), 0.5)
+
 # Everything salvaged from from IPMeasures: https://github.com/aicenter/IPMeasures.jl/blob/master/src/mmd.jl
-struct MMD{K<:AbstractKernel,D<:MetricOrFun} <: PreMetric
+struct MMD{K<:KernelFunctions.Kernel} <: PreMetric
     kernel::K
-    dist::D
 end
 
 
 function (m::MMD)(x::AbstractArray, y::AbstractArray)
-    xx = kernelsum(m.kernel, x, m.dist)
-    yy = kernelsum(m.kernel, y, m.dist)
-    xy = kernelsum(m.kernel, x, y, m.dist)
+    
+    xx = kernelsum(m.kernel, x)
+    yy = kernelsum(m.kernel, y)
+    xy = kernelsum(m.kernel, x, y)
     xx + yy - 2xy
 end
 
 
 """
-	mmd(AbstractKernel(γ), x, y)
-	mmd(AbstractKernel(γ), x, y, n)
+	mmd(KernelFunctions.Kernel(γ), x, y)
+	mmd(KernelFunctions.Kernel(γ), x, y, n)
 MMD with Gaussian kernel of bandwidth `γ` using at most `n` samples
 """
-function mmd(x::AbstractArray, y::AbstractArray, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; compute_p::Union{Nothing,Int}=1000)
-    mmd_ = MMD(k, dist)(x, y)
+function mmd(x::AbstractArray, y::AbstractArray, k::KernelFunctions.Kernel=default_kernel; compute_p::Union{Nothing,Int}=1000)
+    mmd_ = MMD(k)(x, y)
     if !isnothing(compute_p)
-        mmd_null = mmd_null_dist(x, y, k, dist; l=compute_p)
+        mmd_null = mmd_null_dist(x, y, k; l=compute_p)
         p_val = mmd_significance(mmd_, mmd_null)
     else
-        p_val = nothing
+        p_val = missing
     end
     return mmd_, p_val
 end
-function mmd(x::AbstractArray, y::AbstractArray, n::Int, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; compute_p::Union{Nothing,Int}=1000)
+function mmd(x::AbstractArray, y::AbstractArray, n::Int, k::KernelFunctions.Kernel=default_kernel; compute_p::Union{Nothing,Int}=1000)
     n = minimum([size(x,2),n])
-    mmd(samplecolumns(x,n), samplecolumns(y,n), k, dist; compute_p=compute_p)
+    mmd(samplecolumns(x,n), samplecolumns(y,n), k; compute_p=compute_p)
 end
 
 using Random: shuffle
 """
-    mmd_null_dist(k::AbstractKernel, x::AbstractArray, y::AbstractArray, dist=pairwisel2; l=10000)
+    mmd_null_dist(k::KernelFunctions.Kernel, x::AbstractArray, y::AbstractArray; l=10000)
 
 Calculates the MMD for a set of permutations of samples from the two distributions to measure whether the shift should be considered significant. This works under the assumption that if samples `x` and `y` come from the same distribution (under the null hypothesis), then the MMD of permutations of these samples should be similar to MMD(x, y)
 
 """
-function mmd_null_dist(x::AbstractArray, y::AbstractArray, k::AbstractKernel=GaussianKernel(), dist=pairwisel2; l=1000)
+function mmd_null_dist(x::AbstractArray, y::AbstractArray, k::KernelFunctions.Kernel=default_kernel; l=1000)
 
     n = size(x,2)
     mmd_null = zeros(l)
@@ -50,7 +53,7 @@ function mmd_null_dist(x::AbstractArray, y::AbstractArray, k::AbstractKernel=Gau
 
     bootstrap = function()
         z = Z[:,shuffle(1:end)]
-        mmd(z[:,1:n],z[:,(n+1):end],k,dist;compute_p=nothing)[1]
+        mmd(z[:,1:n],z[:,(n+1):end],k;compute_p=nothing)[1]
     end
     
     mmd_null = map(x -> bootstrap(), mmd_null)

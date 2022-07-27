@@ -33,3 +33,4 @@ Manifest.toml
 
 /dev/artifacts/upload
 /dev/python
+.DS_Store

@@ -1,4 +1,4 @@
-using .Experiments: Experiment, FixedParameters, set_up_system_grid!, update!, choose_individuals
+using .Experiments: Experiment, FixedParameters, RecourseSystem, set_up_system_grid!, update!, choose_individuals
 using .Evaluation: evaluate_system
 using Random, StatsBase, LinearAlgebra, Flux
 using DataFrames
@@ -10,13 +10,40 @@ using Serialization
 
 is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
 
+function collect_output(
+    experiment::Experiment, recourse_system::RecourseSystem, chosen_individuals::Union{Nothing,AbstractArray}, k::Int, n::Int, m::Int;
+    n_bootstrap=1000
+)
+
+    # Evaluate:
+    output = evaluate_system(recourse_system, experiment, n=n_bootstrap)
+    
+    # Add additional information:
+    output.k .= k
+    output.n .= n
+    output.model .= collect(experiment.system_identifiers)[m][1]
+    output.generator .= collect(experiment.system_identifiers)[m][2]
+    output.n_individuals .= isnothing(chosen_individuals) ? 0 : length(chosen_individuals)
+    output.pct_total .= isnothing(chosen_individuals) ? 0 : length(chosen_individuals)/size(experiment.train_data.y,2)
+
+    # Add recourse measures:
+    if n > 0 
+        bmk = mapcols(mean, recourse_system.benchmark)
+        output.success_rate .=  bmk.success_rate
+        output.distance .= bmk.distance
+        output.redundancy .= bmk.redundancy
+    end
+
+    return output
+end
+
 """
     run!(experiment::Experiment, generator::CounterfactualExplanations.AbstractGenerator, n_folds=5; seed=nothing, T=1000)
 
 A wrapper function that runs the experiment for endogenous models shifts.
 """
 function run!(
-    experiment::Experiment; evaluate_every=10, n_boostrap=1000, forward=false, show_progress=!is_logging(stderr), fixed_parameters...
+    experiment::Experiment; evaluate_every=10, n_bootstrap=1000, forward=false, show_progress=!is_logging(stderr), fixed_parameters...
 )
 
     # Load fixed hyperparameters:
@@ -42,6 +69,12 @@ function run!(
     @info "Running experiment ..."
     for k in 1:K
         recourse_systems = experiment.recourse_systems[k]
+        # Initial evaluation:
+        for m in 1:M
+            output_initial = collect_output(experiment, recourse_systems[m], nothing, k, 0, m, n_bootstrap=nothing)
+            output[m] = vcat(output[m], output_initial)
+        end
+        # Recursion over N rounds:
         chosen_individuals = zeros(size(recourse_systems))
         p_round = Progress(N; desc="Progress on rounds:", showspeed=true, enabled=show_progress, output = stderr)
         for n in 1:N
@@ -51,28 +84,15 @@ function run!(
             Threads.@threads for m in 1:M
                 recourse_system = recourse_systems[m]
                 chosen_individuals_m = chosen_individuals_n[m]
-                recourse_systems[m].chosen_individuals = chosen_individuals[m]
+                recourse_system.chosen_individuals = chosen_individuals_m
+                # Update experiment
                 with_logger(NullLogger()) do
-                    # Update experiment
                     update!(experiment, recourse_system, chosen_individuals_m)
                 end
                 # Evaluate:
                 if n % evaluate_every == 0 
-                    evaluation = evaluate_system(recourse_system, experiment, n=n_boostrap)
-                    # Store results:
-                    evaluation.k .= k
-                    evaluation.n .= n
-                    evaluation.model .= collect(experiment.system_identifiers)[m][1]
-                    evaluation.generator .= collect(experiment.system_identifiers)[m][2]
-                    evaluation.n_individuals .= length(chosen_individuals[m])
-                    evaluation.pct_total .= length(chosen_individuals[m])/size(experiment.train_data.y,2)
-                    # Add recourse measures:
-                    bmk = mapcols(mean, recourse_system.benchmark)
-                    evaluation.success_rate .= bmk.success_rate
-                    evaluation.distance .= bmk.distance
-                    evaluation.redundancy .= bmk.redundancy
-
-                    output[m] = vcat(output[m], evaluation)
+                    output_checkpoint = collect_output(experiment, recourse_system, chosen_individuals_m, k, n, m, n_bootstrap=1000)
+                    output[m] = vcat(output[m], output_checkpoint, cols=:union)
                 end
             end
             next!(p_round, showvalues = [(:Fold, k), (:Round, n)])

@@ -72,10 +72,11 @@ function set_up_system_grid!(experiment::Experiment, K::Int=1)
     recourse_systems = map(1:K) do k
         map(grid) do vars
             newdata = deepcopy(data)
-            model = vars[1] # initial model is owned by the recourse systems
+            model = deepcopy(vars[1]) # initial model is owned by the recourse systems
+            score = Models.model_evaluation(model, experiment.test_data)
             newmodel = deepcopy(model)
             generator = vars[2]
-            recourse_system = RecourseSystem(newdata, newmodel, generator, model, nothing, DataFrame())
+            recourse_system = RecourseSystem(newdata, newmodel, generator, model, score, nothing, DataFrame())
             return recourse_system
         end
     end
@@ -94,6 +95,7 @@ mutable struct RecourseSystem
     model::CounterfactualExplanations.AbstractFittedModel
     generator::CounterfactualExplanations.Generators.AbstractGenerator
     initial_model::CounterfactualExplanations.AbstractFittedModel
+    initial_score::AbstractFloat
     chosen_individuals::Union{Nothing,AbstractArray}
     benchmark::DataFrame
 end

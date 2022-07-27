@@ -1,9 +1,9 @@
 [".DS_Store"]
-git-tree-sha1 = "7d9380680297db4eec7b6105e15994013dfa0d62"
+git-tree-sha1 = "fd85941fd7f29a346972b61686f46d58c26abe2d"
 lazy = true
 
     [[".DS_Store".download]]
-    sha256 = "43aeecba3d0667800efe9a64529b6141d2a181544d1a4457a426ecb38c00df67"
+    sha256 = "e0350c23c2407210e28364a189d9b4e3f828cd2db4114cede9a663b2614f8559"
     url = "https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/releases/download/artifacts/.DS_Store.tar.gz"
 
 [data]
@@ -11,7 +11,7 @@ git-tree-sha1 = "d0d63c39e075b025db47c26deb6aa9eb20b79f7d"
 lazy = true
 
     [[data.download]]
-    sha256 = "ad895ac6b26e4d0fe7324793723cd49540c7ef937fc074a427529fac1328a160"
+    sha256 = "3fd96c6a93937c7ea5f775ae033937ffe94fe8c8594f4f0a441d0ccba77ddc86"
     url = "https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/releases/download/artifacts/data.tar.gz"
 
 [output]

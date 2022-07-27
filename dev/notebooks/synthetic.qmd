@@ -19,8 +19,8 @@ www_path = www_dir("synthetic")
 ```{julia}
 catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic()
 choices = [
-    # :linearly_separable, 
-    # :overlapping, 
+    :linearly_separable, 
+    :overlapping, 
     :plus_shaped, 
     :balanced_positive_clusters,
 ]
@@ -80,10 +80,19 @@ savefig(plt, joinpath(www_path,"models_test_after.png"))
 ```{julia}
 using Serialization
 results = Serialization.deserialize(joinpath(output_path,"results.jls"))
+```
+
+```{julia}
+using Serialization
+results = [Serialization.deserialize(joinpath(output_path,subfolder,"results.jls")) for subfolder in readdir(output_path)];
+```
+
+
+```{julia}
 using Gadfly
 plts = [plot(res) for res in values(results)]
-gridstack(reshape(plts,2,2))
 ```
+
 
 
 

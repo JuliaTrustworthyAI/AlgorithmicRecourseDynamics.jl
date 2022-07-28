@@ -53,9 +53,10 @@ function data_loader(data::CounterfactualData)
 end
 
 using CounterfactualExplanations
+using CounterfactualExplanations.DataPreprocessing
 using MLJ, Flux
 function model_evaluation(M::CounterfactualExplanations.AbstractFittedModel, test_data::CounterfactualData)
-    X, y = unpack(test_data)
+    X, y = DataPreprocessing.unpack(test_data)
     m = MulticlassFScore()
     binary = M.likelihood == :classification_binary
     if binary

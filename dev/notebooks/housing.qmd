@@ -15,3 +15,135 @@ theme(:wong)
 output_path = output_dir("real_world")
 www_path = www_dir("real_world")
 ```
+
+## Training the classifiers
+
+```{julia}
+using MLDatasets, Statistics, StatsBase
+X = BostonHousing.features()
+y = BostonHousing.targets()
+y = Float64.(y .>= median(y)); # binary target
+dt = fit(ZScoreTransform, X, dims=2)
+StatsBase.transform!(dt, X)
+data = CounterfactualData(X,y)
+```
+
+```{julia}
+using CounterfactualExplanations.DataPreprocessing: unpack
+bs = 50
+function data_loader(data::CounterfactualData)
+    X, y = unpack(data)
+    data = Flux.DataLoader((X,y),batchsize=bs)
+    return data
+end
+model_params = (batch_norm=true,n_hidden=128,dropout=true,p_dropout=0.1)
+models = [:FluxModel, :FluxEnsemble]
+models = Dict([(model,getfield(AlgorithmicRecourseDynamics.Models, model)(data; model_params...)) for model in models])
+```
+
+```{julia}
+using AlgorithmicRecourseDynamics.Models
+# Data:
+data_train, data_test = Models.train_test_split(data)
+n_epochs=100
+map!(model -> Models.train(model, data_train; n_epochs=n_epochs, data_loader=data_loader), values(models))
+
+```
+
+```{julia}
+
+generators = Dict(
+    :Greedy=>GreedyGenerator(), 
+    :Generic=>GenericGenerator(),
+    :REVISE=>REVISEGenerator(),
+    :DICE=>DiCEGenerator()
+)
+```
+
+
+```{julia}
+# Prepare data and model:
+using Random
+Random.seed!(1234)
+using StatsBase
+dt = fit(ZScoreTransform, X, dims=2)
+StatsBase.transform!(dt, X)
+xs = Flux.unstack(X,2)
+data = zip(xs,y)
+nn = Models.build_model(input_dim=size(X)[1], n_hidden=100)
+loss(x, y) = Flux.Losses.logitbinarycrossentropy(nn(x), y)
+```
+
+The model achieves decent training accuracy
+
+```{julia}
+run = false
+if run
+  # Train model:
+  using Flux.Optimise: update!, ADAM
+  using Statistics, StatsBase
+  opt = ADAM()
+  epochs = 100
+  avg_loss(data) = mean(map(d -> loss(d[1],d[2]), data))
+  accuracy(data) = sum(map(d ->round.(Flux.σ.(nn(d[1]))) .== d[2], data))[1]/length(data)
+
+  using Plots
+  anim = Animation()
+  avg_l = [avg_loss(data)]
+  p1 = scatter( ylim=(0,avg_l[1]), xlim=(0,epochs), legend=false, xlab="Epoch", title="Average loss")
+  acc = [accuracy(data)]
+  p2 = scatter( ylim=(0.5,1), xlim=(0,epochs), legend=false, xlab="Epoch", title="Accuracy")
+  
+  τ = 1.0
+  stopping_criterium_reached = accuracy(data) >= τ
+  epoch = 1
+
+  while epoch <= epochs && !stopping_criterium_reached
+    for d in data
+      gs = gradient(params(nn)) do
+        l = loss(d...)
+      end
+      update!(opt, params(nn), gs)
+    end
+    avg_l = vcat(avg_l,avg_loss(data))
+    plot!(p1, [0:epoch], avg_l, color=1)
+    scatter!(p1, [0:epoch], avg_l, color=1)
+    acc = vcat(acc,accuracy(data))
+    plot!(p2, [0:epoch], acc, color=1)
+    scatter!(p2, [0:epoch], acc, color=1)
+    plt=plot(p1,p2, size=(600,300))
+    frame(anim, plt)
+
+    # Check if desired accuracy reached:
+    stopping_criterium_reached = accuracy(data) >= τ
+
+    epoch += 1
+
+  end
+
+  gif(anim, joinpath(www_folder, "single_nn.gif"), fps=10)
+
+  using BSON: @save
+  @save joinpath(output_folder, "nn.bson") nn
+
+end
+```
+
+![](www/boston_housing/single_nn.gif)
+
+Next we will build and train a deep ensemble.
+
+```{julia}
+opt = ADAM()
+loss_type = :logitbinarycrossentropy
+run = false
+if run
+    K = 50
+    ensemble = Models.build_ensemble(K,kw=(input_dim=size(X)[1], n_hidden=100));
+    ensemble, anim = Models.forward(ensemble, data, opt, n_epochs=30, plot_every=10, loss_type=loss_type); # fit the ensemble
+    Models.save_ensemble(ensemble, root=joinpath(output_folder, "ensemble")) # save to disk
+    gif(anim, joinpath(www_folder, "ensemble_loss.gif"), fps=25);
+end
+```
+
+![](www/boston_housing/ensemble_loss.gif)

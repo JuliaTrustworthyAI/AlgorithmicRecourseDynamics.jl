@@ -84,7 +84,7 @@ function run!(
             Threads.@threads for m in 1:M
                 recourse_system = recourse_systems[m]
                 chosen_individuals_m = chosen_individuals_n[m]
-                recourse_system.chosen_individuals = chosen_individuals_m
+                recourse_system.chosen_individuals = chosen_individuals[m]
                 # Update experiment
                 with_logger(NullLogger()) do
                     update!(experiment, recourse_system, chosen_individuals_m)

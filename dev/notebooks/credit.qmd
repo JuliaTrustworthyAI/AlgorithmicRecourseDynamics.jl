@@ -20,6 +20,11 @@ www_path = www_dir("real_world")
 catalogue = AlgorithmicRecourseDynamics.Data.load_real_world()
 choices = [:give_me_some_credit_balanced]
 data_sets = filter(p -> p[1] in choices, catalogue)
+map!(data_sets) data do 
+    using StatsBase
+    dt = fit(ZScoreTransform, X, dims=2)
+    StatsBase.transform!(dt, X)
+end
 ```
 
 ```{julia}

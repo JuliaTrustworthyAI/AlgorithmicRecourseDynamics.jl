@@ -22,3 +22,4 @@ function plot(results::ExperimentResults, variable::Symbol=:mmd; kwargs...)
     return plt
 
 end
+

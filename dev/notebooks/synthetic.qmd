@@ -156,17 +156,6 @@ using Serialization
 results = Serialization.deserialize(joinpath(output_path,"results.jls"))
 ```
 
-```{julia}
-using Serialization
-results = [Serialization.deserialize(joinpath(output_path,subfolder,"results.jls")) for subfolder in readdir(output_path)];
-```
-
-
-```{julia}
-using Gadfly
-plts = [plot(res) for res in values(results)]
-```
-
 
 
 

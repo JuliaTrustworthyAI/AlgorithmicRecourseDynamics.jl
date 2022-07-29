@@ -47,7 +47,7 @@ using AlgorithmicRecourseDynamics.Models
 data_train, data_test = Models.train_test_split(data)
 n_epochs=100
 map!(model -> Models.train(model, data_train; n_epochs=n_epochs, data_loader=data_loader), values(models))
-
+initial_model_scores = [(name,Models.model_evaluation(model,data_train),Models.model_evaluation(model,data_test)) for (name,model) in pairs(models)]
 ```
 
 ```{julia}

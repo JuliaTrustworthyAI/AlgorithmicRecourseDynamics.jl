@@ -26,7 +26,7 @@ function evaluate_system(recourse_system::RecourseSystem, experiment::Experiment
         mmd_model(experiment, recourse_system; n=n, grid_search=true),
         disagreement(experiment, recourse_system),
         decisiveness(experiment, recourse_system),
-        fscore(experiment, recourse_system)
+        model_performance(experiment, recourse_system)
     ]
 
     if to_dataframe

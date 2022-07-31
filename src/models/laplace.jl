@@ -67,6 +67,6 @@ using LinearAlgebra, Flux, Statistics
 function perturbation(model::LaplaceReduxModel, new_model::LaplaceReduxModel; agg=mean)
     mlp = model.model
     new_mlp = new_model.model
-    Δ = agg(norm.(collect(Flux.params(new_mlp)) .- collect(Flux.params(mlp))))
+    Δ = mean(map(x -> norm(x)/length(x),Flux.params(new_mlp).-Flux.params(mlp)))
     return Δ
 end

@@ -1,0 +1,255 @@
+---
+title: Experiments with Credit Data
+jupyter: julia-1.7
+---
+
+```{julia}
+using Pkg; Pkg.activate("dev")
+```
+
+```{julia}
+include("dev/utils.jl")
+using AlgorithmicRecourseDynamics
+using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
+theme(:wong)
+output_path = output_dir("real_world")
+www_path = www_dir("real_world")
+```
+
+```{julia}
+catalogue = AlgorithmicRecourseDynamics.Data.load_real_world()
+choices = [:give_me_some_credit_balanced, :housing]
+data_sets = filter(p -> p[1] in choices, catalogue)
+```
+
+```{julia}
+using CounterfactualExplanations.DataPreprocessing: unpack
+bs = 50
+function data_loader(data::CounterfactualData)
+    X, y = unpack(data)
+    data = Flux.DataLoader((X,y),batchsize=bs)
+    return data
+end
+model_params = (batch_norm=false,n_hidden=128,dropout=true,p_dropout=0.1)
+```
+
+
+```{julia}
+models = [:FluxModel, :FluxEnsemble]
+generators = Dict(
+    :Greedy=>GreedyGenerator(), 
+    :Generic=>GenericGenerator(),
+    :REVISE=>REVISEGenerator(),
+    :DICE=>DiCEGenerator(),
+    :Gravitational=>GravitationalGenerator(),
+)
+```
+
+```{julia}
+experiments = set_up_experiments(data_sets,models,generators; pre_train_models=100, model_params=model_params, data_loader=data_loader)
+```
+
+```{julia}
+# #| eval: false
+# using AlgorithmicRecourseDynamics.Models: model_evaluation
+# plts = []
+# for (exp_name, exp_) in experiments
+#     for (M_name, M) in exp_.models
+#         score = round(model_evaluation(M, exp_.test_data),digits=2)
+#         plt = plot(M, exp_.test_data; title="$exp_name;\n $M_name ($score)", dim_red=:umap)
+#         # # Errors:
+#         # ids = findall(vec(round.(probs(M, exp_.test_data.X)) .!= exp_.test_data.y))
+#         # x_wrongly_labelled = exp_.test_data.X[:,ids]
+#         # scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
+#         plts = vcat(plts..., plt)
+#     end
+# end
+# plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
+# savefig(plt, joinpath(www_path,"models_test_before.png"))
+```
+
+```{julia}
+# #| eval: false
+# using AlgorithmicRecourseDynamics.Models: model_evaluation
+# plts = []
+# for (exp_name, exp_) in experiments
+#     for (M_name, M) in exp_.models
+#         score = round(model_evaluation(M, exp_.train_data),digits=2)
+#         plt = plot(M, exp_.train_data; title="$exp_name;\n $M_name ($score)", dim_red=:umap)
+#         # # Errors:
+#         # ids = findall(vec(round.(probs(M, exp_.train_data.X)) .!= exp_.train_data.y))
+#         # x_wrongly_labelled = exp_.train_data.X[:,ids]
+#         # scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
+#         plts = vcat(plts..., plt)
+#     end
+# end
+# plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
+# savefig(plt, joinpath(www_path,"models_train_before.png"))
+```
+
+## Simple convergence
+
+```{julia}
+n_evals = 1
+n_rounds = 10
+evaluate_every = Int(round(n_rounds/n_evals))
+n_folds = 2
+n_bootstrap = 1
+using Serialization
+results = run_experiments(
+    experiments;save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap
+)
+Serialization.serialize(joinpath(output_path,"results.jls"),results)
+```
+
+```{julia}
+# using AlgorithmicRecourseDynamics.Models: model_evaluation
+# plot_dict = Dict(key => Dict() for (key,val) in results)
+# fold = 1
+# for (name, res) in results
+#     exp_ = res.experiment
+#     plot_dict[name] = Dict(key => [] for (key,val) in exp_.generators)
+#     rec_sys = exp_.recourse_systems[fold]
+#     sys_ids = collect(exp_.system_identifiers)
+#     M = length(rec_sys)
+#     for m in 1:M
+#         model_name, generator_name = sys_ids[m]
+#         M = rec_sys[m].model
+#         score = round(model_evaluation(M, exp_.test_data),digits=2)
+#         plt = plot(M, exp_.test_data; title="$name;\n $model_name ($score)", dim_red=:umap)
+#         # # Errors:
+#         # ids = findall(vec(round.(probs(M, exp_.test_data.X)) .!= exp_.test_data.y))
+#         # x_wrongly_labelled = exp_.test_data.X[:,ids]
+#         # scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
+#         plot_dict[name][generator_name] = vcat(plot_dict[name][generator_name], plt)
+#     end
+# end
+# plot_dict = Dict(key => reduce(vcat, [plots[key] for plots in values(plot_dict)]) for (key, value) in generators)
+# for (name, plts) in plot_dict
+#     plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
+#     savefig(plt, joinpath(www_path,"models_test_after_$name.png"))
+# end
+```
+
+```{julia}
+# using AlgorithmicRecourseDynamics.Models: model_evaluation
+# plot_dict = Dict(key => Dict() for (key,val) in results)
+# fold = 1
+# for (name, res) in results
+#     exp_ = res.experiment
+#     plot_dict[name] = Dict(key => [] for (key,val) in exp_.generators)
+#     rec_sys = exp_.recourse_systems[fold]
+#     sys_ids = collect(exp_.system_identifiers)
+#     M = length(rec_sys)
+#     for m in 1:M
+#         model_name, generator_name = sys_ids[m]
+#         M = rec_sys[m].model
+#         data = rec_sys[m].data
+#         score = round(model_evaluation(M, data),digits=2)
+#         plt = plot(M, data; title="$name;\n $model_name ($score)", dim_red=:umap)
+#         # # Errors:
+#         # ids = findall(vec(round.(probs(M, data.X)) .!= data.y))
+#         # x_wrongly_labelled = data.X[:,ids]
+#         # scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
+#         plot_dict[name][generator_name] = vcat(plot_dict[name][generator_name], plt)
+#     end
+# end
+# plot_dict = Dict(key => reduce(vcat, [plots[key] for plots in values(plot_dict)]) for (key, value) in generators)
+# for (name, plts) in plot_dict
+#     plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
+#     savefig(plt, joinpath(www_path,"models_train_after_$name.png"))
+# end
+```
+
+```{julia}
+using Serialization
+results = Serialization.deserialize(joinpath(output_path,"results.jls"))
+```
+
+
+## Strict convergence
+
+```{julia}
+n_evals = 1
+n_rounds = 10
+evaluate_every = Int(round(n_rounds/n_evals))
+n_folds = 2
+n_bootstrap = 1
+using Serialization
+results = run_experiments(
+    experiments;
+    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap,
+    convergence=:strict, save_name_suffix="strict"
+)
+Serialization.serialize(joinpath(output_path,"results_strict.jls"),results)
+```
+
+```{julia}
+using AlgorithmicRecourseDynamics.Models: model_evaluation
+plot_dict = Dict(key => Dict() for (key,val) in results)
+fold = 1
+for (name, res) in results
+    exp_ = res.experiment
+    plot_dict[name] = Dict(key => [] for (key,val) in exp_.generators)
+    rec_sys = exp_.recourse_systems[fold]
+    sys_ids = collect(exp_.system_identifiers)
+    M = length(rec_sys)
+    for m in 1:M
+        model_name, generator_name = sys_ids[m]
+        M = rec_sys[m].model
+        score = round(model_evaluation(M, exp_.test_data),digits=2)
+        plt = plot(M, exp_.test_data; title="$name;\n $model_name ($score)", dim_red=:umap)
+        # # Errors:
+        # ids = findall(vec(round.(probs(M, exp_.test_data.X)) .!= exp_.test_data.y))
+        # x_wrongly_labelled = exp_.test_data.X[:,ids]
+        # scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
+        plot_dict[name][generator_name] = vcat(plot_dict[name][generator_name], plt)
+    end
+end
+plot_dict = Dict(key => reduce(vcat, [plots[key] for plots in values(plot_dict)]) for (key, value) in generators)
+for (name, plts) in plot_dict
+    plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
+    savefig(plt, joinpath(www_path,"models_test_after_$(name)_strict.png"))
+end
+```
+
+```{julia}
+using AlgorithmicRecourseDynamics.Models: model_evaluation
+plot_dict = Dict(key => Dict() for (key,val) in results)
+fold = 1
+for (name, res) in results
+    exp_ = res.experiment
+    plot_dict[name] = Dict(key => [] for (key,val) in exp_.generators)
+    rec_sys = exp_.recourse_systems[fold]
+    sys_ids = collect(exp_.system_identifiers)
+    M = length(rec_sys)
+    for m in 1:M
+        model_name, generator_name = sys_ids[m]
+        M = rec_sys[m].model
+        data = rec_sys[m].data
+        score = round(model_evaluation(M, data),digits=2)
+        plt = plot(M, data; title="$name;\n $model_name ($score)", dim_red=:umap)
+        # # Errors:
+        # ids = findall(vec(round.(probs(M, data.X)) .!= data.y))
+        # x_wrongly_labelled = data.X[:,ids]
+        # scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
+        plot_dict[name][generator_name] = vcat(plot_dict[name][generator_name], plt)
+    end
+end
+plot_dict = Dict(key => reduce(vcat, [plots[key] for plots in values(plot_dict)]) for (key, value) in generators)
+for (name, plts) in plot_dict
+    plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
+    savefig(plt, joinpath(www_path,"models_train_after_$(name)_strict.png"))
+end
+```
+
+```{julia}
+using Serialization
+results = Serialization.deserialize(joinpath(output_path,"results_strict.jls"))
+```
+
+
+
+
+
+

@@ -1,4 +1,4 @@
-struct ModelMetric <: AbstractMetric 
+struct ModelMetric <: AbstractMetric
     metric::Number
     p_value::Union{Missing,Number}
     name::Symbol
@@ -14,7 +14,7 @@ Turns an instance of class `ModelMetric` into `DataFrame`.
 function DataFrame(metric::ModelMetric)
     vals = (metric.metric, metric.p_value, metric.name, :model)
     df = DataFrame(NamedTuple{(:value, :p_value, :name, :scope)}.([vals]))
-    return df  
+    return df
 end
 
 using LinearAlgebra
@@ -27,7 +27,7 @@ function perturbation(experiment::Experiment, recourse_system::RecourseSystem)
 
     value = perturbation(M, new_M)
 
-    metric = ModelMetric(value,missing,:perturbation)
+    metric = ModelMetric(value, missing, :perturbation)
 
     return metric
 
@@ -44,13 +44,13 @@ using StatsBase
 Calculates the MMD on the probabilities of classification assigned by the model to the set of (all) instances. Allows to quantify the model shift.
 """
 function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=1000, grid_search=false, n_samples=1000, kwargs...)
-    
+
     X, _ = unpack(experiment.data)
 
     if grid_search
-        X = reduce(hcat,[map(x -> rand(range(x..., length=100)), extrema(X, dims=2)) for i in 1:n_samples])
+        X = reduce(hcat, [map(x -> rand(range(x..., length=100)), extrema(X, dims=2)) for i in 1:n_samples])
     end
-    
+
     # Initial:
     M = recourse_system.initial_model
     proba = probs(M, X)
@@ -62,7 +62,7 @@ function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=10
     value, p_value = mmd(proba, new_proba, n_samples; compute_p=n, kwargs...)
     metric_name = grid_search ? :mmd_grid : :mmd
 
-    metric = ModelMetric(value,p_value,metric_name)
+    metric = ModelMetric(value, p_value, metric_name)
 
     return metric
 
@@ -75,20 +75,20 @@ using LinearAlgebra
 Calculates the pseudo-distance of points to the decision boundary measured as the average probability of classification centered around 0.5. High value corresponds to a large margin of classification.
 """
 function decisiveness(experiment::Experiment, recourse_system::RecourseSystem)
-    
+
     X, _ = unpack(experiment.data)
 
     # Initial:
     M = recourse_system.initial_model
     proba = probs(M, X)
-    
+
     # New:
     new_M = recourse_system.model
     new_proba = probs(new_M, X)
 
-    value = abs(norm(proba.-0.5) - norm(new_proba.-0.5))
+    value = abs(norm(proba .- 0.5) - norm(new_proba .- 0.5))
 
-    metric = ModelMetric(value,missing,:decisiveness)
+    metric = ModelMetric(value, missing, :decisiveness)
 
     return metric
 end
@@ -104,50 +104,33 @@ function disagreement(experiment::Experiment, recourse_system::RecourseSystem)
 
     # Initial:
     M = recourse_system.initial_model
-    proba = reduce(hcat, map(x -> length(x) == 1 ? [x,1-x] : x, probs(M,X)))
+    proba = reduce(hcat, map(x -> length(x) == 1 ? [x, 1 - x] : x, probs(M, X)))
     # New:
     new_M = recourse_system.model
-    new_proba = reduce(hcat, map(x -> length(x) == 1 ? [x,1-x] : x, probs(new_M,X)))
+    new_proba = reduce(hcat, map(x -> length(x) == 1 ? [x, 1 - x] : x, probs(new_M, X)))
 
-    value = sum(argmax(proba,dims=1) .!= argmax(new_proba,dims=1))/size(X,2)
-    metric = ModelMetric(value,missing,:disagreement)
+    value = sum(argmax(proba, dims=1) .!= argmax(new_proba, dims=1)) / size(X, 2)
+    metric = ModelMetric(value, missing, :disagreement)
 
     return metric
 end
 
-using MLJ, Flux
-function fscore(experiment::Experiment, recourse_system::RecourseSystem)
-
-    X, y = unpack(experiment.test_data)
-    m = MulticlassFScore()
-    binary = recourse_system.initial_model.likelihood == :classification_binary
-
-    function compute_fscore(model) 
-        if binary
-            proba = reduce(hcat, map(x -> binary ? [1-x,x] : x, probs(model,X)))
-            ŷ = Flux.onecold(proba, 0:1)
-        else
-            y = Flux.onecold(y,1:size(y,1))
-            ŷ = Flux.onecold(probs(M,X), sort(unique(y)))
-        end
-        fscore = m(ŷ, vec(y))
-        return fscore
-    end
+using ..Models: model_evaluation
+function model_performance(experiment::Experiment, recourse_system::RecourseSystem)
 
     # Initial:
     M = recourse_system.initial_model
-    fscore = compute_fscore(M)
-    @assert fscore == recourse_system.initial_score 
+    score_ = model_evaluation(M, experiment.test_data)
+    @assert score_ == recourse_system.initial_score
 
     # New:
     new_M = recourse_system.model
-    new_fscore = compute_fscore(new_M)
+    new_score_ = model_evaluation(new_M, experiment.test_data)
 
-    value = new_fscore - fscore    
-
-    metric = ModelMetric(value,missing,:fscore)
-
+    # Difference:
+    value = new_score_ - score_
+    metric = ModelMetric(value, missing, :model_performance)
     return metric
-    
+
 end
 

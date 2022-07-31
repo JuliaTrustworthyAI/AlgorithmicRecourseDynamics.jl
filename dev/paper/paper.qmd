@@ -37,6 +37,7 @@ format:
         documentclass: IEEEtran
         classoption: conference
         include-in-header: tex/preamble.tex
+        keep-tex: true
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl
 number-sections: true
 license: "CC BY"

@@ -9,6 +9,7 @@ using Parameters
     μ::AbstractFloat = 0.05
     γ::AbstractFloat = 0.75
     intersect_::Bool = true
+    convergence::Symbol = :threshold_only
 end
 
 mutable struct Experiment

@@ -68,9 +68,9 @@ end
 
 using LinearAlgebra, Flux, Statistics
 
-function perturbation(model::FluxEnsemble, new_model::FluxEnsemble; agg=mean)
+function perturbation(model::FluxEnsemble, new_model::FluxEnsemble)
     ensemble = model.model
     new_ensemble = new_model.model
-    Δ = agg(norm.(collect.(Flux.params.(new_ensemble)) .- collect.(Flux.params.(ensemble))))
+    Δ = mean(map(x -> norm(x)/length(x),Flux.params(new_ensemble).-Flux.params(ensemble)))
     return Δ
 end

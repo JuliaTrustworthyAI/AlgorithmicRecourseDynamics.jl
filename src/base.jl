@@ -91,7 +91,7 @@ function run!(
                 end
                 # Evaluate:
                 if n % evaluate_every == 0 
-                    output_checkpoint = collect_output(experiment, recourse_system, chosen_individuals_m, k, n, m, n_bootstrap=1000)
+                    output_checkpoint = collect_output(experiment, recourse_system, chosen_individuals[m], k, n, m, n_bootstrap=n_bootstrap)
                     output[m] = vcat(output[m], output_checkpoint, cols=:union)
                 end
             end
@@ -245,12 +245,15 @@ function run_experiment(
     save_name::Union{Nothing,String}=nothing,
     kwargs...
 )
-    @info "Starting experiment"
+
+    exp_name = isnothing(save_name) ? "unnamed" : save_name
+
+    @info "Starting experiment: $exp_name"
 
     # Run:
     output = run!(experiment; evaluate_every=evaluate_every, kwargs...)
 
-    @info "Completed experiment."
+    @info "Completed experiment: $exp_name"
 
     results = ExperimentResults(output,experiment)
 
@@ -263,6 +266,9 @@ function run_experiment(
         Serialization.serialize(joinpath(save_path,"output.jls"), output)
         Serialization.serialize(joinpath(save_path,"experiment.jls"), experiment)
         Serialization.serialize(joinpath(save_path,"results.jls"), results)
+
+        @info "Saved experiment: $exp_name"
+
     end
 
     return results
@@ -302,12 +308,14 @@ function run_experiment(
         target=target,num_counterfactuals=num_counterfactuals,pre_train_models=pre_train_models
     )
 
-    @info "Starting experiment"
+    exp_name = isnothing(save_name) ? "unnamed" : save_name
+
+    @info "Starting experiment: $exp_name"
 
     # Run:
     output = run!(experiment; evaluate_every=evaluate_every, kwargs...)
 
-    @info "Completed experiment."
+    @info "Completed experiment: $exp_name"
 
     results = ExperimentResults(output,experiment)
 
@@ -320,6 +328,9 @@ function run_experiment(
         Serialization.serialize(joinpath(save_path,"output.jls"), output)
         Serialization.serialize(joinpath(save_path,"experiment.jls"), experiment)
         Serialization.serialize(joinpath(save_path,"results.jls"), results)
+
+        @info "Saved experiment: $exp_name"
+
     end
 
     return results
@@ -340,8 +351,14 @@ function run_experiments(
     experiments::Dict{Symbol, Experiment};
     evaluate_every::Int=2,
     save_path::Union{Nothing,String}=nothing,
+    save_name_suffix::String="",
+    create_copy::Bool=true,
     kwargs...
 )
+
+    if create_copy
+        experiments = deepcopy(experiments)
+    end
 
     run_single(experiment, name) = run_experiment(
         experiment;
@@ -351,7 +368,8 @@ function run_experiments(
         kwargs...
     )
 
-    output = Dict(name => run_single(experiment,string(name)) for (name,experiment) in experiments)
+    save_name_suffix = save_name_suffix != "" ? "_$save_name_suffix" : save_name_suffix
+    output = Dict(name => run_single(experiment,"$(string(name))$(save_name_suffix)") for (name,experiment) in experiments)
 
     return output
     
@@ -381,6 +399,7 @@ function run_experiments(
     evaluate_every::Int=2,
     pre_train_models::Union{Nothing, Int}=100,
     save_path::Union{Nothing,String}=nothing,
+    save_name_suffix::String="",
     kwargs...
 )
 
@@ -394,7 +413,8 @@ function run_experiments(
         kwargs...
     )
 
-    output = Dict(name => run_single(data,string(name)) for (name,data) in catalogue)
+    save_name_suffix = save_name_suffix != "" ? "_$save_name_suffix" : save_name_suffix
+    output = Dict(name => run_single(data,"$(string(name))$(save_name_suffix)") for (name,data) in catalogue)
     
     return output
 end

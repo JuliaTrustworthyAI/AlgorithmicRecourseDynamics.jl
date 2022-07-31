@@ -26,3 +26,16 @@ function www_dir(dir="")
     return www_dir
 end
 
+"""
+    data_dir(dir="")
+
+Sets up the directory to save images and returns the path.
+"""
+function data_dir(dir="")
+    root_ = "dev/artifacts/upload/data"
+    data_dir = joinpath(root_, dir)
+    if !isdir(data_dir)
+        mkpath(data_dir)
+    end
+    return data_dir
+end

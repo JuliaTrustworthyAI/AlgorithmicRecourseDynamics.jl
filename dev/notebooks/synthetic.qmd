@@ -247,6 +247,8 @@ using Serialization
 results = Serialization.deserialize(joinpath(output_path,"results_strict.jls"))
 ```
 
+### Plots
+
 ```{julia}
 line_charts = Dict()
 errorbar_charts = Dict()
@@ -254,6 +256,12 @@ for (data_name, res) in results
     line_charts[data_name] = plot(res)
     errorbar_charts[data_name] = plot(res,50)
 end
+```
+
+### Tables
+
+```{julia}
+
 ```
 
 

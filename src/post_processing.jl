@@ -74,3 +74,23 @@ function plot(results::ExperimentResults, n::Int, variable::Symbol=:mmd, scope::
 
 end
 
+function kable(result::ExperimentResults,n::Vector{Int}; format="latex")
+    df = deepcopy(result.output)
+    mapcols!(x -> eltype(x)==Symbol ? string.(x) : x, df)
+    R"""
+    library(data.table)
+    dt <- data.table($df)
+    n_ <- $n
+    dt <- dt[n %in% n_]
+    dt <- dt[,.(value=mean(value,na.rm=TRUE),sd=sd(value)),by=.(model,generator,name,scope,n)]
+    dt[,text:=sprintf("%0.3f (%0.3f)",value,sd)][,value:=NULL][,sd:=NULL]
+    dt <- dcast(dt, ... ~ name, value.var="text")
+    library(kableExtra)
+    dt <- dt[order(-scope,n)]
+    setcolorder(dt, c("scope","n"))
+    ktab <- kbl(dt, booktabs = T, align = "c", format=$format) %>%
+        column_spec(1, bold = T, width = "5em") %>%
+        collapse_rows(columns = 1:4, latex_hline = "major", valign = "middle")
+    """
+end
+

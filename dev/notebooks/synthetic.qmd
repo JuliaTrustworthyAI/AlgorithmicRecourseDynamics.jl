@@ -248,12 +248,11 @@ results = Serialization.deserialize(joinpath(output_path,"results_strict.jls"))
 ```
 
 ```{julia}
-plot_dict = Dict()
+line_charts = Dict()
+errorbar_charts = Dict()
 for (data_name, res) in results
-    output_data = res.output
-    metrics = unique(output_data.name)
-    plots = Dict(metric => plot(res, metric) for metric in metrics)
-    plot_dict[data_name] = plots
+    line_charts[data_name] = plot(res)
+    errorbar_charts[data_name] = plot(res,50)
 end
 ```
 

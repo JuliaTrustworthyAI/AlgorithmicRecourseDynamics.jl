@@ -170,7 +170,7 @@ function set_up_experiment(
     models = Dict([(model,getfield(AlgorithmicRecourseDynamics.Models, model)(data; model_params...)) for model in models])
 
     # Data:
-    data_train, data_test = Models.train_test_split(data)
+    data_train, data_test = Data.train_test_split(data)
 
     # Pretrain:
     if !isnothing(pre_train_models)

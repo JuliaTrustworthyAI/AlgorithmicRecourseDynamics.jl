@@ -1,31 +1,31 @@
 [".DS_Store"]
-git-tree-sha1 = "47dc543f95ce1ab54d111b0b36ab1d05f7ba5d5e"
+git-tree-sha1 = "2fcccf7122a7474bbad9e1c097c1e7f811a18588"
 lazy = true
 
     [[".DS_Store".download]]
-    sha256 = "d2510068e2290acf1709a47e04611861e58a45a5922a6a1dd3aa866d356efa2b"
+    sha256 = "4213d2ce458881ec7d26aaca08bf2ddeca84f0cc164418e80761545b132cd141"
     url = "https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/releases/download/artifacts/.DS_Store.tar.gz"
 
 [data]
-git-tree-sha1 = "d7734dd821c36bc181f575b46f6afb394497393f"
+git-tree-sha1 = "f2f95078fb5e8e45024cea4e726f6d31db135d17"
 lazy = true
 
     [[data.download]]
-    sha256 = "73efadb77cf38b7811e2aac2ab01b2a67da4cf04418063c3d57725a18a7ccefc"
+    sha256 = "fc109531db8ca9d34facdcab846ac9bcf9211b1c2af65d6027e91441a741b6ee"
     url = "https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/releases/download/artifacts/data.tar.gz"
 
 [output]
-git-tree-sha1 = "e25df1a3511e490be373a468edad4b31f09fdf1e"
+git-tree-sha1 = "e58d7f0cd0a97939daf9b838475f6273bb66d915"
 lazy = true
 
     [[output.download]]
-    sha256 = "82eaea65141cdbd91d184a97bc9b6b5292d14ea51e75ef0438e3b7a712451ffe"
+    sha256 = "418c3267252a9e9544378199c7f65c092d7463204bcda7a5b6a2c60b5c1dfeab"
     url = "https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/releases/download/artifacts/output.tar.gz"
 
 [www]
-git-tree-sha1 = "6f4d5eac4c2b8d83ede7fee343d9c95496a5484b"
+git-tree-sha1 = "58fb5fbf88c773303ce055bfd0c91fd8a5a90e10"
 lazy = true
 
     [[www.download]]
-    sha256 = "476a4e75400199f3b095a0050d4a28b0cfc8c6f52483c5a362fa81716f9c65b7"
+    sha256 = "8ee9678107d505e815ed5553e78e2ace212bd521f11579916fec272ee696fd57"
     url = "https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/releases/download/artifacts/www.tar.gz"

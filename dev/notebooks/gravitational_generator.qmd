@@ -60,6 +60,7 @@ M = FluxModel(nn)
 x = select_factual(counterfactual_data, rand(1:size(X)[2])) 
 y = round(probs(M, x)[1])
 target = ifelse(y==1.0,0.0,1.0) # opposite label as target
+T = 100
 ```
 
 ```{julia}
@@ -72,19 +73,19 @@ for λ₂ ∈ Λ₂
     generators = vcat(generators..., generator)
     counterfactuals = vcat(
       counterfactuals...,
-      generate_counterfactual(x, target, counterfactual_data, M, generator; convergence=:strict)
+      generate_counterfactual(x, target, counterfactual_data, M, generator; convergence=:strict, T=T)
     )
 end
 ```
 
 ```{julia}
 theme(:wong)
-T = 500
+T_ = 500
 plts = []
 for i ∈ 1:length(Λ₂)
     λ₂ = Λ₂[i]
     counterfactual = counterfactuals[i]  
-    plt = plot(counterfactual, plot_up_to=T, title="λ₂=$(λ₂)")
+    plt = plot(counterfactual, plot_up_to=minimum([T,T_]), title="λ₂=$(λ₂)")
     x1,x2 = generators[i].centroid[1], generators[i].centroid[2]
     scatter!(plt, [x1], [x2], colour=:purple, label="attractor")
     plts = vcat(plts..., plt)
@@ -112,12 +113,12 @@ end
 
 ```{julia}
 theme(:wong)
-T = 500
+T_ = 500
 plts = []
 for i ∈ 1:length(Λ₂)
     λ₂ = Λ₂[i]
     counterfactual = counterfactuals[i]  
-    plt = plot(counterfactual, plot_up_to=T, title="λ₂=$(λ₂)")
+    plt = plot(counterfactual, plot_up_to=minimum([T,T_]), title="λ₂=$(λ₂)")
     x1,x2 = generators[i].centroid[1], generators[i].centroid[2]
     scatter!(plt, [x1], [x2], colour=:purple, label="attractor")
     plts = vcat(plts..., plt)
@@ -127,6 +128,10 @@ savefig(plt, joinpath(www_path,"gravitational_generator.png"))
 ```
 
 ![Generating diverse counterfactuals through `GravitationalGenerator`, but converging when threshold is reached. The magnitude of attraction ($\lambda_2) increases from left to right.](../artifacts/upload/www/generator/gravitational_generator.png){#fig-conventional}
+
+```{julia}
+
+```
 
 
 # References

@@ -146,7 +146,7 @@ function LogisticRegression(data::CounterfactualData;kwargs...)
     output_dim = output_dim==2 ? output_dim=1 : output_dim # adjust in case binary
     @assert output_dim==1 "Logistic model not applicable to multi-dimensional output."
 
-    model = build_mlp(;input_dim=input_dim, output_dim=output_dim,n_layers=1, kwargs...)
+    model = build_mlp(;input_dim=input_dim, output_dim=output_dim,n_layers=1,activation=Flux.sigmoid)
     M = FluxModel(model; likelihood=:classification_binary)
 
     return M

@@ -4,18 +4,18 @@ mutable struct GravitationalGenerator <: AbstractGradientBasedGenerator
     loss::Union{Nothing,Symbol} # loss function
     complexity::Function # complexity function
     λ::Union{AbstractFloat,AbstractVector} # strength of penalty
-    ϵ::AbstractFloat # learning rate
+    opt::Any # optimizer
     τ::AbstractFloat # tolerance for convergence
     K::Int # number of K randomly chosen neighbours
     centroid::Union{Nothing,AbstractArray}
 end
 
 # API streamlining:
-using Parameters
+using Parameters, Flux
 @with_kw struct GravitationalGeneratorParams
-    ϵ::AbstractFloat=0.1
+    opt::Any=Flux.Optimise.Descent()
     τ::AbstractFloat=1e-5
-    K::Int=5
+    K::Int=50
     centroid::Union{Nothing,AbstractArray}=nothing
 end
 
@@ -25,7 +25,7 @@ end
         loss::Symbol=:logitbinarycrossentropy,
         complexity::Function=norm,
         λ::AbstractFloat=0.1,
-        ϵ::AbstractFloat=0.1,
+        opt::Any=Flux.Optimise.Descent(),
         τ::AbstractFloat=1e-5
     )
 
@@ -36,9 +36,9 @@ An outer constructor method that instantiates a generic generator.
 generator = GravitationalGenerator()
 ```
 """
-function GravitationalGenerator(;loss::Union{Nothing,Symbol}=nothing,complexity::Function=norm,λ::Union{AbstractFloat,AbstractVector}=[0.1, 5.0],kwargs...)
+function GravitationalGenerator(;loss::Union{Nothing,Symbol}=nothing,complexity::Function=norm,λ::Union{AbstractFloat,AbstractVector}=[0.1,1.0],kwargs...)
     params = GravitationalGeneratorParams(;kwargs...)
-    GravitationalGenerator(loss, complexity, λ, params.ϵ, params.τ, params.K, params.centroid)
+    GravitationalGenerator(loss, complexity, λ, params.opt, params.τ, params.K, params.centroid)
 end
 
 # Complexity:

@@ -1,43 +1,12 @@
 ---
-title: "Endogenous Dynamics in Algorithmic Recourse"
-author: |
-    \author{
-    \IEEEauthorblockN{Patrick Altmeyer}
-    \IEEEauthorblockA{\textit{EEMCS} \\
-    \textit{Delft University of Technology}\\
-    Delft, Netherlands \\
-    p.altmeyer[at]tudelft.nl}
-    \and
-    \IEEEauthorblockN{Giovan Angela}
-    \IEEEauthorblockA{\textit{EEMCS} \\
-    \textit{Delft University of Technology}\\
-    Delft, Netherlands \\
-    g.j.a.angela[at]student.tudelft.nl}
-    \and
-    \IEEEauthorblockN{Aleksander Buszydlik}
-    \IEEEauthorblockA{\textit{EEMCS} \\
-    \textit{Delft University of Technology}\\
-    Delft, Netherlands \\
-    a.j.buszydlik[at]student.tudelft.nl}
-    \and
-    \IEEEauthorblockN{Karol Dobiczek}
-    \IEEEauthorblockA{\textit{EEMCS} \\
-    \textit{Delft University of Technology}\\
-    Delft, Netherlands \\
-    k.t.dobiczek[at]student.tudelft.nl}
-    \and
-    \IEEEauthorblockN{Cynthia C. S. Liem}
-    \IEEEauthorblockA{\textit{EEMCS} \\
-    \textit{Delft University of Technology}\\
-    Delft, Netherlands \\
-    c.c.s.liem[at]tudelft.nl}
-    }
+title: "Endogenous Macrodynamics in Algorithmic Recourse"
 format: 
     pdf:
         documentclass: IEEEtran
         classoption: conference
         include-in-header: tex/preamble.tex
         keep-tex: true
+    html: default
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/ieee.csl
 number-sections: true
 license: "CC BY"

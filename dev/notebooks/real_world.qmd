@@ -17,9 +17,8 @@ www_path = www_dir("real_world")
 ```
 
 ```{julia}
-catalogue = AlgorithmicRecourseDynamics.Data.load_real_world()
-choices = [:give_me_some_credit_balanced, :housing]
-data_sets = filter(p -> p[1] in choices, catalogue)
+max_obs = 10000
+data_sets = AlgorithmicRecourseDynamics.Data.load_real_world(max_obs)
 ```
 
 ```{julia}
@@ -30,23 +29,31 @@ function data_loader(data::CounterfactualData)
     data = Flux.DataLoader((X,y),batchsize=bs)
     return data
 end
-model_params = (batch_norm=false,n_hidden=128,dropout=true,p_dropout=0.1)
+model_params = (batch_norm=false,n_hidden=32,n_layers=3,dropout=true,p_dropout=0.25)
 ```
 
 
 ```{julia}
-models = [:FluxModel, :FluxEnsemble]
+models = [
+    :LogisticRegression, 
+    :FluxModel, 
+    :FluxEnsemble
+]
 generators = Dict(
     :Greedy=>GreedyGenerator(), 
     :Generic=>GenericGenerator(),
     :REVISE=>REVISEGenerator(),
     :DICE=>DiCEGenerator(),
-    :Gravitational=>GravitationalGenerator(),
+    :Gravitational=>GravitationalGenerator(λ=[0.1,2]),
 )
 ```
 
 ```{julia}
-experiments = set_up_experiments(data_sets,models,generators; pre_train_models=100, model_params=model_params, data_loader=data_loader)
+experiments = set_up_experiments(
+    data_sets,models,generators; 
+    pre_train_models=100, model_params=model_params, 
+    data_loader=data_loader
+)
 ```
 
 ```{julia}
@@ -87,13 +94,31 @@ experiments = set_up_experiments(data_sets,models,generators; pre_train_models=1
 # savefig(plt, joinpath(www_path,"models_train_before.png"))
 ```
 
+## Strict convergence
+
+```{julia}
+n_evals = 5
+n_rounds = 50
+evaluate_every = Int(round(n_rounds/n_evals))
+n_folds = 5
+n_bootstrap = 1
+T = 500
+using Serialization
+results = run_experiments(
+    experiments;
+    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap, T=T,
+    convergence=:strict, save_name_suffix="strict"
+)
+Serialization.serialize(joinpath(output_path,"results_strict.jls"),results)
+```
+
 ## Simple convergence
 
 ```{julia}
-n_evals = 1
-n_rounds = 10
+n_evals = 5
+n_rounds = 50
 evaluate_every = Int(round(n_rounds/n_evals))
-n_folds = 2
+n_folds = 5
 n_bootstrap = 1
 using Serialization
 results = run_experiments(
@@ -166,23 +191,21 @@ using Serialization
 results = Serialization.deserialize(joinpath(output_path,"results.jls"))
 ```
 
-
-## Strict convergence
+### Plots 
 
 ```{julia}
-n_evals = 1
-n_rounds = 10
-evaluate_every = Int(round(n_rounds/n_evals))
-n_folds = 2
-n_bootstrap = 1
-using Serialization
-results = run_experiments(
-    experiments;
-    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap,
-    convergence=:strict, save_name_suffix="strict"
-)
-Serialization.serialize(joinpath(output_path,"results_strict.jls"),results)
+# plot_dict = Dict()
+# for (data_name, res) in results
+#     output_data = res.output
+#     metrics = unique(output_data.name)
+#     plots = Dict(metric => plot(res, metric) for metric in metrics)
+#     plot_dict[data_name] = plots
+# end
 ```
+
+
+
+
 
 ```{julia}
 using AlgorithmicRecourseDynamics.Models: model_evaluation

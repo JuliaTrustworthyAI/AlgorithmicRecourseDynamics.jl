@@ -1,6 +1,6 @@
 module Generators
 
-include("functions.jl")
+include("GravitationalGenerator.jl")
 export GravitationalGenerator
     
 end

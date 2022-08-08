@@ -162,7 +162,8 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
     factuals = select_factual(counterfactual_data,chosen_individuals)
     results = generate_counterfactual(
         factuals, target, counterfactual_data, M, generator; 
-        T=T, γ=γ, num_counterfactuals=experiment.num_counterfactuals
+        T=T, γ=γ, num_counterfactuals=experiment.num_counterfactuals,
+        convergence=args.convergence
     );
     
     indices_ = rand(1:experiment.num_counterfactuals,length(results)) # randomly draw from generated counterfactuals

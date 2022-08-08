@@ -16,7 +16,8 @@ function load_synthetic()
     return data
 end
 
-function load_real_world()
+using CounterfactualExplanations
+function load_real_world(max_obs::Union{Nothing, Int}=nothing)
     data_dir = joinpath(artifact"data","data/real_world")
     files = readdir(data_dir)
     files = files[contains.(files,".csv")]
@@ -26,6 +27,10 @@ function load_real_world()
         X = permutedims(X)
         y = convert(Matrix, df.target')
         data = CounterfactualData(X,y)
+        if !isnothing(max_obs)
+            n_classes = length(unique(y))
+            data = undersample(data, Int(round(max_obs/n_classes)))
+        end
         (Symbol(replace(file, ".csv" => "")) => data)
     end
     data = Dict(data...)

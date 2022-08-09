@@ -192,7 +192,7 @@ Early findings suggest that the involved shifts may be large with
 important implications on the validity of AR and the overall
 characteristics of the sample population.
 \end{abstract}
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[breakable, interior hidden, borderline west={3pt}{0pt}{shadecolor}, enhanced, boxrule=0pt, sharp corners, frame hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, enhanced, breakable, interior hidden, boxrule=0pt, borderline west={3pt}{0pt}{shadecolor}, frame hidden]}{\end{tcolorbox}}\fi
 
 \hypertarget{sec-intro}{%
 \section{Introduction}\label{sec-intro}}
@@ -312,17 +312,18 @@ focus from single individuals to groups. Secondly, we introduce an
 experimental framework extending previous work by
 \protect\hyperlink{ref-altmeyer2022CounterfactualExplanations}{{[}6{]}},
 which enables us to study macrodynamics of algorithmic recourse through
-simulations. To this end we propose a number of novel evaluation metrics
-that can be used to qunatify and benchmark the macrodynmics introduced
-by different counterfactual generators. Thirdly, we use this framework
-to provide a first in-depth analysis of endogenous recourse dynamics
-induced by various popular counterfactual generators including
+simulations that can be fully parallelized. Thirdly, we use this
+framework to provide a first in-depth analysis of endogenous recourse
+dynamics induced by various popular counterfactual generators including
 \protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}},
 \protect\hyperlink{ref-schut2021generating}{{[}7{]}},
 \protect\hyperlink{ref-joshi2019towards}{{[}8{]}},
 \protect\hyperlink{ref-mothilal2020explaining}{{[}9{]}} and
-\protect\hyperlink{ref-antoran2020getting}{{[}10{]}}. Finally, we
-discuss what drives endogenous dynamics and strategies to mitigate them.
+\protect\hyperlink{ref-antoran2020getting}{{[}10{]}}. To this end we
+propose a number of novel evaluation metrics that can be used to
+quantify and benchmark the macrodynamics introduced by the different
+generators. Finally, we also discuss what drives endogenous dynamics and
+propose strategies to mitigate them.
 
 The remainder of the paper is structured as follows:
 Section~\ref{sec-related} places our work in the broader context of
@@ -411,6 +412,15 @@ correction, temporal shifts or geospatial changes
 for algorithmic recourse (ROAR) that evidently improves robustness to
 such exogenous shifts.
 
+As mentioned earlier, research has so far also generally focused on
+generating counterfactuals for single individuals or instances. We have
+been able to identify only one existing work that investigates black-box
+model behavior towards a group of individuals
+\protect\hyperlink{ref-carrizosa2021generating}{{[}16{]}}. The authors
+propose an optimization framework that generates collective
+counterfactuals. We provide a motivation for doing so from the
+perspective of endogenous macrodynamics of algorithmic recourse.
+
 \hypertarget{sec-related-shifts}{%
 \subsection{Domain and Model Shifts}\label{sec-related-shifts}}
 
@@ -418,25 +428,25 @@ Much attention has been paid to the detection of dataset shifts --
 situations where the distribution of data changes over time. Rabanser et
 al.~suggest a framework to detect data drift from a minimal number of
 samples through the application of two-sample tests
-\protect\hyperlink{ref-rabanser2019failing}{{[}16{]}}. This task is a
+\protect\hyperlink{ref-rabanser2019failing}{{[}17{]}}. This task is a
 generalization of the anomaly detection problem for large datasets,
 which aims to answer the question if two sets of samples could have been
 generated from the same probability distribution. Numerous approaches to
 anomaly detection have been summarized
-\protect\hyperlink{ref-chandola2009anomaly}{{[}17{]}}. Another
+\protect\hyperlink{ref-chandola2009anomaly}{{[}18{]}}. Another
 well-established research topic is that of concept drift -- situations
 where external variables influence the patterns between the input and
 the output of a model
-\protect\hyperlink{ref-widmer1996learning}{{[}18{]}}. For instance, Gama
+\protect\hyperlink{ref-widmer1996learning}{{[}19{]}}. For instance, Gama
 et al.~offer a review of the adaptive learning techniques which can
-handle concept drift \protect\hyperlink{ref-gama2014survey}{{[}19{]}}.
+handle concept drift \protect\hyperlink{ref-gama2014survey}{{[}20{]}}.
 Less previous work is available on the related topic of model drift -
 changes in model performance over time. Nelson et al.~review how
 resistant different machine learning models are to the model drift
-\protect\hyperlink{ref-nelson2015evaluating}{{[}20{]}}. Ackerman et
+\protect\hyperlink{ref-nelson2015evaluating}{{[}21{]}}. Ackerman et
 al.~offer a method to detect changes in model performance when ground
 truth is not available
-\protect\hyperlink{ref-ackerman2021machine}{{[}21{]}}.
+\protect\hyperlink{ref-ackerman2021machine}{{[}22{]}}.
 
 In the context of algorithmic recourse, domain and model shifts were
 first brought up by the authors behind ROAR
@@ -461,15 +471,17 @@ Despite the large and growing number of approaches to counterfactual
 search there have been surprisingly few benchmark studies that compare
 different methodologies. This may be partially due to limited software
 availability in this space. Recent work has started to address this gap:
-firstly, \protect\hyperlink{ref-de2021framework}{{[}22{]}} run a large
+firstly, \protect\hyperlink{ref-de2021framework}{{[}23{]}} run a large
 benchmarking study using different algorithmic aproaches and numerous
 tabular datasets; secondly,
 \protect\hyperlink{ref-pawelczyk2021carla}{{[}4{]}} introduce a Python
-framework that can be used to apply and benchmark different methodology;
-finally,
+framework that can be used to apply and benchmark different
+methodologies; finally,
 \protect\hyperlink{ref-altmeyer2022CounterfactualExplanations}{{[}6{]}}
-provides an extensible and language-agnostic implementation in Julia.
-For the experiments conducted in this work we relied on the latter.
+provides an extensible, fast and language-agnostic implementation in
+Julia. Since the experiments presented here involve extensive
+simulations, we have relied on and extended the Julia implementation due
+to the associated performance benefits.
 
 \hypertarget{sec-method}{%
 \section{Methodology}\label{sec-method}}
@@ -700,9 +712,8 @@ assess if endogenous dynamics also occur in higher-dimensional settings.
 \hypertarget{synthetic-data}{%
 \subsubsection{Synthetic data}\label{synthetic-data}}
 
-We use 6 synthetic binary classification datasets consisting of 200-400
-samples grouped in normally-distributed clusters.\footnote{To see how
-  the data is generated see here:
+We use four synthetic binary classification datasets consisting of 1000
+samples each.\footnote{To see how the data is generated see here:
   \url{https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/blob/main/notebooks/synthetic_datasets.ipynb}}
 The datasets are presented in Figure~\ref{fig-synthetic-data} (see also
 Appendix A for a formal description). Samples from the negative class
@@ -711,7 +722,7 @@ orange.
 
 \begin{figure}
 
-{\centering \includegraphics{www/synthetic_data.png}
+{\centering \includegraphics[width=8cm,height=8cm]{www/placeholder.png}
 
 }
 
@@ -741,12 +752,12 @@ Additionally, we use two real-world datasets from the Finance domain.
 Firstly, we use the Give Me Some Credit dataset which was open-sourced
 on Kaggle for the task to predict whether a borrower is likely to
 experience financial difficulties in the next two years
-\protect\hyperlink{ref-gmsc_data}{{[}23{]}}. Originally consisting of
+\protect\hyperlink{ref-gmsc_data}{{[}24{]}}. Originally consisting of
 250,000 instances with 11 numerical attributes, the dataset was randomly
 undersampled to result in a balanced subsample made up of 3000
 individuals. Secondly, we the German Credit dataset which involves the
 task of predicting if bank customers are credit-worthy or not
-\protect\hyperlink{ref-germancredit1994}{{[}24{]}}. It consists of 700
+\protect\hyperlink{ref-germancredit1994}{{[}25{]}}. It consists of 700
 positive and 300 negative instances charaterized by 7 numerical and 13
 categorical attributes. We process the dataset in two ways: (1) the
 values of the ``Personal status and sex'' feature are aggregated by the
@@ -803,7 +814,7 @@ round \(t=1,...,T\) of the experiment. To assess the statistical
 significance of the observed shifts under the null hypothesis that
 samples \(X\) and \(\tilde{X}\) were drawn from the same probability
 distribution we follow
-\protect\hyperlink{ref-arcones1992bootstrap}{{[}25{]}}. To that end, we
+\protect\hyperlink{ref-arcones1992bootstrap}{{[}26{]}}. To that end, we
 combine the two samples and generate a large number of permutations of
 \(X + \tilde{X}\). Then, we split the permuted data into two new samples
 \(X^\prime\) and \(\tilde{X}^\prime\) having the same size as the
@@ -856,7 +867,7 @@ enough points to overcome noise as the dimension \(D\) grows.
 
 As an alternative to PP MMD we use a pseudo-distance for the
 \textbf{Disagreement Coefficient} (Disagreement). This metric was
-introduced in \protect\hyperlink{ref-hanneke2007bound}{{[}26{]}} and
+introduced in \protect\hyperlink{ref-hanneke2007bound}{{[}27{]}} and
 estimates \(p(M(x) \neq M^\prime(x))\), that is the probability that two
 classifiers do not agree on the predicted outcome for a randomly chosen
 sample. Thus, it is not relevant whether the classification is correct
@@ -980,7 +991,7 @@ learning in the context of high-dimensional data such as image, audio
 and video, empirical evidence suggests that other models such as boosted
 decision trees may have an edge when it comes to lower-dimensional
 tabular datasets, such as the ones considered here
-\protect\hyperlink{ref-grinsztajn2022tree}{{[}28{]}}.
+\protect\hyperlink{ref-grinsztajn2022tree}{{[}29{]}}.
 
 \hypertarget{sec-conclusion}{%
 \section{Concluding Remarks}\label{sec-conclusion}}
@@ -1099,33 +1110,39 @@ fairness, accountability, and transparency}, 2021, pp. 353--362.}
 robust and reliable algorithmic recourse,''} \emph{arXiv preprint
 arXiv:2102.13620}, 2021.}
 
-\leavevmode\vadjust pre{\hypertarget{ref-rabanser2019failing}{}}%
+\leavevmode\vadjust pre{\hypertarget{ref-carrizosa2021generating}{}}%
 \CSLLeftMargin{{[}16{]} }%
+\CSLRightInline{E. Carrizosa, J. Ramırez-Ayerbe, and D. Romero,
+{``Generating collective counterfactual explanations in score-based
+classification via mathematical optimization,''} 2021.}
+
+\leavevmode\vadjust pre{\hypertarget{ref-rabanser2019failing}{}}%
+\CSLLeftMargin{{[}17{]} }%
 \CSLRightInline{S. Rabanser, S. Günnemann, and Z. Lipton, {``Failing
 loudly: An empirical study of methods for detecting dataset shift,''}
 \emph{Advances in Neural Information Processing Systems}, vol. 32,
 2019.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-chandola2009anomaly}{}}%
-\CSLLeftMargin{{[}17{]} }%
+\CSLLeftMargin{{[}18{]} }%
 \CSLRightInline{V. Chandola, A. Banerjee, and V. Kumar, {``Anomaly
 detection: A survey,''} \emph{ACM computing surveys (CSUR)}, vol. 41,
 no. 3, pp. 1--58, 2009.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-widmer1996learning}{}}%
-\CSLLeftMargin{{[}18{]} }%
+\CSLLeftMargin{{[}19{]} }%
 \CSLRightInline{G. Widmer and M. Kubat, {``Learning in the presence of
 concept drift and hidden contexts,''} \emph{Machine learning}, vol. 23,
 no. 1, pp. 69--101, 1996.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-gama2014survey}{}}%
-\CSLLeftMargin{{[}19{]} }%
+\CSLLeftMargin{{[}20{]} }%
 \CSLRightInline{J. Gama, I. Žliobaitė, A. Bifet, M. Pechenizkiy, and A.
 Bouchachia, {``A survey on concept drift adaptation,''} \emph{ACM
 computing surveys (CSUR)}, vol. 46, no. 4, pp. 1--37, 2014.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-nelson2015evaluating}{}}%
-\CSLLeftMargin{{[}20{]} }%
+\CSLLeftMargin{{[}21{]} }%
 \CSLRightInline{K. Nelson, G. Corbin, M. Anania, M. Kovacs, J. Tobias,
 and M. Blowers, {``Evaluating model drift in machine learning
 algorithms,''} in \emph{2015 IEEE symposium on computational
@@ -1133,7 +1150,7 @@ intelligence for security and defense applications (CISDA)}, 2015, pp.
 1--8.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-ackerman2021machine}{}}%
-\CSLLeftMargin{{[}21{]} }%
+\CSLLeftMargin{{[}22{]} }%
 \CSLRightInline{S. Ackerman, P. Dube, E. Farchi, O. Raz, and M.
 Zalmanovici, {``Machine learning model drift detection via weak data
 slices,''} in \emph{2021 IEEE/ACM third international workshop on deep
@@ -1141,42 +1158,42 @@ learning for testing and testing for deep learning (DeepTest)}, 2021,
 pp. 1--8.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-de2021framework}{}}%
-\CSLLeftMargin{{[}22{]} }%
+\CSLLeftMargin{{[}23{]} }%
 \CSLRightInline{R. M. B. de Oliveira and D. Martens, {``A framework and
 benchmarking study for counterfactual generating methods on tabular
 data,''} \emph{Applied Sciences}, vol. 11, no. 16, p. 7274, 2021.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-gmsc_data}{}}%
-\CSLLeftMargin{{[}23{]} }%
+\CSLLeftMargin{{[}24{]} }%
 \CSLRightInline{K. Competition, {``Give me some credit, improve on the
 state of the art in credit scoring by predicting the probability that
 somebody will experience financial distress in the next two years.''}
 \url{https://www.kaggle.com/c/GiveMeSomeCredit}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-germancredit1994}{}}%
-\CSLLeftMargin{{[}24{]} }%
+\CSLLeftMargin{{[}25{]} }%
 \CSLRightInline{H. Hoffman, {``German credit data,''} 1994.
 \url{https://archive.ics.uci.edu/ml/datasets/statlog+(german+credit+data)}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-arcones1992bootstrap}{}}%
-\CSLLeftMargin{{[}25{]} }%
+\CSLLeftMargin{{[}26{]} }%
 \CSLRightInline{M. A. Arcones and E. Gine, {``On the bootstrap of u and
 v statistics,''} \emph{The Annals of Statistics}, pp. 655--674, 1992.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-hanneke2007bound}{}}%
-\CSLLeftMargin{{[}26{]} }%
+\CSLLeftMargin{{[}27{]} }%
 \CSLRightInline{S. Hanneke, {``A bound on the label complexity of
 agnostic active learning,''} in \emph{Proceedings of the 24th
 international conference on machine learning}, 2007, pp. 353--360.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-borisov2021deep}{}}%
-\CSLLeftMargin{{[}27{]} }%
+\CSLLeftMargin{{[}28{]} }%
 \CSLRightInline{V. Borisov, T. Leemann, K. Seßler, J. Haug, M.
 Pawelczyk, and G. Kasneci, {``Deep neural networks and tabular data: A
 survey,''} \emph{arXiv preprint arXiv:2110.01889}, 2021.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-grinsztajn2022tree}{}}%
-\CSLLeftMargin{{[}28{]} }%
+\CSLLeftMargin{{[}29{]} }%
 \CSLRightInline{L. Grinsztajn, E. Oyallon, and G. Varoquaux, {``Why do
 tree-based models still outperform deep learning on tabular data?''}
 \emph{arXiv preprint arXiv:2207.08815}, 2022.}

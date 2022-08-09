@@ -10,7 +10,6 @@ using Pkg; Pkg.activate("dev")
 ```{julia}
 include("dev/utils.jl")
 using AlgorithmicRecourseDynamics
-theme(:wong)
 output_path = output_dir("synthetic")
 www_path = www_dir("synthetic")
 data_path = data_dir("synthetic")
@@ -18,7 +17,7 @@ data_path = data_dir("synthetic")
 
 
 ```{julia}
-using MLJ, DataFrames, CSV, VegaLite
+using MLJ, DataFrames, CSV
 n = 1000
 p = 2
 
@@ -29,27 +28,23 @@ Random.seed!(42)
 X, y = make_blobs(n, p; centers=2, center_box=(-2 => 2), cluster_std=0.1)
 df = DataFrame(X)
 df.target .= ifelse.(y.==1,0,1)
-df |> @vlplot(:point, x=:x1, y=:x2, color = :"target:n")
 CSV.write(joinpath(data_path, "linearly_separable.csv"),df)
 
 # Overlapping:
 X, y = make_blobs(n, p; centers=2, center_box=(-2 => 2), cluster_std=0.5)
 df = DataFrame(X)
 df.target .= ifelse.(y.==1,0,1)
-df |> @vlplot(:point, x=:x1, y=:x2, color = :"target:n")
 CSV.write(joinpath(data_path, "overlapping.csv"),df)
 
 # Circles:
 X, y = make_circles(n; noise=0.15, factor=0.01)
 df = DataFrame(X)
 df.target = y
-df |> @vlplot(:point, x=:x1, y=:x2, color = :"target:n")
 CSV.write(joinpath(data_path, "circles.csv"),df)
 
 # Moon:
 X, y = make_moons(n)
 df = DataFrame(X)
 df.target = y
-df |> @vlplot(:point, x=:x1, y=:x2, color = :"target:n")
 CSV.write(joinpath(data_path, "moons.csv"),df)
 ```

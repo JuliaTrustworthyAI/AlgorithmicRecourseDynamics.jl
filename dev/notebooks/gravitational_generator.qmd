@@ -65,14 +65,14 @@ T = 100
 
 ```{julia}
 Λ₂ = [0.1, 1, 5]
-counterfactuals = []
+counterfactuals_strict = []
 generators = []
 for λ₂ ∈ Λ₂  
     λ = [0.1, λ₂]
     generator = GravitationalGenerator(λ=λ)
     generators = vcat(generators..., generator)
-    counterfactuals = vcat(
-      counterfactuals...,
+    counterfactuals_strict = vcat(
+      counterfactuals_strict...,
       generate_counterfactual(x, target, counterfactual_data, M, generator; convergence=:strict, T=T)
     )
 end
@@ -84,7 +84,7 @@ T_ = 500
 plts = []
 for i ∈ 1:length(Λ₂)
     λ₂ = Λ₂[i]
-    counterfactual = counterfactuals[i]  
+    counterfactual = counterfactuals_strict[i]  
     plt = plot(counterfactual, plot_up_to=minimum([T,T_]), title="λ₂=$(λ₂)")
     x1,x2 = generators[i].centroid[1], generators[i].centroid[2]
     scatter!(plt, [x1], [x2], colour=:purple, label="attractor")
@@ -129,8 +129,17 @@ savefig(plt, joinpath(www_path,"gravitational_generator.png"))
 
 ![Generating diverse counterfactuals through `GravitationalGenerator`, but converging when threshold is reached. The magnitude of attraction ($\lambda_2) increases from left to right.](../artifacts/upload/www/generator/gravitational_generator.png){#fig-conventional}
 
-```{julia}
+### Comparison - simple vs. strict convergence
 
+```{julia}
+idx = 2
+x1,x2 = generators[idx].centroid[1], generators[idx].centroid[2]
+plt1 = plot(counterfactuals[idx], plot_up_to=minimum([T,T_]), title="Simple")
+scatter!(plt1, [x1], [x2], colour=:purple, label="attractor")
+plt2 = plot(counterfactuals_strict[idx], plot_up_to=minimum([T,T_]), title="Strict")
+scatter!(plt2, [x1], [x2], colour=:purple, label="attractor")
+plt = plot(plt1, plt2, size=(850,350), layout=(1,2))
+savefig(plt, joinpath(www_path,"gravitational_generator_comparison.png"))
 ```
 
 

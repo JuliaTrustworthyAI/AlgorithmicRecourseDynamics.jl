@@ -10,6 +10,7 @@ using Parameters
     γ::AbstractFloat = 0.75
     intersect_::Bool = true
     convergence::Symbol = :threshold_only
+    generative_model_params::NamedTuple = (;)
 end
 
 mutable struct Experiment
@@ -163,7 +164,7 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
     results = generate_counterfactual(
         factuals, target, counterfactual_data, M, generator; 
         T=T, γ=γ, num_counterfactuals=experiment.num_counterfactuals,
-        convergence=args.convergence
+        convergence=args.convergence, generative_model_params=args.generative_model_params
     );
     
     indices_ = rand(1:experiment.num_counterfactuals,length(results)) # randomly draw from generated counterfactuals

@@ -28,14 +28,14 @@ Random.seed!(42)
 # Linearly separable:
 X, y = make_blobs(n, p; centers=2, center_box=(-2 => 2), cluster_std=0.1)
 df = DataFrame(X)
-df.target = y
+df.target .= ifelse.(y.==1,0,1)
 df |> @vlplot(:point, x=:x1, y=:x2, color = :"target:n")
 CSV.write(joinpath(data_path, "linearly_separable.csv"),df)
 
 # Overlapping:
 X, y = make_blobs(n, p; centers=2, center_box=(-2 => 2), cluster_std=0.5)
 df = DataFrame(X)
-df.target = y
+df.target .= ifelse.(y.==1,0,1)
 df |> @vlplot(:point, x=:x1, y=:x2, color = :"target:n")
 CSV.write(joinpath(data_path, "overlapping.csv"),df)
 

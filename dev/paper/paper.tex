@@ -192,7 +192,7 @@ Early findings suggest that the involved shifts may be large with
 important implications on the validity of AR and the overall
 characteristics of the sample population.
 \end{abstract}
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, borderline west={3pt}{0pt}{shadecolor}, enhanced, boxrule=0pt, frame hidden, sharp corners, breakable]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[breakable, interior hidden, borderline west={3pt}{0pt}{shadecolor}, enhanced, boxrule=0pt, sharp corners, frame hidden]}{\end{tcolorbox}}\fi
 
 \hypertarget{sec-intro}{%
 \section{Introduction}\label{sec-intro}}
@@ -247,6 +247,18 @@ one step further and ask ourselves: what happens if recourse is provided
 and implemented repeatedly? What types of dynamics are introduced and
 how do different counterfactual generators compare in this context?
 
+Research on algorithmic recourse has also so far typically addressed the
+issue from the perspective of one single individual and has indeed been
+referred to as \textbf{individual recourse} in some places. Arguably
+though, most real-world applications that warrant algorithmic recourse
+involve potentially large groups of individuals typically competing for
+scarce resources. Our work demonstrates that in such scenarios, choices
+made by or for one single individual are likely to affect the broader
+collective of individuals in ways that current approaches to AR fail to
+account for. More specifically, we argue that a strict focus on
+minimizing the private costs faced by individuals may be too narrow an
+objective.
+
 Figure~\ref{fig-poc} illustrates this idea for a binary problem
 involving a probabilistic classifier and the counterfactual generator
 proposed by \protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}}:
@@ -256,7 +268,9 @@ implementing AR and updating the classifier is repeated, the decision
 boundary moves away from training samples that were originally in the
 target class (d). We refer to these types of dynamics as
 \textbf{endogenous} because they are induced by the implementation of
-recourse itself.
+recourse itself. The term \textbf{macrodynamics} is borrowed from the
+economics literature and used to describe processes involving whole
+groups or societies.
 
 \begin{figure}
 
@@ -273,40 +287,50 @@ from the target class (d).}
 
 \end{figure}
 
-We think that these types of endogenous dynamics may be problematic.
-Firstly, model shifts may inadvertently change classification outcomes
-for individuals who never received and implemented recourse. Secondly
-and relatedly, we observe in Figure~\ref{fig-poc} that as the decision
-boundary moves in the direction of the non-target class, counterfactual
-paths become shorter: in the consumer credit example, individuals that
-previously would have been denied credit based on their input features
-are suddenly considered as creditworthy. Average default risk across all
-borrowers can therefore be expected to increase. Conversely, lenders
-that anticipate such dynamics may choose to deny credit to individuals
-that have implemented AR, thereby compromising the validity of AR.
+We think that these types of endogenous dynamics may be problematic and
+warrant our attention. Firstly, model shifts may inadvertently change
+classification outcomes for individuals who never received and
+implemented recourse. Secondly and relatedly, we observe in
+Figure~\ref{fig-poc} that as the decision boundary moves in the
+direction of the non-target class, counterfactual paths become shorter:
+in the consumer credit example, individuals that previously would have
+been denied credit based on their input features are suddenly considered
+as creditworthy. Average default risk across all borrowers can therefore
+be expected to increase. Conversely, lenders that anticipate such
+dynamics may choose to refrain from offering recourse (and hence credit)
+to more than just a tiny share of individuals. In that latter and
+perhaps more likely scenario, the probability of being offered recourse
+decreases with every individual that implements recourse: in other
+words, the actions of first-movers exert a negative externality on
+future would-be borrowers.
 
 To the best of our knowledge this is the first work investigating
-endogenous dynamics in AR. Our contributions to the state of knowledge
-are two-fold. Firstly, we introduce an experimental framework extending
-previous work by \protect\hyperlink{ref-pawelczyk2021carla}{{[}4{]}},
-which allows for benchmarking different counterfactual generators in
-terms of the endogenous domain and model shifts they introduce. To this
-end we propose a number of novel evaluation metrics. Secondly, we use
-this framework to provide the first in-depth analysis of endogenous
-recourse dynamics induced by various popular counterfactual generators
-including \protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}},
-\protect\hyperlink{ref-joshi2019towards}{{[}6{]}},
-\protect\hyperlink{ref-mothilal2020explaining}{{[}7{]}} and
-\protect\hyperlink{ref-antoran2020getting}{{[}8{]}}.
+endogenous macrodynamics in AR. Our contributions to the state of
+knowledge are as follows: firstly, we posit a compelling argument that
+calls for a novel perspective on algorithmic recourse extending our
+focus from single individuals to groups. Secondly, we introduce an
+experimental framework extending previous work by
+\protect\hyperlink{ref-altmeyer2022CounterfactualExplanations}{{[}6{]}},
+which enables us to study macrodynamics of algorithmic recourse through
+simulations. To this end we propose a number of novel evaluation metrics
+that can be used to qunatify and benchmark the macrodynmics introduced
+by different counterfactual generators. Thirdly, we use this framework
+to provide a first in-depth analysis of endogenous recourse dynamics
+induced by various popular counterfactual generators including
+\protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}},
+\protect\hyperlink{ref-schut2021generating}{{[}7{]}},
+\protect\hyperlink{ref-joshi2019towards}{{[}8{]}},
+\protect\hyperlink{ref-mothilal2020explaining}{{[}9{]}} and
+\protect\hyperlink{ref-antoran2020getting}{{[}10{]}}. Finally, we
+discuss what drives endogenous dynamics and strategies to mitigate them.
 
-We find that \ldots{}
-
-The paper is structured as follows: Section~\ref{sec-related} places our
-work in the broader context of related literature.
-Section~\ref{sec-method} presents our methodology and data.
-Section~\ref{sec-empirical} presents our empirical findings which are
-then discussed in Section~\ref{sec-discussion}. We also point to some of
-the limitations or our work as well as avenues for future research in
+The remainder of the paper is structured as follows:
+Section~\ref{sec-related} places our work in the broader context of
+related literature. Section~\ref{sec-method} presents our methodology
+and data. Section~\ref{sec-empirical} presents our empirical findings
+which are then discussed in the broader context of the literature in
+Section~\ref{sec-discussion}. We also point to some of the limitations
+or our work as well as avenues for future research in
 Section~\ref{sec-limit}. Finally, Section~\ref{sec-conclusion}
 concludes.
 
@@ -352,9 +376,9 @@ of \(x\) are costly.
 Many approaches for the generation of algorithmic recourse have been
 described in the literature. An October 2020 survey by Karimi et
 al.~layed out 60 algorithms that have been proposed since 2014
-\protect\hyperlink{ref-karimi2020survey}{{[}9{]}}. Another survey
+\protect\hyperlink{ref-karimi2020survey}{{[}11{]}}. Another survey
 published around the same time by Verma et al.~described 29 algorithms
-\protect\hyperlink{ref-verma2020counterfactual}{{[}10{]}}. Different
+\protect\hyperlink{ref-verma2020counterfactual}{{[}12{]}}. Different
 approaches vary primarily in terms of the objective functions they
 impose, how they optimize said objective (from brute force through
 gradient-based approaches to graph traversal algorithms), and how the
@@ -363,11 +387,11 @@ the literature has produced an extensive list of desiderata each
 addressing different needs. To name but a few, we are interested in
 generating counterfactuals that close
 \protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}}, actionable
-\protect\hyperlink{ref-ustun2019actionable}{{[}11{]}}, realistic
-\protect\hyperlink{ref-schut2021generating}{{[}12{]}}, sparse, diverse
-\protect\hyperlink{ref-mothilal2020explaining}{{[}7{]}} and if possible
+\protect\hyperlink{ref-ustun2019actionable}{{[}13{]}}, realistic
+\protect\hyperlink{ref-schut2021generating}{{[}7{]}}, sparse, diverse
+\protect\hyperlink{ref-mothilal2020explaining}{{[}9{]}} and if possible
 causally founded
-\protect\hyperlink{ref-karimi2021algorithmic}{{[}13{]}}.
+\protect\hyperlink{ref-karimi2021algorithmic}{{[}14{]}}.
 
 Efforts so far have largely been directed at improving the quality of
 counterfactual explanations within a static context: given some
@@ -376,14 +400,14 @@ interested in generating one or multiple meaningful counterfactual
 explanations for some individual characterized by \(x_i\). The ability
 of counterfactual explanations to handle dynamics like data and model
 shifts remains a largely unexplored research challenge at this point
-\protect\hyperlink{ref-verma2020counterfactual}{{[}10{]}}. We have been
+\protect\hyperlink{ref-verma2020counterfactual}{{[}12{]}}. We have been
 able to identify only one recent work that considers the implications of
 \textbf{exogenous} domain and model shifts in the context of AR
-\protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}}. Exogenous shifts
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}}. Exogenous shifts
 are strictly of external origin. For example, they might stem from data
 correction, temporal shifts or geospatial changes
-\protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}}. The authors of
-\protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}} propose framework
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}}. The authors of
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}} propose framework
 for algorithmic recourse (ROAR) that evidently improves robustness to
 such exogenous shifts.
 
@@ -394,33 +418,33 @@ Much attention has been paid to the detection of dataset shifts --
 situations where the distribution of data changes over time. Rabanser et
 al.~suggest a framework to detect data drift from a minimal number of
 samples through the application of two-sample tests
-\protect\hyperlink{ref-rabanser2019failing}{{[}15{]}}. This task is a
+\protect\hyperlink{ref-rabanser2019failing}{{[}16{]}}. This task is a
 generalization of the anomaly detection problem for large datasets,
 which aims to answer the question if two sets of samples could have been
 generated from the same probability distribution. Numerous approaches to
 anomaly detection have been summarized
-\protect\hyperlink{ref-chandola2009anomaly}{{[}16{]}}. Another
+\protect\hyperlink{ref-chandola2009anomaly}{{[}17{]}}. Another
 well-established research topic is that of concept drift -- situations
 where external variables influence the patterns between the input and
 the output of a model
-\protect\hyperlink{ref-widmer1996learning}{{[}17{]}}. For instance, Gama
+\protect\hyperlink{ref-widmer1996learning}{{[}18{]}}. For instance, Gama
 et al.~offer a review of the adaptive learning techniques which can
-handle concept drift \protect\hyperlink{ref-gama2014survey}{{[}18{]}}.
+handle concept drift \protect\hyperlink{ref-gama2014survey}{{[}19{]}}.
 Less previous work is available on the related topic of model drift -
 changes in model performance over time. Nelson et al.~review how
 resistant different machine learning models are to the model drift
-\protect\hyperlink{ref-nelson2015evaluating}{{[}19{]}}. Ackerman et
+\protect\hyperlink{ref-nelson2015evaluating}{{[}20{]}}. Ackerman et
 al.~offer a method to detect changes in model performance when ground
 truth is not available
-\protect\hyperlink{ref-ackerman2021machine}{{[}20{]}}.
+\protect\hyperlink{ref-ackerman2021machine}{{[}21{]}}.
 
 In the context of algorithmic recourse, domain and model shifts were
 first brought up by the authors behind ROAR
-\protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}}. In their work
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}}. In their work
 they refer to model shifts as simply any perturbation \(\Delta\) to the
 parameters of the model in question: \(M\). While this also sets the
 baseline for our analysis here, it is worth noting that in
-\protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}} these
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}} these
 perturbations are mechanically introduced. In contrast we are interested
 in quantifying model shifts that arise endogenously as part of a dynamic
 recourse process. In addition to quantifying the magnitude of shifts
@@ -437,13 +461,13 @@ Despite the large and growing number of approaches to counterfactual
 search there have been surprisingly few benchmark studies that compare
 different methodologies. This may be partially due to limited software
 availability in this space. Recent work has started to address this gap:
-firstly, \protect\hyperlink{ref-de2021framework}{{[}21{]}} run a large
+firstly, \protect\hyperlink{ref-de2021framework}{{[}22{]}} run a large
 benchmarking study using different algorithmic aproaches and numerous
 tabular datasets; secondly,
 \protect\hyperlink{ref-pawelczyk2021carla}{{[}4{]}} introduce a Python
 framework that can be used to apply and benchmark different methodology;
 finally,
-\protect\hyperlink{ref-altmeyer2022CounterfactualExplanations}{{[}22{]}}
+\protect\hyperlink{ref-altmeyer2022CounterfactualExplanations}{{[}6{]}}
 provides an extensible and language-agnostic implementation in Julia.
 For the experiments conducted in this work we relied on the latter.
 
@@ -465,9 +489,14 @@ In this work we have chosen to focus on a number of gradient-based
 counterfactual generators to investigate the endogenous dynamics we
 introduced in Section~\ref{sec-intro}. Gradient-based counterfactual
 search is well-suited for differentiable black-box models like deep
-neural networks. We can restate Equation~\ref{eq-solution} in a more
-general form that encompasses most gradient-based approaches to
-counterfactual search:
+neural networks.
+
+\hypertarget{from-individual-recourse}{%
+\subsubsection{From individual recourse
+\ldots{}}\label{from-individual-recourse}}
+
+We can restate Equation~\ref{eq-solution} in a more general form that
+encompasses most gradient-based approaches to counterfactual search:
 
 \begin{equation}\protect\hypertarget{eq-general}{}{
 \begin{aligned}
@@ -486,11 +515,11 @@ to one. This generator, which we shall refer to as \textbf{Wachter} in
 the following, shall serve as the baseline against which all other
 gradient-based methodologies will be compared. In particular, we include
 include the following generator in our benchmarking exercises: REVISE
-\protect\hyperlink{ref-joshi2019towards}{{[}6{]}}, CLUE
-\protect\hyperlink{ref-antoran2020getting}{{[}8{]}}, DICE
-\protect\hyperlink{ref-mothilal2020explaining}{{[}7{]}} and a greedy
+\protect\hyperlink{ref-joshi2019towards}{{[}8{]}}, CLUE
+\protect\hyperlink{ref-antoran2020getting}{{[}10{]}}, DICE
+\protect\hyperlink{ref-mothilal2020explaining}{{[}9{]}} and a greedy
 approach that relies on probabilistic models
-\protect\hyperlink{ref-schut2021generating}{{[}12{]}}.
+\protect\hyperlink{ref-schut2021generating}{{[}7{]}}.
 
 Both \textbf{REVISE} and \textbf{CLUE} search counterfactuals in some
 latent embedding \(S \subset \mathcal{S}\) instead of the feature space
@@ -502,23 +531,23 @@ function that maps back from the latent embedding to the feature space.
 Provided the generative model is well-specified, traversing the latent
 embedding typically results in realistic and plausible counterfactuals,
 because they are implicitly generated by the (learned) DGP
-\protect\hyperlink{ref-joshi2019towards}{{[}6{]}}. CLUE distinguishes
+\protect\hyperlink{ref-joshi2019towards}{{[}8{]}}. CLUE distinguishes
 itself from REVISE and other counterfactual generators in that it aims
 to minimize the predictive uncertainty of the model in question \(M\).
 To quantify predictive uncertainty the authors rely on entropy estimates
 for probabilistic models. The \textbf{Greedy} approach proposed by
-\protect\hyperlink{ref-schut2021generating}{{[}12{]}} also works with
-the subclass of models \(\tilde{\mathcal{M}}\subset\mathcal{M}\) that
-can produce predictive uncertainty estimates. The authors show that in
-this setting the complexity penalty \(h(\cdot)\) in
-Equation~\ref{eq-general} is redundant and meaningful counterfactuals
-can be generated in a fast and efficient manner through a modified
-Jacobian-based Saliency Map Attack (JSMA). Finally, \textbf{DICE}
-distinguishes itself from all other generators considered here in that
-it aims to generate a diverse set of \(K>1\) counterfactuals. To this
-end the authors use a complexity penalty \(h(\mathbf{s}^\prime)\) that
-favours diverse outcomes, in the sense that \(s_1, ... , s_K\) look as
-different from each other as possible.
+\protect\hyperlink{ref-schut2021generating}{{[}7{]}} also works with the
+subclass of models \(\tilde{\mathcal{M}}\subset\mathcal{M}\) that can
+produce predictive uncertainty estimates. The authors show that in this
+setting the complexity penalty \(h(\cdot)\) in Equation~\ref{eq-general}
+is redundant and meaningful counterfactuals can be generated in a fast
+and efficient manner through a modified Jacobian-based Saliency Map
+Attack (JSMA). Finally, \textbf{DICE} distinguishes itself from all
+other generators considered here in that it aims to generate a diverse
+set of \(K>1\) counterfactuals. To this end the authors use a complexity
+penalty \(h(\mathbf{s}^\prime)\) that favours diverse outcomes, in the
+sense that \(s_1, ... , s_K\) look as different from each other as
+possible.
 
 Our motivation for including these different generators in our analysis,
 is that they all offer slightly different approaches to generate
@@ -531,6 +560,78 @@ generated by the same or at least a very similar data generating process
 as the training data. All else equal, counterfactuals that fulfill this
 basic requirement should be less prone to trigger domain and model
 shifts.
+
+\hypertarget{towards-collective-recourse}{%
+\subsubsection{\ldots{} towards collective
+recourse}\label{towards-collective-recourse}}
+
+To explicitly address the notion that individual recourse may affect the
+outcome and prospect of other individuals, we propose to extend
+Equation~\ref{eq-general} as follows:
+
+\begin{equation}\protect\hypertarget{eq-collective}{}{
+\begin{aligned}
+\mathbf{s}^\prime &= \arg \min_{\mathbf{s}^\prime \in \mathcal{S}}  \sum_{k=1}^{K} {\ell(M(f(s_k^\prime)),t)} \\ &+ \lambda_1 {h(f(s_k^\prime)) } + \lambda_2 {g(f(s_k^\prime))}  
+\end{aligned}
+}\label{eq-collective}\end{equation}
+
+Here \(h(f(s_k^\prime))\) denotes the proxy for private costs faced by
+the individual as before and \(\lambda_1\) governs to what extent that
+private cost ought to be penalised. The newly introduced term
+\(g(f(s_k^\prime))\) is meant to capture and address social costs
+incurred by the collective of individuals in response to changes in
+\(\mathbf{s}^\prime\). The trade-off between private and social costs is
+determined by the ratio between \(\lambda_1\) and \(\lambda_2\). As with
+individual recourse, the exact choice of \(g(\cdot)\) is not obvious,
+nor do we intend to provide a definite answer in this work, if such even
+exists. A straight-forward choice simply extends the baseline approach
+by \protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}}: instead
+of only penalizing the distance of the individuals' counterfactual to
+its factual, we propose penalizing its distance to some sensible point
+in the target domain, for example the sample average:
+\(\bar{\mathbf{x}}\). For such a recourse objective, higher choices of
+\(\lambda_2\) relative to \(\lambda_1\) will lead counterfactuals to
+gravitate towards the specified point in the target domain. In the
+remainder of this paper we will therefore refer to this approach as
+\textbf{Gravitational} generator, when we investigate its potential
+usefulness for mitigating endongenous macrodynamics\footnote{Note that
+  despite the naming convention our goal here is not to provide yet
+  another counterfactual generator, but merely investigate the most
+  simple penalty we can think of with respect to its effectiveness.}.
+
+\hypertarget{a-note-on-convergence}{%
+\subsubsection{A note on convergence}\label{a-note-on-convergence}}
+
+For this simple mitigating strategy underlying the Gravitational
+generator to work as expected, one needs to ensure that counterfactual
+search continues, even after a predetermined threshold probability
+\(\gamma\) has potentially already been reached.
+Figure~\ref{fig-convergence} illustrates this distinction: if one
+chooses to terminate search once the desired threshold is reached (left
+panel) the gravitational pull towards \(\bar{\mathbf{x}}\) is never
+actually satisfied (compare to right panel). More generally, if
+convergence is defined simply in terms of flipping the predicted label
+with some desired degree of confidence, this corresponds to essentially
+ignoring any parts of the counterfactual search objective that do not
+involve \(\ell(M(f(s_k^\prime)),t)\) beyond that point. While this may
+be appropriate for some applications, in general this seems like an odd
+convention. Since we nonetheless seen convergence specified simply in
+terms of reaching the threshold probability in some places\footnote{\protect\hyperlink{ref-joshi2019towards}{{[}8{]}}
+  define convergence of Algorithm 1 in this way. The implementation of
+  \protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}} in CARLA is
+  also defined in this way.}, we thought it worth making this
+distinction explicit.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.45\textwidth,height=\textheight]{www/gravitational_generator_comparison.png}
+
+}
+
+\caption{\label{fig-convergence}Comparison of counterfactual search
+outcome with simple (left) and strict convergence (right).}
+
+\end{figure}
 
 \hypertarget{sec-method-experiment}{%
 \subsection{Experimental Setup}\label{sec-method-experiment}}
@@ -591,7 +692,7 @@ rounds depend solely on the employed generator.
 We have chosen to work with both synthetic and real-world datasets.
 Using synthetic data allows us to impose distributional properties that
 may affect the resulting recourse dynamics. Following
-\protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}} we generate
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}} we generate
 synthetic data in \(\mathbb{R}^2\) to also allow for a visual
 interpretation of the results. Real-world data is used in order to
 assess if endogenous dynamics also occur in higher-dimensional settings.
@@ -623,11 +724,11 @@ Ex-ante we expect to see that Wachter will create a new cluster of
 counterfactual instances in the proximity of the initial decision
 boundary. Thus, the choice of a black-box model may have an impact on
 the paths of the recourse. For generators that use latent space search
-(\protect\hyperlink{ref-joshi2019towards}{{[}6{]}},
-\protect\hyperlink{ref-antoran2020getting}{{[}8{]}}) or rely on (and
+(\protect\hyperlink{ref-joshi2019towards}{{[}8{]}},
+\protect\hyperlink{ref-antoran2020getting}{{[}10{]}}) or rely on (and
 have access to) probabilistic models
-(\protect\hyperlink{ref-antoran2020getting}{{[}8{]}},
-\protect\hyperlink{ref-schut2021generating}{{[}12{]}}) we expect that
+(\protect\hyperlink{ref-antoran2020getting}{{[}10{]}},
+\protect\hyperlink{ref-schut2021generating}{{[}7{]}}) we expect that
 counterfactuals will end up in regions of the target domain that are
 densely populated by training samples. Finally, we expect to see the
 counterfactuals generated by DiCE to be uniformly spread around the
@@ -733,7 +834,7 @@ more granular look at individual features.
 
 As our baseline for quantifying model shifts we measure perturbations to
 the model parameters at each point in time \(t\) following
-\protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}}. We define
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}}. We define
 \(\Delta=||\theta_{t+1}-\theta_{t}||^2\), that is the euclidean distance
 between the vectors of parameters before and after retraining the model
 \(M\). We shall refer to this baseline metric simply as
@@ -783,6 +884,9 @@ the decision boundary moves towards either one of the two classes.
 \hypertarget{sec-empirical}{%
 \section{Experiments}\label{sec-empirical}}
 
+\hypertarget{sec-discussion}{%
+\section{Discussion}\label{sec-discussion}}
+
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
@@ -806,23 +910,29 @@ the decision boundary moves towards either one of the two classes.
   Mitigating strategy: penaliye distance from centroid.
 \end{enumerate}
 
-\hypertarget{sec-discussion}{%
-\section{Discussion}\label{sec-discussion}}
-
 \hypertarget{sec-limit}{%
-\subsection{Limitations and Future Work}\label{sec-limit}}
+\section{Limitations and Future Work}\label{sec-limit}}
+
+While we believe that this work constitutes a valuable starting point
+for addressing existing issues in algorithmic recourse from a fresh
+perspective, we are aware of several of its limitations. In the
+following we highlight some of these limitations and point to avenues
+for future research.
+
+\hypertarget{experimental-setup}{%
+\subsection{Experimental Setup}\label{experimental-setup}}
 
 The experimental setup proposed here is designed to mimic a real-world
 recourse process in a simple fashion. In practice, models are in fact
 updated on a regular basis
-\protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}}. We also find it
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}}. We also find it
 plausible to assume that the implementation of recourse happens
 periodically for different individuals, rather that all at once at time
 \(t=0\). That being said, our experimental design is a vast
 over-simplification of potential real-world scenarios. In practice, any
 endogenous shifts that may occur can be expected to be entangled with
 exogenous shifts of the nature investigated in
-\protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}}. We also make
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}}. We also make
 implicit assumptions about the utility functions of the involved agents
 that may well be too simple: individuals seeking recourse are assumed to
 always implement the proposed counterfactual explanations; conversely,
@@ -838,12 +948,39 @@ point for future work on recourse dynamics (both endogenous and
 exogenous dynamics).
 
 \hypertarget{data}{%
-\subsubsection{Data}\label{data}}
+\subsection{Data}\label{data}}
 
-The number of real-world datasets considered in this work is limited,
-constrained by the fact that at the time of writing
-\texttt{CounterfactualExplanations.jl} only supported continuous
-features.
+Largely in line with the existing literature on algorithmic recourse, we
+have limited our analysis of real-world data to three commonly used
+benchmark datasets that involve binary prediction tasks. Future work may
+benefit from including novel datasets or extending the analysis to
+multi-class or regression problems, the latter arguably representing the
+most common objective in Finance and Economics. It is also worth
+mentioning that the use of real-world datasets considered in this work
+is constrained by the fact that at the time of writing
+\texttt{CounterfactualExplanations.jl} only supports continuous
+features, at least of some of the counterfactual generators considered
+here. The fact that we therefore had to discard discrete features led to
+relatively poor initial performance of our classifiers in some cases.
+While this is indeed a limitation we intend to address in future and
+derivative work, our findings with respect to endogenous macrodynamics
+do not hinge on strong classifier performance.
+
+\hypertarget{classifiers}{%
+\subsection{Classifiers}\label{classifiers}}
+
+For reasons stated earlier we have limited our analysis to
+differentiable linear and non-linear classifiers, in particular logistic
+regression and deep neural networks. While these sorts of classifiers
+have also typically been analyzed in the existing literature on
+counterfactual explanations and algorithmic recourse, they represent
+only a subset of popular machine learning models employed in practice -
+both black-box and glass-box. Despite the success and popularity of deep
+learning in the context of high-dimensional data such as image, audio
+and video, empirical evidence suggests that other models such as boosted
+decision trees may have an edge when it comes to lower-dimensional
+tabular datasets, such as the ones considered here
+\protect\hyperlink{ref-grinsztajn2022tree}{{[}28{]}}.
 
 \hypertarget{sec-conclusion}{%
 \section{Concluding Remarks}\label{sec-conclusion}}
@@ -895,93 +1032,100 @@ algorithmic recourse and counterfactual explanation algorithms,''}
 decisions and the GDPR,''} \emph{Harv. JL \& Tech.}, vol. 31, p. 841,
 2017.}
 
-\leavevmode\vadjust pre{\hypertarget{ref-joshi2019towards}{}}%
+\leavevmode\vadjust pre{\hypertarget{ref-altmeyer2022CounterfactualExplanations}{}}%
 \CSLLeftMargin{{[}6{]} }%
+\CSLRightInline{P. Altmeyer, \emph{{CounterfactualExplanations.jl - a
+Julia package for Counterfactual Explanations and Algorithmic
+Recourse}}. 2022. Available:
+\url{https://github.com/pat-alt/CounterfactualExplanations.jl}}
+
+\leavevmode\vadjust pre{\hypertarget{ref-schut2021generating}{}}%
+\CSLLeftMargin{{[}7{]} }%
+\CSLRightInline{L. Schut \emph{et al.}, {``Generating interpretable
+counterfactual explanations by implicit minimisation of epistemic and
+aleatoric uncertainties,''} in \emph{International conference on
+artificial intelligence and statistics}, 2021, pp. 1756--1764.}
+
+\leavevmode\vadjust pre{\hypertarget{ref-joshi2019towards}{}}%
+\CSLLeftMargin{{[}8{]} }%
 \CSLRightInline{S. Joshi, O. Koyejo, W. Vijitbenjaronk, B. Kim, and J.
 Ghosh, {``Towards realistic individual recourse and actionable
 explanations in black-box decision making systems,''} \emph{arXiv
 preprint arXiv:1907.09615}, 2019.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-mothilal2020explaining}{}}%
-\CSLLeftMargin{{[}7{]} }%
+\CSLLeftMargin{{[}9{]} }%
 \CSLRightInline{R. K. Mothilal, A. Sharma, and C. Tan, {``Explaining
 machine learning classifiers through diverse counterfactual
 explanations,''} in \emph{Proceedings of the 2020 conference on
 fairness, accountability, and transparency}, 2020, pp. 607--617.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-antoran2020getting}{}}%
-\CSLLeftMargin{{[}8{]} }%
+\CSLLeftMargin{{[}10{]} }%
 \CSLRightInline{J. Antorán, U. Bhatt, T. Adel, A. Weller, and J. M.
 Hernández-Lobato, {``Getting a clue: A method for explaining uncertainty
 estimates,''} \emph{arXiv preprint arXiv:2006.06848}, 2020.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-karimi2020survey}{}}%
-\CSLLeftMargin{{[}9{]} }%
+\CSLLeftMargin{{[}11{]} }%
 \CSLRightInline{A.-H. Karimi, G. Barthe, B. Schölkopf, and I. Valera,
 {``A survey of algorithmic recourse: Definitions, formulations,
 solutions, and prospects,''} \emph{arXiv preprint arXiv:2010.04050},
 2020.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-verma2020counterfactual}{}}%
-\CSLLeftMargin{{[}10{]} }%
+\CSLLeftMargin{{[}12{]} }%
 \CSLRightInline{S. Verma, J. Dickerson, and K. Hines, {``Counterfactual
 explanations for machine learning: A review,''} \emph{arXiv preprint
 arXiv:2010.10596}, 2020.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-ustun2019actionable}{}}%
-\CSLLeftMargin{{[}11{]} }%
+\CSLLeftMargin{{[}13{]} }%
 \CSLRightInline{B. Ustun, A. Spangher, and Y. Liu, {``Actionable
 recourse in linear classification,''} in \emph{Proceedings of the
 conference on fairness, accountability, and transparency}, 2019, pp.
 10--19.}
 
-\leavevmode\vadjust pre{\hypertarget{ref-schut2021generating}{}}%
-\CSLLeftMargin{{[}12{]} }%
-\CSLRightInline{L. Schut \emph{et al.}, {``Generating interpretable
-counterfactual explanations by implicit minimisation of epistemic and
-aleatoric uncertainties,''} in \emph{International conference on
-artificial intelligence and statistics}, 2021, pp. 1756--1764.}
-
 \leavevmode\vadjust pre{\hypertarget{ref-karimi2021algorithmic}{}}%
-\CSLLeftMargin{{[}13{]} }%
+\CSLLeftMargin{{[}14{]} }%
 \CSLRightInline{A.-H. Karimi, B. Schölkopf, and I. Valera,
 {``Algorithmic recourse: From counterfactual explanations to
 interventions,''} in \emph{Proceedings of the 2021 ACM conference on
 fairness, accountability, and transparency}, 2021, pp. 353--362.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-upadhyay2021towards}{}}%
-\CSLLeftMargin{{[}14{]} }%
+\CSLLeftMargin{{[}15{]} }%
 \CSLRightInline{S. Upadhyay, S. Joshi, and H. Lakkaraju, {``Towards
 robust and reliable algorithmic recourse,''} \emph{arXiv preprint
 arXiv:2102.13620}, 2021.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-rabanser2019failing}{}}%
-\CSLLeftMargin{{[}15{]} }%
+\CSLLeftMargin{{[}16{]} }%
 \CSLRightInline{S. Rabanser, S. Günnemann, and Z. Lipton, {``Failing
 loudly: An empirical study of methods for detecting dataset shift,''}
 \emph{Advances in Neural Information Processing Systems}, vol. 32,
 2019.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-chandola2009anomaly}{}}%
-\CSLLeftMargin{{[}16{]} }%
+\CSLLeftMargin{{[}17{]} }%
 \CSLRightInline{V. Chandola, A. Banerjee, and V. Kumar, {``Anomaly
 detection: A survey,''} \emph{ACM computing surveys (CSUR)}, vol. 41,
 no. 3, pp. 1--58, 2009.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-widmer1996learning}{}}%
-\CSLLeftMargin{{[}17{]} }%
+\CSLLeftMargin{{[}18{]} }%
 \CSLRightInline{G. Widmer and M. Kubat, {``Learning in the presence of
 concept drift and hidden contexts,''} \emph{Machine learning}, vol. 23,
 no. 1, pp. 69--101, 1996.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-gama2014survey}{}}%
-\CSLLeftMargin{{[}18{]} }%
+\CSLLeftMargin{{[}19{]} }%
 \CSLRightInline{J. Gama, I. Žliobaitė, A. Bifet, M. Pechenizkiy, and A.
 Bouchachia, {``A survey on concept drift adaptation,''} \emph{ACM
 computing surveys (CSUR)}, vol. 46, no. 4, pp. 1--37, 2014.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-nelson2015evaluating}{}}%
-\CSLLeftMargin{{[}19{]} }%
+\CSLLeftMargin{{[}20{]} }%
 \CSLRightInline{K. Nelson, G. Corbin, M. Anania, M. Kovacs, J. Tobias,
 and M. Blowers, {``Evaluating model drift in machine learning
 algorithms,''} in \emph{2015 IEEE symposium on computational
@@ -989,7 +1133,7 @@ intelligence for security and defense applications (CISDA)}, 2015, pp.
 1--8.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-ackerman2021machine}{}}%
-\CSLLeftMargin{{[}20{]} }%
+\CSLLeftMargin{{[}21{]} }%
 \CSLRightInline{S. Ackerman, P. Dube, E. Farchi, O. Raz, and M.
 Zalmanovici, {``Machine learning model drift detection via weak data
 slices,''} in \emph{2021 IEEE/ACM third international workshop on deep
@@ -997,17 +1141,10 @@ learning for testing and testing for deep learning (DeepTest)}, 2021,
 pp. 1--8.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-de2021framework}{}}%
-\CSLLeftMargin{{[}21{]} }%
+\CSLLeftMargin{{[}22{]} }%
 \CSLRightInline{R. M. B. de Oliveira and D. Martens, {``A framework and
 benchmarking study for counterfactual generating methods on tabular
 data,''} \emph{Applied Sciences}, vol. 11, no. 16, p. 7274, 2021.}
-
-\leavevmode\vadjust pre{\hypertarget{ref-altmeyer2022CounterfactualExplanations}{}}%
-\CSLLeftMargin{{[}22{]} }%
-\CSLRightInline{P. Altmeyer, \emph{{CounterfactualExplanations.jl - a
-Julia package for Counterfactual Explanations and Algorithmic
-Recourse}}. 2022. Available:
-\url{https://github.com/pat-alt/CounterfactualExplanations.jl}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-gmsc_data}{}}%
 \CSLLeftMargin{{[}23{]} }%
@@ -1031,6 +1168,18 @@ v statistics,''} \emph{The Annals of Statistics}, pp. 655--674, 1992.}
 \CSLRightInline{S. Hanneke, {``A bound on the label complexity of
 agnostic active learning,''} in \emph{Proceedings of the 24th
 international conference on machine learning}, 2007, pp. 353--360.}
+
+\leavevmode\vadjust pre{\hypertarget{ref-borisov2021deep}{}}%
+\CSLLeftMargin{{[}27{]} }%
+\CSLRightInline{V. Borisov, T. Leemann, K. Seßler, J. Haug, M.
+Pawelczyk, and G. Kasneci, {``Deep neural networks and tabular data: A
+survey,''} \emph{arXiv preprint arXiv:2110.01889}, 2021.}
+
+\leavevmode\vadjust pre{\hypertarget{ref-grinsztajn2022tree}{}}%
+\CSLLeftMargin{{[}28{]} }%
+\CSLRightInline{L. Grinsztajn, E. Oyallon, and G. Varoquaux, {``Why do
+tree-based models still outperform deep learning on tabular data?''}
+\emph{arXiv preprint arXiv:2207.08815}, 2022.}
 
 \end{CSLReferences}
 

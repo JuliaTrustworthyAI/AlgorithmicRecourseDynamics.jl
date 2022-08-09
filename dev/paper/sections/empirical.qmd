@@ -1,7 +1,5 @@
 # Experiments {#sec-empirical}
 
-1. Shift of focus from individual to group of individuals (related: https://www.researchgate.net/publication/353073138_Generating_Collective_Counterfactual_Explanations_in_Score-Based_Classification_via_Mathematical_Optimization)
-2. Convergence criterium matters: terminating once threshold probability is reached may not be optimal (see e.g. REVISE)
-3. Optimizer choice matters: dimensionality is typically low, so no obvious benefit to using ADAM.
-    - This might be better placed in JuliaCon proceedings, perhaps backed by small blog post on the matter. 
-4. Mitigating strategy: penaliye distance from centroid.
+
+
+

@@ -17,7 +17,7 @@ www_path = www_dir("real_world")
 ```
 
 ```{julia}
-max_obs = 10000
+max_obs = 1000
 data_sets = AlgorithmicRecourseDynamics.Data.load_real_world(max_obs)
 ```
 
@@ -76,7 +76,7 @@ Serialization.serialize(joinpath(output_path,"results_strict.jls"),results)
 
 ```{julia}
 using Serialization
-results = Serialization.deserialize(joinpath(output_path,"results.jls"))
+results = Serialization.deserialize(joinpath(output_path,"results_strict.jls"))
 ```
 
 ```{julia}

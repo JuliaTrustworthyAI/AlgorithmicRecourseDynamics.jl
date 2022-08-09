@@ -11,6 +11,9 @@ csl: https://raw.githubusercontent.com/citation-style-language/styles/master/iee
 number-sections: true
 license: "CC BY"
 link-citations: true
+execute: 
+  eval: false
+  echo: false
 ---
 
 {{< include sections/abstract.qmd >}}

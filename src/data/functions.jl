@@ -7,7 +7,7 @@ function load_synthetic()
     files = files[contains.(files,".csv")]
     data = map(files) do file
         df = CSV.read(joinpath(data_dir, file), DataFrame)
-        X = convert(Matrix, hcat(df.feature1,df.feature2)')
+        X = convert(Matrix, hcat(df.x1,df.x2)')
         y = convert(Matrix, df.target')
         data = CounterfactualData(X,y)
         (Symbol(replace(file, ".csv" => "")) => data)

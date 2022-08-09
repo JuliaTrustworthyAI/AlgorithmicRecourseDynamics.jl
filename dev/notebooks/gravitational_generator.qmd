@@ -132,7 +132,7 @@ savefig(plt, joinpath(www_path,"gravitational_generator.png"))
 ### Comparison - simple vs. strict convergence
 
 ```{julia}
-idx = 2
+idx = 1
 x1,x2 = generators[idx].centroid[1], generators[idx].centroid[2]
 plt1 = plot(counterfactuals[idx], plot_up_to=minimum([T,T_]), title="Simple")
 scatter!(plt1, [x1], [x2], colour=:purple, label="attractor")

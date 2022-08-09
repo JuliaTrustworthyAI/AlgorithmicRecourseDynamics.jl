@@ -36,7 +36,7 @@ An outer constructor method that instantiates a generic generator.
 generator = GravitationalGenerator()
 ```
 """
-function GravitationalGenerator(;loss::Union{Nothing,Symbol}=nothing,complexity::Function=norm,λ::Union{AbstractFloat,AbstractVector}=[0.1,1.0],kwargs...)
+function GravitationalGenerator(;loss::Union{Nothing,Symbol}=nothing,complexity::Function=norm,λ::Union{AbstractFloat,AbstractVector}=0.1,kwargs...)
     params = GravitationalGeneratorParams(;kwargs...)
     GravitationalGenerator(loss, complexity, λ, params.opt, params.τ, params.K, params.centroid)
 end

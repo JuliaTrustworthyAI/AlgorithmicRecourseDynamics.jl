@@ -18,7 +18,8 @@ function plot(results::ExperimentResults, variable::Symbol=:mmd, scope::Symbol=:
     nrow = length(unique(df_plot.name))
     R"""
     library(ggplot2)
-    plt <- ggplot($df_plot,aes(x=n, y=mean, color=generator)) +
+    plt <- ggplot($df_plot,aes(x=n, y=mean, ymin=ymin, ymax=ymax, color=generator)) +
+        geom_ribbon(aes(fill=generator), alpha=0.5) +
         geom_line() +
         facet_wrap(name ~ model, scale="free_y", ncol=$ncol) +
         labs(

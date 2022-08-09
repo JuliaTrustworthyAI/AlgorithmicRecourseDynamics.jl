@@ -192,7 +192,7 @@ Early findings suggest that the involved shifts may be large with
 important implications on the validity of AR and the overall
 characteristics of the sample population.
 \end{abstract}
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[breakable, interior hidden, borderline west={3pt}{0pt}{shadecolor}, enhanced, boxrule=0pt, sharp corners, frame hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[breakable, boxrule=0pt, borderline west={3pt}{0pt}{shadecolor}, enhanced, frame hidden, interior hidden, sharp corners]}{\end{tcolorbox}}\fi
 
 \hypertarget{sec-intro}{%
 \section{Introduction}\label{sec-intro}}
@@ -312,17 +312,18 @@ focus from single individuals to groups. Secondly, we introduce an
 experimental framework extending previous work by
 \protect\hyperlink{ref-altmeyer2022CounterfactualExplanations}{{[}6{]}},
 which enables us to study macrodynamics of algorithmic recourse through
-simulations. To this end we propose a number of novel evaluation metrics
-that can be used to qunatify and benchmark the macrodynmics introduced
-by different counterfactual generators. Thirdly, we use this framework
-to provide a first in-depth analysis of endogenous recourse dynamics
-induced by various popular counterfactual generators including
+simulations that can be fully parallelized. Thirdly, we use this
+framework to provide a first in-depth analysis of endogenous recourse
+dynamics induced by various popular counterfactual generators including
 \protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}},
 \protect\hyperlink{ref-schut2021generating}{{[}7{]}},
 \protect\hyperlink{ref-joshi2019towards}{{[}8{]}},
 \protect\hyperlink{ref-mothilal2020explaining}{{[}9{]}} and
-\protect\hyperlink{ref-antoran2020getting}{{[}10{]}}. Finally, we
-discuss what drives endogenous dynamics and strategies to mitigate them.
+\protect\hyperlink{ref-antoran2020getting}{{[}10{]}}. To this end we
+propose a number of novel evaluation metrics that can be used to
+quantify and benchmark the macrodynamics introduced by the different
+generators. Finally, we also discuss what drives endogenous dynamics and
+propose strategies to mitigate them.
 
 The remainder of the paper is structured as follows:
 Section~\ref{sec-related} places our work in the broader context of
@@ -411,6 +412,15 @@ correction, temporal shifts or geospatial changes
 for algorithmic recourse (ROAR) that evidently improves robustness to
 such exogenous shifts.
 
+As mentioned earlier, research has so far also generally focused on
+generating counterfactuals for single individuals or instances. We have
+been able to identify only one existing work that investigates black-box
+model behavior towards a group of individuals
+\protect\hyperlink{ref-carrizosa2021generating}{\textbf{carrizosa2021generating?}}.
+The authors propose an optimization framework that generates collective
+counterfactuals. We provide a motivation for doing so from the
+perspective of endogenous macrodynamics of algorithmic recourse.
+
 \hypertarget{sec-related-shifts}{%
 \subsection{Domain and Model Shifts}\label{sec-related-shifts}}
 
@@ -465,11 +475,13 @@ firstly, \protect\hyperlink{ref-de2021framework}{{[}22{]}} run a large
 benchmarking study using different algorithmic aproaches and numerous
 tabular datasets; secondly,
 \protect\hyperlink{ref-pawelczyk2021carla}{{[}4{]}} introduce a Python
-framework that can be used to apply and benchmark different methodology;
-finally,
+framework that can be used to apply and benchmark different
+methodologies; finally,
 \protect\hyperlink{ref-altmeyer2022CounterfactualExplanations}{{[}6{]}}
-provides an extensible and language-agnostic implementation in Julia.
-For the experiments conducted in this work we relied on the latter.
+provides an extensible, fast and language-agnostic implementation in
+Julia. Since the experiments presented here involve extensive
+simulations, we have relied on and extended the Julia implementation due
+to the associated performance benefits.
 
 \hypertarget{sec-method}{%
 \section{Methodology}\label{sec-method}}

@@ -17,7 +17,8 @@ www_path = www_dir("synthetic")
 ```
 
 ```{julia}
-catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic()
+max_obs = 1000
+catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic(max_obs)
 choices = [
     :linearly_separable, 
     :overlapping, 
@@ -90,10 +91,11 @@ n_rounds = 50
 evaluate_every = Int(round(n_rounds/n_evals))
 n_folds = 5
 n_bootstrap = 1
+T = 100
 using Serialization
 results = run_experiments(
     experiments;
-    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap,
+    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap, T=T,
     convergence=:strict, save_name_suffix="strict"
 )
 Serialization.serialize(joinpath(output_path,"results_strict.jls"),results)

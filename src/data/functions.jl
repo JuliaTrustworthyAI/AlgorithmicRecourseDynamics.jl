@@ -1,7 +1,7 @@
 using Pkg.Artifacts
 
 using CSV, DataFrames, CounterfactualExplanations
-function load_synthetic()
+function load_synthetic(max_obs::Union{Nothing, Int}=nothing)
     data_dir = joinpath(artifact"data","data/synthetic")
     files = readdir(data_dir)
     files = files[contains.(files,".csv")]
@@ -10,6 +10,10 @@ function load_synthetic()
         X = convert(Matrix, hcat(df.x1,df.x2)')
         y = convert(Matrix, df.target')
         data = CounterfactualData(X,y)
+        if !isnothing(max_obs)
+            n_classes = length(unique(y))
+            data = undersample(data, Int(round(max_obs/n_classes)))
+        end
         (Symbol(replace(file, ".csv" => "")) => data)
     end
     data = Dict(data...)

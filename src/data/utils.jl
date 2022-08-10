@@ -1,7 +1,6 @@
 # Train-test split
 using StatsBase
 using CounterfactualExplanations
-using CounterfactualExplanations.DataPreprocessing: unpack
 using Flux
 """
     train_test_split(data::CounterfactualData;test_size=0.2)
@@ -9,7 +8,7 @@ using Flux
 Splits data into train and test split.
 """
 function train_test_split(data::CounterfactualData;test_size=0.2)
-    X,y = unpack(data)
+    X,y = CounterfactualExplanations.DataPreprocessing.unpack(data)
     N = size(y,2)
     classes_ = sort(unique(y))
     n_per_class = round(N/length(classes_))

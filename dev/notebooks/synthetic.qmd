@@ -39,7 +39,6 @@ generators = Dict(
     :Generic=>GenericGenerator(),
     :REVISE=>REVISEGenerator(),
     :DICE=>DiCEGenerator(),
-    :Gravitational=>GravitationalGenerator(λ=[0.1,0.5]),
 )
 ```
 

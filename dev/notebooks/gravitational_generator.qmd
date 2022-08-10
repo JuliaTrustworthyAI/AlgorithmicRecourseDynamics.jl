@@ -1,5 +1,5 @@
 ---
-title: Experiments with Housing Data
+title: Gravitational Generator
 jupyter: julia-1.7
 ---
 

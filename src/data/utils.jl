@@ -19,7 +19,7 @@ function train_test_split(data::CounterfactualData;test_size=0.2)
     return train_data, test_data
 end
 
-
+using CounterfactualExplanations.DataPreprocessing: unpack
 function undersample(data::CounterfactualData, n_per_class::Int)
     
     X,y = unpack(data)

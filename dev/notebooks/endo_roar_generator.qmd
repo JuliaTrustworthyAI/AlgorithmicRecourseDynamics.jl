@@ -98,7 +98,7 @@ for λ₂ ∈ Λ₂
     generators = vcat(generators..., generator)
     counterfactuals_strict = vcat(
       counterfactuals_strict...,
-      generate_counterfactual(x, target, counterfactual_data, M, generator; convergence=:strict, T=T)
+      generate_counterfactual(x, target, counterfactual_data, M, generator; T=T)
     )
 end
 ```
@@ -122,7 +122,7 @@ generators = Dict(
     :Generic => GenericGenerator(),
     :ROAR => EndoROARGenerator()
 )
-counterfactuals = Dict([name => generate_counterfactual(x, target, counterfactual_data, M, gen; convergence=:strict, T=T) for (name, gen) in generators])
+counterfactuals = Dict([name => generate_counterfactual(x, target, counterfactual_data, M, gen; T=T) for (name, gen) in generators])
 ```
 
 ```{julia}
@@ -136,3 +136,7 @@ plt = plot(plts..., size=(800,300), layout=(1,2))
 
 
 
+
+```{julia}
+
+```

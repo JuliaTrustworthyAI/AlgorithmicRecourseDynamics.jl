@@ -4,6 +4,7 @@ mutable struct EndoROARGenerator <: AbstractGradientBasedGenerator
     loss::Union{Nothing,Symbol} # loss function
     complexity::Function # complexity function
     λ::Union{AbstractFloat,AbstractVector} # strength of penalty
+    decision_threshold::Union{Nothing,AbstractFloat}
     opt::Any # optimizer
     τ::AbstractFloat # tolerance for convergence
 end
@@ -32,9 +33,16 @@ An outer constructor method that instantiates a generic generator.
 generator = EndoROARGenerator()
 ```
 """
-function EndoROARGenerator(;loss::Union{Nothing,Symbol}=nothing,complexity::Function=norm,λ::Union{AbstractFloat,AbstractVector}=[0.1,5.0],kwargs...)
+function EndoROARGenerator(
+    ;
+    loss::Union{Nothing,Symbol}=nothing,
+    complexity::Function=norm,
+    λ::Union{AbstractFloat,AbstractVector}=[0.1,5.0],
+    decision_threshold=nothing,
+    kwargs...
+)
     params = EndoROARGeneratorParams(;kwargs...)
-    EndoROARGenerator(loss, complexity, λ, params.opt, params.τ)
+    EndoROARGenerator(loss, complexity, λ, decision_threshold, params.opt, params.τ)
 end
 
 using Flux
@@ -42,11 +50,11 @@ function gradient_penalty(generator::EndoROARGenerator, counterfactual_state::Co
     
     x_ = counterfactual_state.f(counterfactual_state.s′)
     M = counterfactual_state.M
-    nn = M.model
+    model = isa(M.model, Vector) ? M.model : [M.model]
     y_ = counterfactual_state.y′
 
     loss_type = M.likelihood == :classification_binary ? :logitbinarycrossentropy : :logitcrossentropy
-    loss(x, y) = getfield(Flux.Losses,loss_type)(nn(x), y)
+    loss(x, y) = sum([getfield(Flux.Losses,loss_type)(nn(x), y) for nn in model])/length(model)
 
     return loss(x_,y_)
 end

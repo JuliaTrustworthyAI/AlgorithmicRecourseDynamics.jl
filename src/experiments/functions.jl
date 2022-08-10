@@ -7,7 +7,6 @@ using Parameters
     seed::Union{Nothing, Int} = nothing
     T::Int = 1000
     μ::AbstractFloat = 0.05
-    γ::AbstractFloat = 0.75
     intersect_::Bool = true
     convergence::Symbol = :threshold_only
     generative_model_params::NamedTuple = (;)
@@ -156,15 +155,14 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
 
     # Experiment:
     args = experiment.fixed_parameters
-    T, γ = args.T, args.γ
+    T = args.T
     target = experiment.target
 
     # Generate recourse:
     factuals = select_factual(counterfactual_data,chosen_individuals)
     results = generate_counterfactual(
         factuals, target, counterfactual_data, M, generator; 
-        T=T, γ=γ, num_counterfactuals=experiment.num_counterfactuals,
-        convergence=args.convergence, generative_model_params=args.generative_model_params
+        T=T, num_counterfactuals=experiment.num_counterfactuals, generative_model_params=args.generative_model_params
     );
     
     indices_ = rand(1:experiment.num_counterfactuals,length(results)) # randomly draw from generated counterfactuals

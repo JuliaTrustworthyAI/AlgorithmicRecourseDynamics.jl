@@ -4,6 +4,7 @@ mutable struct GravitationalGenerator <: AbstractGradientBasedGenerator
     loss::Union{Nothing,Symbol} # loss function
     complexity::Function # complexity function
     λ::Union{AbstractFloat,AbstractVector} # strength of penalty
+    decision_threshold::Union{Nothing,AbstractFloat}
     opt::Any # optimizer
     τ::AbstractFloat # tolerance for convergence
     K::Int # number of K randomly chosen neighbours
@@ -36,9 +37,16 @@ An outer constructor method that instantiates a generic generator.
 generator = GravitationalGenerator()
 ```
 """
-function GravitationalGenerator(;loss::Union{Nothing,Symbol}=nothing,complexity::Function=norm,λ::Union{AbstractFloat,AbstractVector}=[0.1,1.0],kwargs...)
+function GravitationalGenerator(
+    ;
+    loss::Union{Nothing,Symbol}=nothing,
+    complexity::Function=norm,
+    λ::Union{AbstractFloat,AbstractVector}=[0.1,5.0],
+    decision_threshold=nothing,
+    kwargs...
+)
     params = GravitationalGeneratorParams(;kwargs...)
-    GravitationalGenerator(loss, complexity, λ, params.opt, params.τ, params.K, params.centroid)
+    GravitationalGenerator(loss, complexity, λ, decision_threshold, params.opt, params.τ, params.K, params.centroid)
 end
 
 # Complexity:

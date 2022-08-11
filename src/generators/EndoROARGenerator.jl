@@ -1,6 +1,6 @@
 using LinearAlgebra, CounterfactualExplanations
 
-mutable struct EndoROARGenerator <: AbstractGradientBasedGenerator
+mutable struct ClapROARGenerator <: AbstractGradientBasedGenerator
     loss::Union{Nothing,Symbol} # loss function
     complexity::Function # complexity function
     λ::Union{AbstractFloat,AbstractVector} # strength of penalty
@@ -11,13 +11,13 @@ end
 
 # API streamlining:
 using Parameters, Flux
-@with_kw struct EndoROARGeneratorParams
+@with_kw struct ClapROARGeneratorParams
     opt::Any=Flux.Optimise.Descent()
     τ::AbstractFloat=1e-5
 end
 
 """
-    EndoROARGenerator(
+    ClapROARGenerator(
         ;
         loss::Symbol=:logitbinarycrossentropy,
         complexity::Function=norm,
@@ -30,10 +30,10 @@ An outer constructor method that instantiates a generic generator.
 
 # Examples
 ```julia-repl
-generator = EndoROARGenerator()
+generator = ClapROARGenerator()
 ```
 """
-function EndoROARGenerator(
+function ClapROARGenerator(
     ;
     loss::Union{Nothing,Symbol}=nothing,
     complexity::Function=norm,
@@ -41,12 +41,12 @@ function EndoROARGenerator(
     decision_threshold=nothing,
     kwargs...
 )
-    params = EndoROARGeneratorParams(;kwargs...)
-    EndoROARGenerator(loss, complexity, λ, decision_threshold, params.opt, params.τ)
+    params = ClapROARGeneratorParams(;kwargs...)
+    ClapROARGenerator(loss, complexity, λ, decision_threshold, params.opt, params.τ)
 end
 
 using Flux
-function gradient_penalty(generator::EndoROARGenerator, counterfactual_state::CounterfactualState.State)
+function gradient_penalty(generator::ClapROARGenerator, counterfactual_state::CounterfactualState.State)
     
     x_ = counterfactual_state.f(counterfactual_state.s′)
     M = counterfactual_state.M
@@ -68,7 +68,7 @@ import CounterfactualExplanations.Generators: h
 
 The default method to apply the generator complexity penalty to the current counterfactual state for any generator.
 """
-function h(generator::EndoROARGenerator, counterfactual_state::CounterfactualState.State)
+function h(generator::ClapROARGenerator, counterfactual_state::CounterfactualState.State)
     
     # Distance from factual:
     dist_ = generator.complexity(counterfactual_state.x .- counterfactual_state.f(counterfactual_state.s′))

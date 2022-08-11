@@ -10,7 +10,7 @@ using .Models
 
 include("generators/Generators.jl")
 using .Generators
-export GravitationalGenerator, EndoROARGenerator
+export GravitationalGenerator, ClapROARGenerator
 
 include("experiments/Experiments.jl")
 using .Experiments

@@ -24,9 +24,10 @@ models = [
 ]
 generators = Dict(
     :Generic=>GenericGenerator(decision_threshold=0.5),
+    :REVISE=>REVISEGenerator(),
     :Generic_conservative=>GenericGenerator(decision_threshold=0.9),
     :Gravitational=>GravitationalGenerator(),
-    :ROAR=>EndoROARGenerator()
+    :ClapROAR=>ClapROARGenerator()
 )
 ```
 
@@ -231,14 +232,12 @@ end
 
 ### Latent Space Search
 
-
-
 ```{julia}
 generators = Dict(
     :REVISE=>GenericGenerator(decision_threshold=0.5),
     :REVISE_conservative=>GenericGenerator(decision_threshold=0.9),
     :Gravitational=>GravitationalGenerator(),
-    :ROAR=>EndoROARGenerator()
+    :ROAR=>ClapROARGenerator()
 )
 ```
 

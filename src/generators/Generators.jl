@@ -3,7 +3,7 @@ module Generators
 include("GravitationalGenerator.jl")
 export GravitationalGenerator
 
-include("EndoROARGenerator.jl")
-export EndoROARGenerator
+include("ClapROARGenerator.jl")
+export ClapROARGenerator
     
 end

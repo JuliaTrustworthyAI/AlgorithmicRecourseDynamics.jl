@@ -63,42 +63,13 @@ n_rounds = 50
 evaluate_every = Int(round(n_rounds/n_evals))
 n_folds = 5
 n_bootstrap = 1
-T = 250
+T = 100
 generative_model_params = (epochs=250, latent_dim=8)
 using Serialization
 results = run_experiments(
     experiments;
     save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap, T=T,
-    convergence=:strict, generative_model_params=generative_model_params, save_name_suffix="strict"
-)
-Serialization.serialize(joinpath(output_path,"results_strict.jls"),results)
-```
-
-```{julia}
-using Serialization
-results = Serialization.deserialize(joinpath(output_path,"results_strict.jls"))
-```
-
-```{julia}
-line_charts = Dict()
-errorbar_charts = Dict()
-for (data_name, res) in results
-    line_charts[data_name] = plot(res)
-    errorbar_charts[data_name] = plot(res,50)
-end
-```
-
-## Simple convergence
-
-```{julia}
-n_evals = 5
-n_rounds = 50
-evaluate_every = Int(round(n_rounds/n_evals))
-n_folds = 5
-n_bootstrap = 1
-using Serialization
-results = run_experiments(
-    experiments;save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap
+    generative_model_params=generative_model_params
 )
 Serialization.serialize(joinpath(output_path,"results.jls"),results)
 ```
@@ -107,8 +78,6 @@ Serialization.serialize(joinpath(output_path,"results.jls"),results)
 using Serialization
 results = Serialization.deserialize(joinpath(output_path,"results.jls"))
 ```
-
-### Plots 
 
 ```{julia}
 line_charts = Dict()

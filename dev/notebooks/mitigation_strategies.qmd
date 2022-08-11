@@ -17,18 +17,6 @@ www_path = www_dir("mitigation_strategies")
 ```
 
 ```{julia}
-max_obs = 1000
-catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic(max_obs)
-choices = [
-    :linearly_separable, 
-    :overlapping, 
-    :circles, 
-    :moons,
-]
-data_sets = filter(p -> p[1] in choices, catalogue)
-```
-
-```{julia}
 models = [
     :LogisticRegression, 
     :FluxModel, 
@@ -40,6 +28,20 @@ generators = Dict(
     :Gravitational=>GravitationalGenerator(),
     :ROAR=>EndoROARGenerator()
 )
+```
+
+## Synthetic
+
+```{julia}
+max_obs = 1000
+catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic(max_obs)
+choices = [
+    :linearly_separable, 
+    :overlapping, 
+    :circles, 
+    :moons,
+]
+data_sets = filter(p -> p[1] in choices, catalogue)
 ```
 
 ```{julia}
@@ -81,8 +83,6 @@ end
 plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
 savefig(plt, joinpath(www_path,"models_train_before.png"))
 ```
-
-## Experiments
 
 ```{julia}
 n_evals = 5
@@ -161,6 +161,118 @@ end
 ```{julia}
 using Serialization
 results = Serialization.deserialize(joinpath(output_path,"results.jls"))
+```
+
+### Plots
+
+```{julia}
+line_charts = Dict()
+errorbar_charts = Dict()
+for (data_name, res) in results
+    line_charts[data_name] = plot(res)
+    errorbar_charts[data_name] = plot(res,50)
+end
+```
+
+## Real World
+
+```{julia}
+max_obs = 1000
+data_sets = AlgorithmicRecourseDynamics.Data.load_real_world(max_obs)
+```
+
+```{julia}
+using CounterfactualExplanations.DataPreprocessing: unpack
+bs = 50
+function data_loader(data::CounterfactualData)
+    X, y = unpack(data)
+    data = Flux.DataLoader((X,y),batchsize=bs)
+    return data
+end
+model_params = (batch_norm=false,n_hidden=32,n_layers=3,dropout=true,p_dropout=0.25)
+```
+
+```{julia}
+experiments = set_up_experiments(
+    data_sets,models,generators; 
+    pre_train_models=100, model_params=model_params, 
+    data_loader=data_loader
+)
+```
+
+```{julia}
+n_evals = 5
+n_rounds = 50
+evaluate_every = Int(round(n_rounds/n_evals))
+n_folds = 5
+n_bootstrap = 1
+T = 100
+using Serialization
+results = run_experiments(
+    experiments;
+    save_path=output_path,
+    evaluate_every=evaluate_every,
+    n_rounds=n_rounds, 
+    n_folds=n_folds, 
+    n_bootstrap=n_bootstrap, 
+    T=T
+)
+Serialization.serialize(joinpath(output_path,"results.jls"),results)
+```
+
+```{julia}
+line_charts = Dict()
+errorbar_charts = Dict()
+for (data_name, res) in results
+    line_charts[data_name] = plot(res)
+    errorbar_charts[data_name] = plot(res,50)
+end
+```
+
+### Latent Space Search
+
+
+
+```{julia}
+generators = Dict(
+    :REVISE=>GenericGenerator(decision_threshold=0.5),
+    :REVISE_conservative=>GenericGenerator(decision_threshold=0.9),
+    :Gravitational=>GravitationalGenerator(),
+    :ROAR=>EndoROARGenerator()
+)
+```
+
+
+```{julia}
+generative_model_params = (epochs=250, latent_dim=8)
+experiments = set_up_experiments(
+    data_sets,models,generators; 
+    pre_train_models=100, model_params=model_params, 
+    data_loader=data_loader
+)
+```
+
+```{julia}
+n_evals = 5
+n_rounds = 50
+evaluate_every = Int(round(n_rounds/n_evals))
+n_folds = 5
+n_bootstrap = 1
+T = 100
+using Serialization
+results = run_experiments(
+    experiments;
+    save_path=output_path,
+    save_name_suffix="latent",
+    evaluate_every=evaluate_every,
+    n_rounds=n_rounds, 
+    n_folds=n_folds, 
+    n_bootstrap=n_bootstrap, 
+    T=T,
+    latent_space=true,
+    generative_model_params=generative_model_params
+)
+Serialization.serialize(joinpath(output_path,"results_latent.jls"),results)
 ```
 
 ### Plots

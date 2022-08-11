@@ -1,4 +1,4 @@
-# Related Work {#sec-related}
+# Background {#sec-related}
 
 In this Section we provide a review of the relevant literature. First, @sec-related-recourse discusses the existing research within the domain of counterfactual explanations and algorithmic recourse. Then, @sec-related-shifts presents some of the previous work on the measurement of dataset and model shifts.
 

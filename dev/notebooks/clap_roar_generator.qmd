@@ -1,5 +1,5 @@
 ---
-title: EndoROAR Generator
+title: ClapROAR Generator
 jupyter: julia-1.7
 ---
 

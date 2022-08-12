@@ -170,7 +170,11 @@ results = Serialization.deserialize(joinpath(output_path,"results_strict.jls"))
 line_charts = Dict()
 errorbar_charts = Dict()
 for (data_name, res) in results
-    line_charts[data_name] = plot(res)
-    errorbar_charts[data_name] = plot(res,50)
+    plt = plot(res)
+    savefig(plt, joinpath(www_path, "line_chart_$(data_name).png"))
+    line_charts[data_name] = plt
+    plt = plot(res,maximum(res.output.n))
+    savefig(plt, joinpath(www_path, "errorbar_chart_$(data_name).png"))
+    errorbar_charts[data_name] = plt
 end
 ```

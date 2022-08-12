@@ -242,7 +242,7 @@ generators = Dict(
     :REVISE=>GenericGenerator(decision_threshold=0.5),
     :REVISE_conservative=>GenericGenerator(decision_threshold=0.9),
     :Gravitational=>GravitationalGenerator(),
-    :ROAR=>ClapROARGenerator()
+    :ClapROAR=>ClapROARGenerator()
 )
 ```
 
@@ -290,7 +290,3 @@ for (data_name, res) in results
 end
 ```
 
-
-```{julia}
-
-```

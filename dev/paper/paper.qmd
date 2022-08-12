@@ -36,13 +36,6 @@ execute:
 
 {{< include sections/conclusion.qmd >}}
 
-# Acknowledgment {.unnumbered}
-
-P. A. thanks ...
-
-\pagebreak
-\FloatBarrier
-
 # References {.unnumbered}
 
 ::: {#refs}

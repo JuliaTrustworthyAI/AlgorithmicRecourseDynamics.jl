@@ -202,7 +202,7 @@ practice. Fortunately, we find various potential mitigation strategies
 that can be used in combination with existing approaches. Our simulation
 framework for studying recourse dynamics is fast and open-sourced.
 \end{abstract}
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, enhanced, frame hidden, breakable, interior hidden]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[frame hidden, borderline west={3pt}{0pt}{shadecolor}, sharp corners, enhanced, interior hidden, boxrule=0pt, breakable]}{\end{tcolorbox}}\fi
 
 \hypertarget{sec-intro}{%
 \section{Introduction}\label{sec-intro}}
@@ -673,33 +673,35 @@ dynamic setting.
 The dynamics illustrated in Figure~\ref{fig-poc} in
 Section~\ref{sec-intro} were generated through a simple experiment that
 aims to simulate the process of Algorithmic Recourse in practice. We
-begin in the static setting at time time \(t=0\): given some pre-trained
-classifier \(M\) we generate recourse for a random batch of \(B\)
-individuals in the non-target class. Note that we focus our attention on
-classification problems, since classification poses the most common
-practical use-case for Algorithmic Recourse. In order to simulate the
-dynamic process, we suppose that the model \(M\) is retrained following
-the actual implementation of recourse in time \(t=0\). Following the
-update to the model, we assume that at time \(t=1\) recourse is
-generated for yet another random subset of individuals in the non-target
-class. This process is repeated for a number of time periods \(T\). To
-get a clean read on endogenous dynamics we keep the total population of
-samples closed: we allow existing samples to move from factual to
-counterfactual states, but do not allow any entirely new samples to
-enter the population. The experimental setup is summarized in Algorithm
+begin in the static setting at time time \(t=0\): given some classifier
+\(M\) that was pre-trained on data
+\(\mathcal{D}=\mathcal{D}_0 \cup \mathcal{D}_1\) we generate recourse
+for a random batch of \(B\) individuals in the non-target class
+(\(\mathcal{D}_0\)). Note that we focus our attention on classification
+problems, since classification poses the most common practical use-case
+for Algorithmic Recourse. In order to simulate the dynamic process, we
+suppose that the model \(M\) is retrained following the actual
+implementation of recourse in time \(t=0\). Following the update to the
+model, we assume that at time \(t=1\) recourse is generated for yet
+another random subset of individuals in the non-target class. This
+process is repeated for a number of time periods \(T\). To get a clean
+read on endogenous dynamics we keep the total population of samples
+closed: we allow existing samples to move from factual to counterfactual
+states, but do not allow any entirely new samples to enter the
+population. The experimental setup is summarized in Algorithm
 \ref{algo-experiment}
 
 \begin{algorithm}
 \caption{Simulation Experiment}\label{algo-experiment}
 \begin{algorithmic}[1]
-\Procedure{Experiment}{$M,D,G$}
+\Procedure{Experiment}{$M,\mathcal{D},G$}
 \State $t\gets 0$
 \While{$t<T$}
-\State $D_B \subset D$
-\State $D_B\gets G(D_B)$ \Comment{Generate counterfactuals.}
-\State $M\gets M(D)$ \Comment{Retrain model.}
+\State $\mathcal{D}_B \subset \mathcal{D}_0$ \Comment{Sample from $\mathcal{D}_0$.}
+\State $\mathcal{D}_B\gets G(\mathcal{D}_B)$ \Comment{Generate counterfactuals.}
+\State $M\gets M(\mathcal{D})$ \Comment{Retrain model.}
 \EndWhile
-\State \textbf{return} $M,D$
+\State \textbf{return} $M,\mathcal{D}$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -711,25 +713,25 @@ more pronounced domain and model shifts by time \(T\). At the same time,
 it is generally improbable that a very large part of the population
 would request an explanation of the algorithm's decisions. In our
 experiments, we choose the values such that \(T \cdot B\) corresponds to
-the application of recourse on \(25-50\%\) of the negative instances
+the application of recourse on \(\approx50\%\) of the negative instances
 from the initial dataset. As we collect data at each time \(t\), we can
 also verify the impact of recourse when it is implemented for a smaller
 number of individuals.
 
 Algorithm \ref{algo-experiment} summarizes the proposed simulation
-experiment for a given dataset \(D\), model \(M\) and generator \(G\),
-but naturally we are interested in comparing simulation outcomes for
-different sources of data, models and generators. The framework we have
-built facilitates this, making use of multi-threading in order to speed
-up computations. Holding the initial model and dataset constant the
-experiments are run for all generators, since our primary concern is to
-benchmark different recourse methods. To ensure that each generator is
-faced with the exact same initial conditions in each round \(t\), the
-candidate batch of individuals from the non-target class is randomly
-drawn from the intersection of all individuals in the non-target class
-across all experiments
-\(\left\{\textsc{Experiment}(M,D,G)\right\}_{j=1}^J\) where \(J\) is the
-total number of generators.
+experiment for a given dataset \(\mathcal{D}\), model \(M\) and
+generator \(G\), but naturally we are interested in comparing simulation
+outcomes for different sources of data, models and generators. The
+framework we have built facilitates this, making use of multi-threading
+in order to speed up computations. Holding the initial model and dataset
+constant the experiments are run for all generators, since our primary
+concern is to benchmark different recourse methods. To ensure that each
+generator is faced with the exact same initial conditions in each round
+\(t\), the candidate batch of individuals from the non-target class is
+randomly drawn from the intersection of all individuals in the
+non-target class across all experiments
+\(\left\{\textsc{Experiment}(M,\mathcal{D},G)\right\}_{j=1}^J\) where
+\(J\) is the total number of generators.
 
 \hypertarget{sec-method-2-metrics}{%
 \subsection{Evaluation Metrics}\label{sec-method-2-metrics}}
@@ -762,23 +764,26 @@ MMD^2_u[F,{X}^\prime,\tilde{X}^\prime] &= \frac{1}{m(m-1)}\sum_{i=1}^m\sum_{j\ne
 }\label{eq-mmd}\end{equation}
 
 where \(\mathcal{F}\) is a unit ball in a Reproducing Kernel Hilbert
-Space H {[}27{]}, and \(X\), \(\tilde{X}\) represent independent and
-identically distributed samples drawn from probability distributions
-\(p\) and \(q\) respectively {[}28{]}. MMD is a measure of the distance
-between the kernel mean embeddings of \(p\) and \(q\) in RKHS
-\(\mathcal{H}\). An important consideration is the choice of the kernel
-function \(k(\cdot,\cdot)\). In our implementation we make use of the
-radial basis function (RBF) kernel with a constant length-scale
-parameter of \(0.5\). As RBF captures all moments of distributions \(p\)
-and \(q\), we have that \(MMD_u^2[F,X,\tilde{X}]=0\) if and only if
-\(X=\tilde{X}\).
+Space \(\mathcal{H}\)
+\protect\hyperlink{ref-berlinet2011reproducing}{{[}26{]}}, and \(X\),
+\(\tilde{X}\) represent independent and identically distributed samples
+drawn from probability distributions \(\mathcal{X}\) and
+\(\mathcal{\tilde{X}}\) respectively
+\protect\hyperlink{ref-gretton2012kernel}{{[}27{]}}. MMD is a measure of
+the distance between the kernel mean embeddings of \(\mathcal{X}\) and
+\(\mathcal{\tilde{X}}\) in RKHS \(\mathcal{H}\). An important
+consideration is the choice of the kernel function \(k(\cdot,\cdot)\).
+In our implementation we make use of Gaussian kernel with a constant
+length-scale parameter of \(0.5\). As the Gaussian kernel captures all
+moments of distributions \(\mathcal{X}\) and \(\mathcal{\tilde{X}}\), we
+have that \(MMD_u^2[F,X,\tilde{X}]=0\) if and only if \(X=\tilde{X}\).
 
 The evaluation metric in Equation~\ref{eq-mmd} is computed after every
 round \(t=1,...,T\) of the experiment. To assess the statistical
 significance of the observed shifts under the null hypothesis that
 samples \(X\) and \(\tilde{X}\) were drawn from the same probability
-distribution we follow
-\protect\hyperlink{ref-arcones1992bootstrap}{{[}26{]}}. To that end, we
+distribution, we follow
+\protect\hyperlink{ref-arcones1992bootstrap}{{[}28{]}}. To that end, we
 combine the two samples and generate a large number of permutations of
 \(X + \tilde{X}\). Then, we split the permuted data into two new samples
 \(X^\prime\) and \(\tilde{X}^\prime\) having the same size as the
@@ -789,7 +794,7 @@ calculated by counting how these two quantities are not equal.
 
 We calculate the MMD for both classes individually based on the ground
 truth labels, i.e.~the labels that samples were assigned in time
-\(t=0\). Throughout our experiments we generally do not expect the
+\(t=0\). Throughout our experiments, we generally do not expect the
 distribution of the negative class to change over time -- application of
 recourse reduces the size of this class, but since individuals are
 sampled uniformly the distribution should remain unaffected. Conversely,
@@ -797,12 +802,6 @@ unless a recourse generator can perfectly replicate the original
 probability distribution, we expect the MMD of the positive class to
 increase. Thus, when discussing MMD, we generally mean the shift in the
 distribution of the positive class.
-
-Finally, \textbf{feature mean and feature standard deviation} are also
-calculated to verify how the implementation of recourse impacts every
-attribute in the dataset. Although MMD already captures information
-about the expected value and variance, we may also be interested in a
-more granular look at individual features.
 
 \hypertarget{model-shifts}{%
 \subsubsection{Model Shifts}\label{model-shifts}}
@@ -821,17 +820,19 @@ Probability MMD (PP MMD)}: instead of applying Equation~\ref{eq-mmd} to
 features directly, we apply it to the predicted probabilities assigned
 to a set of samples by the model \(M\). If the model shifts, the
 probabilities assigned to each sample will change; again, this metric
-will equal 0 only if the two classifiers are the same. It is worth
-noting that while we apply the technique to samples drawn uniformly from
-the dataset, it can also be employed on arbitrary points in the entire
-feature space (or a subspace). The latter approach is theoretically more
-robust. Unfortunately, in practice this approachs suffers from the curse
-of dimensionality, since it becomes increasingly difficult to select
-enough points to overcome noise as the dimension \(D\) grows.
+will equal 0 only if the two classifiers are the same. We compute PP MMD
+in two ways: firstly, we compute it over samples drawn uniformly from
+the dataset, and, secondly, we compute it over points spanning a
+meshgrid over a subspace of the entire feature space. For the latter
+approach we bound the subspace by the extrema of each feature. While
+this approach is theoretically more robust, unfortunately, it suffers
+from the curse of dimensionality, since it becomes increasingly
+difficult to select enough points to overcome noise as the dimension
+\(D\) grows.
 
 As an alternative to PP MMD we use a pseudo-distance for the
 \textbf{Disagreement Coefficient} (Disagreement). This metric was
-introduced in \protect\hyperlink{ref-hanneke2007bound}{{[}27{]}} and
+introduced in \protect\hyperlink{ref-hanneke2007bound}{{[}29{]}} and
 estimates \(p(M(x) \neq M^\prime(x))\), that is the probability that two
 classifiers do not agree on the predicted outcome for a randomly chosen
 sample. Thus, it is not relevant whether the classification is correct
@@ -859,8 +860,98 @@ the decision boundary moves towards either one of the two classes.
 \hypertarget{sec-empirical}{%
 \section{Experiment Setup}\label{sec-empirical}}
 
+This section presents the exact ingredients and parameter choices
+describing the simulation experiments we ran to produce the findings
+presented in the next section (Section~\ref{sec-empirical-2}). For
+convenience, we use Algorithm \ref{algo-experiment} as a template to
+guide us through this section. A few high-level details upfront: each
+experiment is run for a total of \(T=50\) rounds, where in each round we
+provide recourse to five percent of all individuals in the non-target
+class, so \(B_t=0.05 * N_t^{\mathcal{D}_0}\)\footnote{As mentioned in
+  the previous section, we end up providing recourse to a total of
+  \(\approx50\%\) by the end of round \(T=50\).}. All classifiers and
+generative models are retrained for 10 epochs in each round \(t\) of the
+experiment. Rather than retraining models from scratch, we initialize
+all parameters at their previous levels (\(t-1\)) and compute
+backpropagate for 10 epochs using the new training data as inputs into
+the existing model. Evaluation metrics are computed and stored every 10
+rounds.
+
+\hypertarget{sec-empirical-classifiers}{%
+\subsection{\texorpdfstring{\(M\) -- Classifiers and Generative
+Models}{M -- Classifiers and Generative Models}}\label{sec-empirical-classifiers}}
+
+For each dataset and generator we look at three different types of
+classifiers all of them built and trained using \texttt{Flux.jl}
+\protect\hyperlink{ref-innes2018fashionable}{{[}30{]}}: firstly, a
+simple linear classifier - \textbf{Logistic Regression} - implemented as
+single linear layer with sigmoid activation; secondly, a multilayer
+perceptron (\textbf{MLP}); and finally, a \textbf{Deep Ensemble}
+composed of five MLPs following
+\protect\hyperlink{ref-lakshminarayanan2016simple}{{[}31{]}} that serves
+as our only probabilistic classifier. We have chosen to work with deep
+ensembles both for their simplicity and effectiveness at modelling
+predictive uncertainty. They are also the model of choice in
+\protect\hyperlink{ref-schut2021generating}{{[}7{]}}. The actual neural
+network architectures are kept simple (Table~\ref{tbl-mlp}), since we
+are only marginally concerned with achieving good initial classifier
+performance. For the real-world datasets we using mini-batch training
+and dropout regularization.
+
+The Latent Space generators rely on separate generative models.
+Following the authors of both REVISE and CLUE we use Variational
+Autoencoders (\textbf{VAE}) for this purpose. As with the classifiers,
+we deliberately choose to work with fairly simple architectures
+(Table~\ref{tbl-vae}). More expressive generative models generally also
+lead to more meaningful counterfactuals produced by Latent Space
+generators. But in our view this should simply be considered as a
+vulnerability of counterfactual generators that rely on surrogate models
+to learn what realistic representations of the underlying data.
+
+\begin{table}
+
+\caption{\label{tbl-panel}Model
+Architectures}\begin{minipage}[t]{\linewidth}
+\subcaption{\label{tbl-mlp}MLP}
+
+{\centering 
+
+\begin{tabular}[t]{lllll}
+\toprule
+ & Hidden Dim. & Hidden Layers & Batch & Dropout\\
+\midrule
+Synthetic & 32 & 1 & - & -\\
+Real-World & 32 & 2 & 50 & 0.25\\
+\bottomrule
+\end{tabular}
+
+}
+
+\end{minipage}%
+\newline
+\begin{minipage}[t]{\linewidth}
+\subcaption{\label{tbl-vae}Variational Autoencoder}
+
+{\centering 
+
+\begin{tabular}[t]{lll}
+\toprule
+ & Hidden Dim. & Epochs\\
+\midrule
+Synthetic & 2 & 100\\
+Real-World & 8 & 250\\
+\bottomrule
+\end{tabular}
+
+}
+
+\end{minipage}%
+
+\end{table}
+
 \hypertarget{sec-empirical-data}{%
-\subsection{Data}\label{sec-empirical-data}}
+\subsection{\texorpdfstring{\(\mathcal{D}\) --
+Data}{\textbackslash mathcal\{D\} -- Data}}\label{sec-empirical-data}}
 
 We have chosen to work with both synthetic and real-world datasets.
 Using synthetic data allows us to impose distributional properties that
@@ -921,10 +1012,10 @@ Economics domain, all of which are tabular and can be used for binary
 classification. Firstly, we use the \textbf{Give Me Some Credit} dataset
 which was open-sourced on Kaggle for the task to predict whether a
 borrower is likely to experience financial difficulties in the next two
-years \protect\hyperlink{ref-gmsc_data}{{[}28{]}}. Originally consisting
+years \protect\hyperlink{ref-gmsc_data}{{[}32{]}}. Originally consisting
 of 250,000 instances with 11 numerical attributes. Secondly, we use the
 \textbf{UCI defaultCredit} dataset
-\protect\hyperlink{ref-yeh2009comparisons}{{[}29{]}}, a benchmark
+\protect\hyperlink{ref-yeh2009comparisons}{{[}33{]}}, a benchmark
 dataset that can be used to train binary classifiers to predict the
 binary outcome variable, whether credit card clients default on their
 payment. In its raw form it consists of 23 explanatory variables - 4
@@ -942,7 +1033,7 @@ individuals that compete for access to credit.
 
 As a third dataset we include the \textbf{California Housing} dataset
 derived from the 1990 U.S. census and sourced through scikit-learn
-\protect\hyperlink{ref-pace1997sparse}{{[}31{]}}. It consists of 8
+\protect\hyperlink{ref-pace1997sparse}{{[}35{]}}. It consists of 8
 continuous features that can be used to predict the median house price
 for California districts. The continuous outcome variable is binarized
 as \(\tilde{y}=\mathbb{I}_{y>\text{median}(Y)}\) indicating whether or
@@ -953,7 +1044,7 @@ in a similar fashion (see for example
 \protect\hyperlink{ref-schut2021generating}{{[}7{]}}). While we
 initially also conducted experiments on that dataset, we eventually
 discarded this dataset, since it has been found to suffer from an
-ethical problem \protect\hyperlink{ref-carlisle2019racist}{{[}32{]}}.
+ethical problem \protect\hyperlink{ref-carlisle2019racist}{{[}36{]}}.
 
 Since the simulations involve generating counterfactuals for a
 significant proportion of the entire sample of individuals, we have
@@ -962,83 +1053,20 @@ consisting of 10,000 individuals each. We have also standardized all
 explanatory features since our chosen classifiers are sensetive to
 scale.
 
-\hypertarget{sec-empirical-classifiers}{%
-\subsection{Classifiers and Generative
-Models}\label{sec-empirical-classifiers}}
+\hypertarget{g-generators}{%
+\subsection{\texorpdfstring{\(G\) --
+Generators}{G -- Generators}}\label{g-generators}}
 
-For each dataset and generator we look at three different types of
-classifiers all of them built and trained using \texttt{Flux.jl}
-\protect\hyperlink{ref-innes2018fashionable}{{[}33{]}}: firstly, a
-simple linear classifier - \textbf{Logistic Regression} - implemented as
-single linear layer with sigmoid activation; secondly, a multilayer
-perceptron (\textbf{MLP}); and finally, a \textbf{Deep Ensemble}
-composed of five MLPs following
-\protect\hyperlink{ref-lakshminarayanan2016simple}{{[}34{]}} that serves
-as our only probabilistic classifier. We have chosen to work with deep
-ensembles both for their simplicity and effectiveness at modelling
-predictive uncertainty. They are also the model of choice in
-\protect\hyperlink{ref-schut2021generating}{{[}7{]}}. The actual neural
-network architectures are kept simple (Table~\ref{tbl-mlp}), since we
-are only marginally concerned with achieving good initial classifier
-performance. For the real-world datasets we using mini-batch training
-and dropout regularization.
-
-The Latent Space generators rely on separate generative models.
-Following the authors of both REVISE and CLUE we use Variational
-Autoencoders (\textbf{VAE}) for this purpose. As with the classifiers,
-we deliberately choose to work with fairly simple architectures
-(Table~\ref{tbl-vae}). More expressive generative models generally also
-lead to more meaningful counterfactuals produced by Latent Space
-generators. But in our view this should simply be considered as a
-vulnerability of counterfactual generators that rely on surrogate models
-to learn what realistic representations of the underlying data.
-
-All classifiers and generative models are retrained for 10 epochs in
-each round \(t\) of the experiment. Rather than retraining models from
-scratch, we initialize all parameters at their previous levels (\(t-1\))
-and compute backpropagate for 10 epochs using the new training data as
-inputs into the existing model.
-
-\begin{table}
-
-\caption{\label{tbl-panel}Model
-Architectures}\begin{minipage}[t]{\linewidth}
-\subcaption{\label{tbl-mlp}MLP}
-
-{\centering 
-
-\begin{tabular}[t]{lllll}
-\toprule
- & Hidden Dim. & Hidden Layers & Batch & Dropout\\
-\midrule
-Synthetic & 32 & 1 & - & -\\
-Real-World & 32 & 2 & 50 & 0.25\\
-\bottomrule
-\end{tabular}
-
-}
-
-\end{minipage}%
-\newline
-\begin{minipage}[t]{\linewidth}
-\subcaption{\label{tbl-vae}Variational Autoencoder}
-
-{\centering 
-
-\begin{tabular}[t]{lll}
-\toprule
- & Hidden Dim. & Epochs\\
-\midrule
-Synthetic & 2 & 100\\
-Real-World & 8 & 250\\
-\bottomrule
-\end{tabular}
-
-}
-
-\end{minipage}%
-
-\end{table}
+All generators introduced earlier are included in the experiments:
+Wachter \protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}},
+REVISE \protect\hyperlink{ref-joshi2019towards}{{[}8{]}}, CLUE
+\protect\hyperlink{ref-antoran2020getting}{{[}10{]}}, DiCE
+\protect\hyperlink{ref-mothilal2020explaining}{{[}9{]}} and Greedy
+\protect\hyperlink{ref-schut2021generating}{{[}7{]}}. In addition, we
+introduce two new generators in Section~\ref{sec-empirical-2-mitigate}
+that directly address the issue of endogenous domain and model shifts.
+We also test to what extent it may be beneficial to combine ideas
+underlying the various generators.
 
 \hypertarget{sec-empirical-2}{%
 \section{Experiments}\label{sec-empirical-2}}
@@ -1046,62 +1074,117 @@ Real-World & 8 & 250\\
 \hypertarget{endogenous-macrodynamics}{%
 \subsection{Endogenous Macrodynamics}\label{endogenous-macrodynamics}}
 
-\hypertarget{potential-mitigation-strategies}{%
-\subsection{Potential Mitigation
-Strategies}\label{potential-mitigation-strategies}}
-
 \hypertarget{sec-empirical-2-mitigate}{%
+\subsection{Potential Mitigation
+Strategies}\label{sec-empirical-2-mitigate}}
+
+In the following we explore several ideas for strategies that may help
+to mitigate those types of endogenous recourse dynamics we observed in
+the previous subsection. All of them essentially boil down to one simple
+principle: to avoid substantial domain and model shifts, the generated
+counterfactuals should comply as much as possible with the true data
+generating process. This principle is really at the core of Latent Space
+generators, and hence it is not surprising that we have found these
+types of generators to perform comparably well in the previous
+subsection. But as we have mentioned earlier, generators that rely on
+separate generative models carry an additional computational cost and -
+perhaps more importantly - their performance hinges on the performance
+of said generative models. Fortunately, it turns out that we can use a
+number of other, much simpler strategies, which we will discuss now.
+
+\hypertarget{more-conservative-decision-thresholds}{%
+\subsubsection{More Conservative Decision
+Thresholds}\label{more-conservative-decision-thresholds}}
+
+The most obvious and trivial mitigation strategy is to simply choose a
+higher decision threshold \(\gamma\). Under \(\gamma=0.5\),
+counterfactuals will end up near the decision boundary by construction.
+Since this is the region of maximal aleotoric uncertainty, the
+classifier is bound to be thrown off. By simply setting a more
+conservative decision threshold, we can avoid this issue to some extent.
+A potential drawback of this approach is that a classifier with high
+decisiveness may classify samples with high confidence even far away
+from the training data.
+
+\hypertarget{classifier-preserving-roar}{%
+\subsubsection{Classifier Preserving
+ROAR}\label{classifier-preserving-roar}}
+
+Another potential strategy draws inspiration from ROAR
+\protect\hyperlink{ref-upadhyay2021towards}{{[}15{]}}: to preserve the
+classifier, we propose to simply explicitly penalize the loss it incurs
+when evaluated on the counterfactual \(x^\prime\) at given parameter
+values. Recall that \(g(\cdot)\) denotes what we had defined as the
+external cost in Equation~\ref{eq-collective}. Then formally we let
+
+\begin{equation}\protect\hypertarget{eq-clap}{}{
+\begin{aligned}
+g(f(s_k^\prime)) = l(M(f(s_k^\prime)),y^\prime)
+\end{aligned}
+}\label{eq-clap}\end{equation}
+
+for each counterfactual \(k\) where \(l\) denotes the loss function used
+to train \(M\). This approach, which we shall refer to as
+\textbf{ClapROAR}, is based on the intuition that (endogenous) model
+shifts will be triggered by counterfactuals that increase classifier
+loss. It is closely linked to the idea of choosing higher decision
+threshold, but likely better at avoiding the potential pitfalls
+associated with highly decisive classifiers. It also makes the private
+vs.~external cost trade-off more explicit and hence manageable.
+
+\hypertarget{gravitational-counterfactual-explanations}{%
 \subsubsection{Gravitational Counterfactual
-Explanations}\label{sec-empirical-2-mitigate}}
+Explanations}\label{gravitational-counterfactual-explanations}}
 
-A straight-forward choice simply extends the baseline approach by
-\protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}}: instead of
-only penalizing the distance of the individuals' counterfactual to its
+Yet another strategy simply extends Wachter as follows: instead of only
+penalizing the distance of the individuals' counterfactual to its
 factual, we propose penalizing its distance to some sensible point in
-the target domain, for example the sample average: \(\bar{\mathbf{x}}\).
-For such a recourse objective, higher choices of \(\lambda_2\) relative
-to \(\lambda_1\) will lead counterfactuals to gravitate towards the
-specified point in the target domain. In the remainder of this paper we
-will therefore refer to this approach as \textbf{Gravitational}
-generator, when we investigate its potential usefulness for mitigating
-endongenous macrodynamics\footnote{Note that despite the naming
-  convention our goal here is not to provide yet another counterfactual
-  generator, but merely investigate the most simple penalty we can think
-  of with respect to its effectiveness.}.
+the target domain, for example the sample average: \(\bar{x}\):
 
-\hypertarget{a-note-on-convergence}{%
-\paragraph{A note on convergence}\label{a-note-on-convergence}}
+\begin{equation}\protect\hypertarget{eq-clap}{}{
+\begin{aligned}
+g(f(s_k^\prime)) = \text{dist}(f(s_k^\prime),\bar{x})
+\end{aligned}
+}\label{eq-clap}\end{equation}
 
-For this simple mitigating strategy underlying the Gravitational
-generator to work as expected, one needs to ensure that counterfactual
-search continues, even after a predetermined threshold probability
-\(\gamma\) has potentially already been reached.
-Figure~\ref{fig-convergence} illustrates this distinction: if one
-chooses to terminate search once the desired threshold is reached (left
-panel) the gravitational pull towards \(\bar{\mathbf{x}}\) is never
-actually satisfied (compare to right panel). More generally, if
-convergence is defined simply in terms of flipping the predicted label
-with some desired degree of confidence, this corresponds to essentially
-ignoring any parts of the counterfactual search objective that do not
-involve \(\ell(M(f(s_k^\prime)),t)\) beyond that point. While this may
-be appropriate for some applications, in general this seems like an odd
-convention. Since we nonetheless seen convergence specified simply in
-terms of reaching the threshold probability in some places\footnote{\protect\hyperlink{ref-joshi2019towards}{{[}8{]}}
-  define convergence of Algorithm 1 in this way. The implementation of
-  \protect\hyperlink{ref-wachter2017counterfactual}{{[}5{]}} in CARLA is
-  also defined in this way.}, we thought it worth making this
-distinction explicit.
+Once again we can putting this in the context of
+Equation~\ref{eq-collective}, the former penalty can be thought of here
+as the private cost incurred by the individual, while the latter
+reflects the external cost incurred by other individuals. Higher choices
+of \(\lambda_2\) relative to \(\lambda_1\) will lead counterfactuals to
+gravitate towards the specified point \(\bar{x}\) in the target domain.
+In the remainder of this paper we will therefore refer to this approach
+as \textbf{Gravitational} generator, when we investigate its potential
+usefulness for mitigating endongenous macrodynamics\footnote{Note that
+  despite the naming convention our goal here is not to provide yet
+  another counterfactual generator, but merely investigate the most
+  simple penalty we can think of with respect to its effectiveness.}.
+
+Figure~\ref{fig-mitigation} shows an illustrative example that
+demonstrates the differences in counterfactual outcomes when using the
+various mitigation strategies compared to the baseline approach, that is
+Wachter with \(\gamma=0.5\): choosing a higher decision threshold pushes
+the counterfactual a little further into the target domain; this effect
+is even stronger for ClapROAR; finally, using the Gravitational
+generator the counterfactual ends up all the way inside the target
+domain in the neighbourhood of \(\bar{x}\)\footnote{In order for the
+  Graviational generator and ClapROAR to work as expected, one needs to
+  ensure that counterfactual search continues, independent of the
+  threshold probability \(\gamma\).}.
 
 \begin{figure}
 
-{\centering \includegraphics[width=0.45\textwidth,height=\textheight]{www/gravitational_generator_comparison.png}
+{\centering \includegraphics[width=0.45\textwidth,height=\textheight]{www/mitigation.png}
 
 }
 
-\caption{\label{fig-convergence}Comparison of counterfactual search
-outcome with simple (left) and strict convergence (right).}
+\caption{\label{fig-mitigation}The differences in counterfactual
+outcomes when using the various mitigation strategies compared to the
+baseline approach, that is Wachter with \(\gamma=0.5\)}
 
 \end{figure}
+
+Our findings \ldots{}
 
 \hypertarget{sec-discussion}{%
 \section{Discussion}\label{sec-discussion}}
@@ -1199,7 +1282,7 @@ learning in the context of high-dimensional data such as image, audio
 and video, empirical evidence suggests that other models such as boosted
 decision trees may have an edge when it comes to lower-dimensional
 tabular datasets, such as the ones considered here
-\protect\hyperlink{ref-grinsztajn2022tree}{{[}36{]}}.
+\protect\hyperlink{ref-grinsztajn2022tree}{{[}38{]}}.
 
 \hypertarget{sec-conclusion}{%
 \section{Concluding Remarks}\label{sec-conclusion}}
@@ -1381,68 +1464,80 @@ data,''} \emph{Applied Sciences}, vol. 11, no. 16, p. 7274, 2021.}
 \CSLRightInline{R. S. Pindyck and D. L. Rubinfeld,
 \emph{Microeconomics}. Pearson Education, 2014.}
 
-\leavevmode\vadjust pre{\hypertarget{ref-arcones1992bootstrap}{}}%
+\leavevmode\vadjust pre{\hypertarget{ref-berlinet2011reproducing}{}}%
 \CSLLeftMargin{{[}26{]} }%
+\CSLRightInline{A. Berlinet and C. Thomas-Agnan, \emph{Reproducing
+kernel hilbert spaces in probability and statistics}. Springer Science
+\& Business Media, 2011.}
+
+\leavevmode\vadjust pre{\hypertarget{ref-gretton2012kernel}{}}%
+\CSLLeftMargin{{[}27{]} }%
+\CSLRightInline{A. Gretton, K. M. Borgwardt, M. J. Rasch, B. Schölkopf,
+and A. Smola, {``A kernel two-sample test,''} \emph{The Journal of
+Machine Learning Research}, vol. 13, no. 1, pp. 723--773, 2012.}
+
+\leavevmode\vadjust pre{\hypertarget{ref-arcones1992bootstrap}{}}%
+\CSLLeftMargin{{[}28{]} }%
 \CSLRightInline{M. A. Arcones and E. Gine, {``On the bootstrap of u and
 v statistics,''} \emph{The Annals of Statistics}, pp. 655--674, 1992.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-hanneke2007bound}{}}%
-\CSLLeftMargin{{[}27{]} }%
+\CSLLeftMargin{{[}29{]} }%
 \CSLRightInline{S. Hanneke, {``A bound on the label complexity of
 agnostic active learning,''} in \emph{Proceedings of the 24th
 international conference on machine learning}, 2007, pp. 353--360.}
 
+\leavevmode\vadjust pre{\hypertarget{ref-innes2018fashionable}{}}%
+\CSLLeftMargin{{[}30{]} }%
+\CSLRightInline{M. Innes \emph{et al.}, {``Fashionable modelling with
+flux,''} \emph{arXiv preprint arXiv:1811.01457}, 2018.}
+
+\leavevmode\vadjust pre{\hypertarget{ref-lakshminarayanan2016simple}{}}%
+\CSLLeftMargin{{[}31{]} }%
+\CSLRightInline{B. Lakshminarayanan, A. Pritzel, and C. Blundell,
+{``Simple and scalable predictive uncertainty estimation using deep
+ensembles,''} \emph{arXiv preprint arXiv:1612.01474}, 2016.}
+
 \leavevmode\vadjust pre{\hypertarget{ref-gmsc_data}{}}%
-\CSLLeftMargin{{[}28{]} }%
+\CSLLeftMargin{{[}32{]} }%
 \CSLRightInline{K. Competition, {``Give me some credit, improve on the
 state of the art in credit scoring by predicting the probability that
 somebody will experience financial distress in the next two years.''}
 \url{https://www.kaggle.com/c/GiveMeSomeCredit}}
 
 \leavevmode\vadjust pre{\hypertarget{ref-yeh2009comparisons}{}}%
-\CSLLeftMargin{{[}29{]} }%
+\CSLLeftMargin{{[}33{]} }%
 \CSLRightInline{I.-C. Yeh and C. Lien, {``The comparisons of data mining
 techniques for the predictive accuracy of probability of default of
 credit card clients,''} \emph{Expert systems with applications}, vol.
 36, no. 2, pp. 2473--2480, 2009.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-pedregosa2011scikit}{}}%
-\CSLLeftMargin{{[}30{]} }%
+\CSLLeftMargin{{[}34{]} }%
 \CSLRightInline{F. Pedregosa \emph{et al.}, {``Scikit-learn: Machine
 learning in python,''} \emph{the Journal of machine Learning research},
 vol. 12, pp. 2825--2830, 2011.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-pace1997sparse}{}}%
-\CSLLeftMargin{{[}31{]} }%
+\CSLLeftMargin{{[}35{]} }%
 \CSLRightInline{R. K. Pace and R. Barry, {``Sparse spatial
 autoregressions,''} \emph{Statistics \& Probability Letters}, vol. 33,
 no. 3, pp. 291--297, 1997.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-carlisle2019racist}{}}%
-\CSLLeftMargin{{[}32{]} }%
+\CSLLeftMargin{{[}36{]} }%
 \CSLRightInline{C. M., {``Racist data destruction? - a boston housing
 dataset controversy,''} 2019, Available:
 \url{https://medium.com/@docintangible/racist-data-destruction-113e3eff54a8}}
 
-\leavevmode\vadjust pre{\hypertarget{ref-innes2018fashionable}{}}%
-\CSLLeftMargin{{[}33{]} }%
-\CSLRightInline{M. Innes \emph{et al.}, {``Fashionable modelling with
-flux,''} \emph{arXiv preprint arXiv:1811.01457}, 2018.}
-
-\leavevmode\vadjust pre{\hypertarget{ref-lakshminarayanan2016simple}{}}%
-\CSLLeftMargin{{[}34{]} }%
-\CSLRightInline{B. Lakshminarayanan, A. Pritzel, and C. Blundell,
-{``Simple and scalable predictive uncertainty estimation using deep
-ensembles,''} \emph{arXiv preprint arXiv:1612.01474}, 2016.}
-
 \leavevmode\vadjust pre{\hypertarget{ref-borisov2021deep}{}}%
-\CSLLeftMargin{{[}35{]} }%
+\CSLLeftMargin{{[}37{]} }%
 \CSLRightInline{V. Borisov, T. Leemann, K. Seßler, J. Haug, M.
 Pawelczyk, and G. Kasneci, {``Deep neural networks and tabular data: A
 survey,''} \emph{arXiv preprint arXiv:2110.01889}, 2021.}
 
 \leavevmode\vadjust pre{\hypertarget{ref-grinsztajn2022tree}{}}%
-\CSLLeftMargin{{[}36{]} }%
+\CSLLeftMargin{{[}38{]} }%
 \CSLRightInline{L. Grinsztajn, E. Oyallon, and G. Varoquaux, {``Why do
 tree-based models still outperform deep learning on tabular data?''}
 \emph{arXiv preprint arXiv:2207.08815}, 2022.}

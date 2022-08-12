@@ -1,6 +1,33 @@
 # Experiment Setup {#sec-empirical}
 
-## Data {#sec-empirical-data}
+This section presents the exact ingredients and parameter choices describing the simulation experiments we ran to produce the findings presented in the next section (@sec-empirical-2). For convenience, we use Algorithm \ref{algo-experiment} as a template to guide us through this section. A few high-level details upfront: each experiment is run for a total of $T=50$ rounds, where in each round we provide recourse to five percent of all individuals in the non-target class, so $B_t=0.05 * N_t^{\mathcal{D}_0}$^[As mentioned in the previous section, we end up providing recourse to a total of $\approx50\%$ by the end of round $T=50$.]. All classifiers and generative models are retrained for 10 epochs in each round $t$ of the experiment. Rather than retraining models from scratch, we initialize all parameters at their previous levels ($t-1$) and compute backpropagate for 10 epochs using the new training data as inputs into the existing model. Evaluation metrics are computed and stored every 10 rounds. 
+
+## $M$ -- Classifiers and Generative Models {#sec-empirical-classifiers}
+
+For each dataset and generator we look at three different types of classifiers all of them built and trained using `Flux.jl` [@innes2018fashionable]: firstly, a simple linear classifier - **Logistic Regression** - implemented as single linear layer with sigmoid activation; secondly, a multilayer perceptron (**MLP**); and finally, a **Deep Ensemble** composed of five MLPs following @lakshminarayanan2016simple that serves as our only probabilistic classifier. We have chosen to work with deep ensembles both for their simplicity and effectiveness at modelling predictive uncertainty. They are also the model of choice in @schut2021generating. The actual neural network architectures are kept simple (@tbl-mlp), since we are only marginally concerned with achieving good initial classifier performance. For the real-world datasets we using mini-batch training and dropout regularization. 
+
+The Latent Space generators rely on separate generative models. Following the authors of both REVISE and CLUE we use Variational Autoencoders (**VAE**) for this purpose. As with the classifiers, we deliberately choose to work with fairly simple architectures (@tbl-vae). More expressive generative models generally also lead to more meaningful counterfactuals produced by Latent Space generators. But in our view this should simply be considered as a vulnerability of counterfactual generators that rely on surrogate models to learn what realistic representations of the underlying data. 
+
+::: {#tbl-panel layout-ncol=1}
+
+| | Hidden Dim. | Hidden Layers | Batch | Dropout |
+|------|------|------|-----|-----|
+| Synthetic | 32 | 1 | - | - |
+| Real-World | 32 | 2 | 50 | 0.25 |
+
+: MLP {#tbl-mlp} 
+
+|  | Hidden Dim. | Epochs |
+|------|------|------|
+| Synthetic | 2 | 100 | 
+| Real-World | 8 | 250 | 
+
+: Variational Autoencoder {#tbl-vae}
+
+Model Architectures
+:::
+
+## $\mathcal{D}$ -- Data {#sec-empirical-data}
 
 We have chosen to work with both synthetic and real-world datasets. Using synthetic data allows us to impose distributional properties that may affect the resulting recourse dynamics. Following @upadhyay2021towards, we generate synthetic data in $\mathbb{R}^2$ to also allow for a visual interpretation of the results. Real-world data is used in order to assess if endogenous dynamics also occur in higher-dimensional settings.
 
@@ -34,32 +61,9 @@ As a third dataset we include the **California Housing** dataset derived from th
 
 Since the simulations involve generating counterfactuals for a significant proportion of the entire sample of individuals, we have randomly undersampled each dataset to yield balanced subsamples consisting of 10,000 individuals each. We have also standardized all explanatory features since our chosen classifiers are sensetive to scale.
 
-## Classifiers and Generative Models {#sec-empirical-classifiers}
+## $G$ -- Generators
 
-For each dataset and generator we look at three different types of classifiers all of them built and trained using `Flux.jl` [@innes2018fashionable]: firstly, a simple linear classifier - **Logistic Regression** - implemented as single linear layer with sigmoid activation; secondly, a multilayer perceptron (**MLP**); and finally, a **Deep Ensemble** composed of five MLPs following @lakshminarayanan2016simple that serves as our only probabilistic classifier. We have chosen to work with deep ensembles both for their simplicity and effectiveness at modelling predictive uncertainty. They are also the model of choice in @schut2021generating. The actual neural network architectures are kept simple (@tbl-mlp), since we are only marginally concerned with achieving good initial classifier performance. For the real-world datasets we using mini-batch training and dropout regularization. 
-
-The Latent Space generators rely on separate generative models. Following the authors of both REVISE and CLUE we use Variational Autoencoders (**VAE**) for this purpose. As with the classifiers, we deliberately choose to work with fairly simple architectures (@tbl-vae). More expressive generative models generally also lead to more meaningful counterfactuals produced by Latent Space generators. But in our view this should simply be considered as a vulnerability of counterfactual generators that rely on surrogate models to learn what realistic representations of the underlying data. 
-
-All classifiers and generative models are retrained for 10 epochs in each round $t$ of the experiment. Rather than retraining models from scratch, we initialize all parameters at their previous levels ($t-1$) and compute backpropagate for 10 epochs using the new training data as inputs into the existing model. 
-
-::: {#tbl-panel layout-ncol=1}
-
-| | Hidden Dim. | Hidden Layers | Batch | Dropout |
-|------|------|------|-----|-----|
-| Synthetic | 32 | 1 | - | - |
-| Real-World | 32 | 2 | 50 | 0.25 |
-
-: MLP {#tbl-mlp} 
-
-|  | Hidden Dim. | Epochs |
-|------|------|------|
-| Synthetic | 2 | 100 | 
-| Real-World | 8 | 250 | 
-
-: Variational Autoencoder {#tbl-vae}
-
-Model Architectures
-:::
+All generators introduced earlier are included in the experiments: Wachter [@wachter2017counterfactual], REVISE [@joshi2019towards], CLUE [@antoran2020getting], DiCE [@mothilal2020explaining] and Greedy [@schut2021generating]. In addition, we introduce two new generators in @sec-empirical-2-mitigate that directly address the issue of endogenous domain and model shifts. We also test to what extent it may be beneficial to combine ideas underlying the various generators. 
 
 
 

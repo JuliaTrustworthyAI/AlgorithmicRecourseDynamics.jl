@@ -24,7 +24,11 @@ execute:
 
 {{< include sections/methodology.qmd >}}
 
+{{< include sections/methodology_2.qmd >}}
+
 {{< include sections/empirical.qmd >}}
+
+{{< include sections/empirical_2.qmd >}}
 
 {{< include sections/discussion.qmd >}}
 

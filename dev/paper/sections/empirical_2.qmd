@@ -1,0 +1,15 @@
+# Experiments {#sec-empirical-2}
+
+## Endogenous Macrodynamics
+
+## Potential Mitigation Strategies
+
+### Gravitational Counterfactual Explanations {#sec-empirical-2-mitigate}
+
+A straight-forward choice simply extends the baseline approach by @wachter2017counterfactual: instead of only penalizing the distance of the individuals' counterfactual to its factual, we propose penalizing its distance to some sensible point in the target domain, for example the sample average: $\bar{\mathbf{x}}$. For such a recourse objective, higher choices of $\lambda_2$ relative to $\lambda_1$ will lead counterfactuals to gravitate towards the specified point in the target domain. In the remainder of this paper we will therefore refer to this approach as **Gravitational** generator, when we investigate its potential usefulness for mitigating endongenous macrodynamics^[Note that despite the naming convention our goal here is not to provide yet another counterfactual generator, but merely investigate the most simple penalty we can think of with respect to its effectiveness.].
+
+#### A note on convergence
+
+For this simple mitigating strategy underlying the Gravitational generator to work as expected, one needs to ensure that counterfactual search continues, even after a predetermined threshold probability $\gamma$ has potentially already been reached. @fig-convergence illustrates this distinction: if one chooses to terminate search once the desired threshold is reached (left panel) the gravitational pull towards $\bar{\mathbf{x}}$ is never actually satisfied (compare to right panel). More generally, if convergence is defined simply in terms of flipping the predicted label with some desired degree of confidence, this corresponds to essentially ignoring any parts of the counterfactual search objective that do not involve $\ell(M(f(s_k^\prime)),t)$ beyond that point. While this may be appropriate for some applications, in general this seems like an odd convention. Since we nonetheless seen convergence specified simply in terms of reaching the threshold probability in some places^[@joshi2019towards define convergence of Algorithm 1 in this way. The implementation of @wachter2017counterfactual in CARLA is also defined in this way.], we thought it worth making this distinction explicit.
+
+![Comparison of counterfactual search outcome with simple (left) and strict convergence (right).](www/gravitational_generator_comparison.png){#fig-convergence fig.pos="h" width=45%}

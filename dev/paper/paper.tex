@@ -202,7 +202,7 @@ practice. Fortunately, we find various potential mitigation strategies
 that can be used in combination with existing approaches. Our simulation
 framework for studying recourse dynamics is fast and open-sourced.
 \end{abstract}
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, sharp corners, enhanced, interior hidden, borderline west={3pt}{0pt}{shadecolor}, frame hidden, breakable]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[interior hidden, boxrule=0pt, sharp corners, frame hidden, breakable, borderline west={3pt}{0pt}{shadecolor}, enhanced]}{\end{tcolorbox}}\fi
 
 \hypertarget{sec-intro}{%
 \section{Introduction}\label{sec-intro}}
@@ -1170,7 +1170,7 @@ Turning to the real-world data next \ldots{}
 \end{figure}
 
 \hypertarget{sec-empirical-2-mitigate}{%
-\subsection{Potential Mitigation
+\section{Potential Mitigation
 Strategies}\label{sec-empirical-2-mitigate}}
 
 In the following we explore several ideas for strategies that may help
@@ -1188,7 +1188,7 @@ of said generative models. Fortunately, it turns out that we can use a
 number of other, much simpler strategies, which we will discuss now.
 
 \hypertarget{more-conservative-decision-thresholds}{%
-\subsubsection{More Conservative Decision
+\subsection{More Conservative Decision
 Thresholds}\label{more-conservative-decision-thresholds}}
 
 The most obvious and trivial mitigation strategy is to simply choose a
@@ -1202,7 +1202,7 @@ decisiveness may classify samples with high confidence even far away
 from the training data.
 
 \hypertarget{classifier-preserving-roar}{%
-\subsubsection{Classifier Preserving
+\subsection{Classifier Preserving
 ROAR}\label{classifier-preserving-roar}}
 
 Another potential strategy draws inspiration from ROAR
@@ -1228,7 +1228,7 @@ associated with highly decisive classifiers. It also makes the private
 vs.~external cost trade-off more explicit and hence manageable.
 
 \hypertarget{gravitational-counterfactual-explanations}{%
-\subsubsection{Gravitational Counterfactual
+\subsection{Gravitational Counterfactual
 Explanations}\label{gravitational-counterfactual-explanations}}
 
 Yet another strategy simply extends Wachter as follows: instead of only
@@ -1255,7 +1255,7 @@ usefulness for mitigating endongenous macrodynamics\footnote{Note that
   another counterfactual generator, but merely investigate the most
   simple penalty we can think of with respect to its effectiveness.}.
 
-Figure~\ref{fig-mitigation} shows an illustrative example that
+Figure~\ref{fig-mitigation} hows an illustrative example that
 demonstrates the differences in counterfactual outcomes when using the
 various mitigation strategies compared to the baseline approach, that is
 Wachter with \(\gamma=0.5\): choosing a higher decision threshold pushes
@@ -1273,32 +1273,68 @@ domain in the neighbourhood of \(\bar{x}\)\footnote{In order for the
 
 }
 
-\caption{\label{fig-mitigation}The differences in counterfactual
-outcomes when using the various mitigation strategies compared to the
-baseline approach, that is Wachter with \(\gamma=0.5\)}
+\caption{\label{fig-mitigation}Illustrative example demonstrating the
+properties of the various mitigation strategies.}
 
 \end{figure}
 
 Our findings indicate that all three mitigation strategies are at least
 at par with Latent Space generators with respect to their effectiveness
-at mitigating domain and model shifts
-(Figure~\ref{fig-mitigate-results}) \ldots{}
+at mitigating domain and model shifts. Figure~\ref{fig-mitigate-results}
+presents a subset of the evaluation metrics for our synthetic data with
+overlapping classes. The top row in Figure~\ref{fig-mitigate-results}
+indicates that while domain shifts are of roughly the same magnitude for
+both Wachter and Latent Space generators, our proposed strategies
+effectively mitigate these shifts. ClapROAR appears to be particularly
+effective, which is positively surprising, since it is designed to
+explicitly address model shifts, not domain shifts. As evident from the
+middle row in Figure~\ref{fig-mitigate-results} model shifts can also be
+reduced: for the deep ensemble Latent Space search yields results that
+are at par with the mitigation strategies, while for both the simple MLP
+and logistic regression our simple strategies are actually more
+effective. The same overall pattern can be observed for out-of-sample
+model performance. With respect to the other synthetic datasets we found
+the following: for the Moons dataset the emerging patterns are largely
+the same, but the estimated model shifts are insignificant as noted
+earlier; the same holds for the Circles dataset, but there is no
+significant reduction in model performance for our neural networks; in
+the case of linearly separable data we find the Gravitational generator
+to be most effective at mitigating shifts.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.45\textwidth,height=\textheight]{www/mitigation_synthetic_results.png}
+
+}
+
+\caption{\label{fig-mitigate-results}The differences in counterfactual
+outcomes when using the various mitigation strategies compared to the
+baseline approach, that is Wachter with \(\gamma=0.5\). Results for
+synthetic data with overlapping classes. The shown model MMD (PP MMD)
+was computed over a meshgrid of points. Error bars indicate the standard
+deviation across folds.}
+
+\end{figure}
 
 An interesting finding is also that the proposed strategies can have a
 complementary effect when used in combination with Latent Space
 generators. In experiments we conducted on the synthetic data, the
 benefits of Latent Space generators were exacerbated further when using
 a more conservative threshold or combining it with the penalties
-underlying Gravitational and ClapROAR.
+underlying Gravitational and ClapROAR. A snapshot of the results is
+shown in Figure~\ref{fig-mitigate-latent-results}.
 
 \begin{figure}
 
-{\centering \includegraphics[width=9cm,height=9cm]{www/synthetic_results.png}
+{\centering \includegraphics[width=9cm,height=9cm]{www/mitigation_synthetic_latent_results.png}
 
 }
 
-\caption{\label{fig-mitigate-results}PLACEHOLDER: Results for mitigating
-strategies.}
+\caption{\label{fig-mitigate-latent-results}Combinining various
+mitigation strategies with Latent Space search. Results for synthetic
+data with overlapping classes. The shown model MMD (PP MMD) was computed
+over a meshgrid of points. Error bars indicate the standard deviation
+across folds.}
 
 \end{figure}
 

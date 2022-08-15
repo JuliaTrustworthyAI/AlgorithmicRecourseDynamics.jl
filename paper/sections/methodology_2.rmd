@@ -1,6 +1,6 @@
 # Modeling Endogenous Macrodynamics in Algorithmic Recourse {#method-2}
 
-In the following we describe the framework we propose for modeling and analysing endogenous macrodynamics in Algorithmic Recourse. We first describe the basic simulations that were generated to produce the findings in this work and also constitute the core of `AlgorithmicRecourseDynamics.jl` - the Julia package we introduced earlier. The remainder of this section then introduces various evaluation metrics that can be used to benchmark different counterfactual generators with respect to how they perform in the dynamic setting. 
+In the following we describe the framework we propose for modeling and analysing endogenous macrodynamics in Algorithmic Recourse. We first describe the basic simulations that were generated to produce the findings in this work and also constitute the core of [`AlgorithmicRecourseDynamics.jl`](https://anonymous.4open.science/r/AlgorithmicRecourseDynamics/README.md) - the Julia package we introduced earlier. The remainder of this section then introduces various evaluation metrics that can be used to benchmark different counterfactual generators with respect to how they perform in the dynamic setting. 
 
 ## Simulations {#method-2-experiment}
 

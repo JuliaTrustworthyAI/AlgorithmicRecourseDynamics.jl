@@ -30,18 +30,13 @@ execute:
 
 {{< include sections/empirical_2.qmd >}}
 
+{{< include sections/mitigation.qmd >}}
+
 {{< include sections/discussion.qmd >}}
 
 {{< include sections/limitations.qmd >}}
 
 {{< include sections/conclusion.qmd >}}
-
-# Acknowledgment {.unnumbered}
-
-P. A. thanks ...
-
-\pagebreak
-\FloatBarrier
 
 # References {.unnumbered}
 

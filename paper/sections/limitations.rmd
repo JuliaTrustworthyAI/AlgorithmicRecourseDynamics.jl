@@ -1,0 +1,24 @@
+# Limitations and Future Work {#limit}
+
+While we believe that this work constitutes a valuable starting point for addressing existing issues in Algorithmic Recourse from a fresh perspective, we are aware of several of its limitations. In the following, we highlight some of these limitations and point to avenues for future research.
+
+## Private vs. External Costs
+
+Perhaps the most crucial shortcoming of our work is that we merely point out that there exists a trade-off between private costs to the individual and external costs to the collective of stakeholders. We fall short of providing any definite answers as to how that trade-off may be resolved in practice. The mitigation strategies we have proposed here provide a good starting point, but they are ad-hoc, mechanical extensions of the existing AR framework. An interesting idea to explore in future work could be the potential for Pareto optimal Algorithmic Recourse, that is a collective recourse outcome in which no single individual can be made better off, without make at least one other individual worse off. This type of work would be interdisciplinary and could help to formalize some of the concepts presented in this work. For the time being, we suggest that the trade-off can be resolved on a case-by-case basis.  
+
+## Experimental Setup
+
+The experimental setup proposed here is designed to mimic a real-world recourse process in a simple fashion. In practice, models are in fact updated on a regular basis [@upadhyay2021towards]. We also find it plausible to assume that the implementation of recourse happens periodically for different individuals, rather that all at once at time $t=0$. That being said, our experimental design is a vast over-simplification of potential real-world scenarios. In practice, any endogenous shifts that may occur can be expected to be entangled with exogenous shifts of the nature investigated in @upadhyay2021towards. We also make implicit assumptions about the utility functions of the involved agents that may well be too simple: individuals seeking recourse are assumed to always implement the proposed Counterfactual Explanations; conversely, the agent in charge of the model $M$ is assumed to always treat individuals that have implemented valid recourse as if they were truly now in the target class. Relating this back to the consumer credit example, we assume that the would-be borrowers are always willing and able to implement recourse and the bank is always willing to provide credit as would-be borrowers move across the decision boundary. In practice it is doubtful that agents behave according to such simple rules. Nonetheless, we think that our simple framework offers a starting point for future work on recourse dynamics (both endogenous and exogenous dynamics). 
+
+## Data {#limit-data}
+
+Largely in line with the existing literature on Algorithmic Recourse, we have limited our analysis of real-world data to three commonly used benchmark datasets that involve binary prediction tasks. Future work may benefit from including novel datasets or extending the analysis to multi-class or regression problems, the latter arguably representing the most common objective in Finance and Economics. It is also worth mentioning that the use of real-world datasets considered in this work is constrained by the fact that at the time of writing `CounterfactualExplanations.jl` only supports continuous features, at least of some of the counterfactual generators considered here. The fact that we therefore had to discard discrete features led to relatively poor initial performance of our classifiers in some cases. While this is indeed a limitation we intend to address in future and derivative work, our findings with respect to endogenous macrodynamics do not hinge on strong classifier performance.
+
+## Classifiers 
+
+For reasons stated earlier we have limited our analysis to differentiable linear and non-linear classifiers, in particular logistic regression and deep neural networks. While these sorts of classifiers have also typically been analyzed in the existing literature on Counterfactual Explanations and Algorithmic Recourse, they represent only a subset of popular machine learning models employed in practice - both black-box and glass-box. Despite the success and popularity of deep learning in the context of high-dimensional data such as image, audio and video, empirical evidence suggests that other models such as boosted decision trees may have an edge when it comes to lower-dimensional tabular datasets, such as the ones considered here [@borisov2021deep, @grinsztajn2022tree]. 
+
+
+
+
+

@@ -1,0 +1,72 @@
+# Experiment Setup {#empirical}
+
+This section presents the exact ingredients and parameter choices describing the simulation experiments we ran to produce the findings presented in the next section (\@ref(empirical-2)). For convenience, we use Algorithm \ref{algo-experiment} as a template to guide us through this section. A few high-level details upfront: each experiment is run for a total of $T=50$ rounds, where in each round we provide recourse to five percent of all individuals in the non-target class, so $B_t=0.05 * N_t^{\mathcal{D}_0}$^[As mentioned in the previous section, we end up providing recourse to a total of $\approx50\%$ by the end of round $T=50$.]. All classifiers and generative models are retrained for 10 epochs in each round $t$ of the experiment. Rather than retraining models from scratch, we initialize all parameters at their previous levels ($t-1$) and compute backpropagate for 10 epochs using the new training data as inputs into the existing model. Evaluation metrics are computed and stored every 10 rounds. To account for noise each individual experiment is repeat five times.
+
+## $M$ -- Classifiers and Generative Models {#empirical-classifiers}
+
+For each dataset and generator we look at three different types of classifiers all of them built and trained using `Flux.jl` [@innes2018fashionable]: firstly, a simple linear classifier - **Logistic Regression** - implemented as single linear layer with sigmoid activation; secondly, a multilayer perceptron (**MLP**); and finally, a **Deep Ensemble** composed of five MLPs following @lakshminarayanan2016simple that serves as our only probabilistic classifier. We have chosen to work with deep ensembles both for their simplicity and effectiveness at modelling predictive uncertainty. They are also the model of choice in @schut2021generating. The actual neural network architectures are kept simple (@tbl-mlp), since we are only marginally concerned with achieving good initial classifier performance. For the real-world datasets we using mini-batch training and dropout regularization. 
+
+The Latent Space generators rely on separate generative models. Following the authors of both REVISE and CLUE we use Variational Autoencoders (**VAE**) for this purpose. As with the classifiers, we deliberately choose to work with fairly simple architectures (@tbl-vae). More expressive generative models generally also lead to more meaningful counterfactuals produced by Latent Space generators. But in our view this should simply be considered as a vulnerability of counterfactual generators that rely on surrogate models to learn what realistic representations of the underlying data. 
+
+<!-- | | Hidden Dim. | Hidden Layers | Batch | Dropout | -->
+<!-- |------|------|------|-----|-----| -->
+<!-- | Synthetic | 32 | 1 | - | - | -->
+<!-- | Real-World | 32 | 2 | 50 | 0.25 | -->
+
+<!-- : MLP {#tbl-mlp}  -->
+
+<!-- |  | Hidden Dim. | Epochs | -->
+<!-- |------|------|------| -->
+<!-- | Synthetic | 2 | 100 |  -->
+<!-- | Real-World | 8 | 250 |  -->
+
+<!-- : Variational Autoencoder {#tbl-vae} -->
+
+
+## $\mathcal{D}$ -- Data {#empirical-data}
+
+We have chosen to work with both synthetic and real-world datasets. Using synthetic data allows us to impose distributional properties that may affect the resulting recourse dynamics. Following @upadhyay2021towards, we generate synthetic data in $\mathbb{R}^2$ to also allow for a visual interpretation of the results. Real-world data is used in order to assess if endogenous dynamics also occur in higher-dimensional settings.
+
+### Synthetic data
+
+```{julia, eval=FALSE, echo=FALSE}
+using Plots, PlotThemes
+theme(:wong)
+catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic()
+function plot_data(data,title)
+    plt = plot(title=title)
+    scatter!(data)
+    return plt
+end
+plts = [plot_data(data,name) for (name, data) in catalogue]
+plt = plot(plts..., layout=(1,4), size=(850,200))
+savefig(plt, "dev/paper/www/synthetic_data.png")
+```
+
+We use four synthetic binary classification datasets consisting of 1000 samples each. The datasets are presented in Figure \@ref(fig:synthetic-data) (see also Appendix A for a formal description). Samples from the negative class are marked in blue while samples of the positive class are marked in orange.
+
+```{r synthetic-data, fig.cap="Synthetic classification datasets used in our experiments."}
+knitr::include_graphics("www/synthetic_data.png")
+```
+
+Ex-ante we expect to see that by construction Wachter will create a new cluster of counterfactual instances in the proximity of the initial decision boundary. Thus, the choice of a black-box model may have an impact on the paths of the recourse. For generators that use latent space search (REVISE @joshi2019towards, CLUE @antoran2020getting) or rely on (and have access to) probabilistic models (CLUE @antoran2020getting, Greedy @schut2021generating) we expect that counterfactuals will end up in regions of the target domain that are densely populated by training samples. Of course, this is expectation hinges on how effective said probabilistic models are at capturing predictive uncertainty. Finally, we expect to see the counterfactuals generated by DiCE to be uniformly spread around the feature space inside the target class^[As we mentioned earlier, the diversity constraint used by DiCE is only effective for when at least two counterfactuals are being generated. We have therefore decided to always generate 5 counterfactuals for each generator and randomly pick one of them.]. In summary, we expect that the endogenous shifts induced by Wachter outsize those induced by all other generators, since Wachter is the only approach that is not concered with generating what we have defined as meaningful counterfactuals. 
+
+### Real-world data
+
+We use three different real-world datasets from the Finance and Economics domain, all of which are tabular and can be used for binary classification. Firstly, we use the **Give Me Some Credit** dataset which was open-sourced on Kaggle for the task to predict whether a borrower is likely to experience financial difficulties in the next two years [@gmsc_data]. Originally consisting of 250,000 instances with 11 numerical attributes. Secondly, we use the **UCI defaultCredit** dataset [@yeh2009comparisons], a benchmark dataset that can be used to train binary classifiers to predict the binary outcome variable, whether credit card clients default on their payment. In its raw form it consists of 23 explanatory variables - 4 categorical features relating to demographic attributes^[These have been ommitted from the analysis. See Section \@ref(limit-data) for details.] and 19 continuous features largely relating to individuals' payment histories and amount of credit outstanding. Both of these datasets have been used in the literature on Algorithmic Recourse before (see for example @pawelczyk2021carla, @joshi2019towards and @ustun2019actionable), presumably because they constitute real-world classification tasks involving individuals that compete for access to credit. 
+
+As a third dataset we include the **California Housing** dataset derived from the 1990 U.S. census and sourced through scikit-learn [@pedregosa2011scikit, @pace1997sparse]. It consists of 8 continuous features that can be used to predict the median house price for California districts. The continuous outcome variable is binarized as $\tilde{y}=\mathbb{I}_{y>\text{median}(Y)}$ indicating whether or not the median house price of a given district is above or below the median of all districts. While we have not seen this dataset used in the previous literature on AR, others have used the Boston Housing dataset in a similar fashion (see for example @schut2021generating). While we initially also conducted experiments on that dataset, we eventually discarded this dataset, since it has been found to suffer from an ethical problem [@carlisle2019racist].
+
+Since the simulations involve generating counterfactuals for a significant proportion of the entire sample of individuals, we have randomly undersampled each dataset to yield balanced subsamples consisting of 10,000 individuals each. We have also standardized all explanatory features since our chosen classifiers are sensetive to scale.
+
+## $G$ -- Generators
+
+All generators introduced earlier are included in the experiments: Wachter [@wachter2017counterfactual], REVISE [@joshi2019towards], CLUE [@antoran2020getting], DiCE [@mothilal2020explaining] and Greedy [@schut2021generating]. In addition, we introduce two new generators in Section \@ref(mitigate) that directly address the issue of endogenous domain and model shifts. We also test to what extent it may be beneficial to combine ideas underlying the various generators. 
+
+
+
+
+
+
+
+

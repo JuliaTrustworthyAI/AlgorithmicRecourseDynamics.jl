@@ -11,8 +11,9 @@ function plot(results::ExperimentResults, variable::Symbol=:mmd, scope::Symbol=:
 
     gdf = groupby(df, [:generator, :model, :n, :name, :scope])
     df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
-    df_plot = df_plot[(df_plot.scope .== scope),:]
     df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
+    df_plot.name .= [r[:name] == "mmd" ? "$(r[:name])_$(r[:scope])" : r[:name] for r in eachrow(df_plot)]
+    select!(df_plot, Not(:scope))
 
     ncol = length(unique(df_plot.model))
     nrow = length(unique(df_plot.name))
@@ -45,8 +46,9 @@ function plot(results::ExperimentResults, n::Int, variable::Symbol=:mmd, scope::
 
     gdf = groupby(df, [:generator, :model, :n, :name, :scope])
     df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
-    df_plot = df_plot[(df_plot.scope .== scope),:]
     df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
+    df_plot.name .= [r[:name] == "mmd" ? "$(r[:name])_$(r[:scope])" : r[:name] for r in eachrow(df_plot)]
+    select!(df_plot, Not(:scope))
 
     ncol = length(unique(df_plot.model))
     nrow = length(unique(df_plot.name))
@@ -83,15 +85,42 @@ function kable(result::ExperimentResults,n::Vector{Int}; format="latex")
     dt <- data.table($df)
     n_ <- $n
     dt <- dt[n %in% n_]
-    dt <- dt[,.(value=mean(value,na.rm=TRUE),sd=sd(value)),by=.(model,generator,name,scope,n)]
+    dt[,name:=ifelse(name=="mmd",paste0(name,scope),name)][,scope:=NULL]
+    dt <- dt[,.(value=mean(value,na.rm=TRUE),sd=sd(value)),by=.(model,generator,name,n)]
     dt[,text:=sprintf("%0.3f (%0.3f)",value,sd)][,value:=NULL][,sd:=NULL]
     dt <- dcast(dt, ... ~ name, value.var="text")
     library(kableExtra)
-    dt <- dt[order(-scope,n)]
-    setcolorder(dt, c("scope","n"))
+    dt <- dt[order(n)]
+    setcolorder(dt, c("n"))
+    ktab <- kbl(dt, booktabs = T, align = "c", format=$format) %>%
+        column_spec(1, bold = T, width = "5em") %>%
+        collapse_rows(columns = 1:3, latex_hline = "major", valign = "middle")
+    """
+end
+
+using DataFrames
+function kable(results::Dict{Symbol,ExperimentResults},n::Vector{Int}; format="latex")
+    df = DataFrame() 
+    for (key, val) in results
+        df_ = deepcopy(val.output)
+        df_.dataset .= key
+        df = vcat(df,df_)
+    end
+    mapcols!(x -> eltype(x)==Symbol ? string.(x) : x, df)
+    R"""
+    library(data.table)
+    dt <- data.table($df)
+    n_ <- $n
+    dt <- dt[n %in% n_]
+    dt[,name:=ifelse(name=="mmd",paste0(name,scope),name)][,scope:=NULL]
+    dt <- dt[,.(value=mean(value,na.rm=TRUE),sd=sd(value)),by=.(dataset,model,generator,name,n)]
+    dt[,text:=sprintf("%0.3f (%0.3f)",value,sd)][,value:=NULL][,sd:=NULL]
+    dt <- dcast(dt, ... ~ name, value.var="text")
+    library(kableExtra)
+    dt <- dt[order(-dataset,n)]
+    setcolorder(dt, c("dataset","n"))
     ktab <- kbl(dt, booktabs = T, align = "c", format=$format) %>%
         column_spec(1, bold = T, width = "5em") %>%
         collapse_rows(columns = 1:4, latex_hline = "major", valign = "middle")
     """
 end
-

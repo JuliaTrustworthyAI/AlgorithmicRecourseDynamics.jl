@@ -94,10 +94,9 @@ T = 100
 using Serialization
 results = run_experiments(
     experiments;
-    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap, T=T,
-    convergence=:strict, save_name_suffix="strict"
+    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap, T=T
 )
-Serialization.serialize(joinpath(output_path,"results_strict.jls"),results)
+Serialization.serialize(joinpath(output_path,"results.jls"),results)
 ```
 
 ```{julia}
@@ -155,26 +154,71 @@ end
 plot_dict = Dict(key => reduce(vcat, [plots[key] for plots in values(plot_dict)]) for (key, value) in generators)
 for (name, plts) in plot_dict
     plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
-    savefig(plt, joinpath(www_path,"models_train_after_$(name)_strict.png"))
+    savefig(plt, joinpath(www_path,"models_train_after_$(name).png"))
 end
 ```
 
 ```{julia}
 using Serialization
-results = Serialization.deserialize(joinpath(output_path,"results_strict.jls"))
+results = Serialization.deserialize(joinpath(output_path,"results.jls"))
 ```
 
 ### Plots
 
 ```{julia}
+using Images
 line_charts = Dict()
 errorbar_charts = Dict()
 for (data_name, res) in results
     plt = plot(res)
-    savefig(plt, joinpath(www_path, "line_chart_$(data_name).png"))
+    Images.save(joinpath(www_path, "line_chart_$(data_name).png"), plt)
     line_charts[data_name] = plt
     plt = plot(res,maximum(res.output.n))
-    savefig(plt, joinpath(www_path, "errorbar_chart_$(data_name).png"))
+    Images.save(joinpath(www_path, "errorbar_chart_$(data_name).png"), plt)
     errorbar_charts[data_name] = plt
 end
 ```
+
+### Chart in paper
+
+```{julia}
+using DataFrames, Statistics
+df = results[:overlapping].output
+df = df[df.n .== maximum(df.n),:]
+gdf = groupby(df, [:generator, :model, :n, :name, :scope])
+df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
+df_plot = df_plot[[name in [:mmd, :mmd_grid, :model_performance] for name in df_plot.name],:]
+df_plot = df_plot[.!(df_plot.name.==:mmd .&& df_plot.scope.==:model),:]
+df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
+transform!(df_plot, :name => (X -> [x=="mmd" ? "MMD (domain)" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="mmd_grid" ? "MMD (model)" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="model_performance" ? "Performance" : x for x in X]) => :name)
+
+ncol = length(unique(df_plot.model))
+nrow = length(unique(df_plot.name))
+
+using RCall
+scale_ = 2
+R"""
+library(ggplot2)
+plt <- ggplot($df_plot) +
+    geom_bar(aes(x=n, y=mean, fill=generator), stat="identity", alpha=0.5, position="dodge") +
+    geom_pointrange( aes(x=n, y=mean, ymin=ymin, ymax=ymax, colour=generator), alpha=0.9, position=position_dodge(width=0.9), size=0.5) +
+    facet_wrap(name ~ model, scale="free_y", ncol=$ncol) +
+    labs(y = "Value") + 
+    scale_fill_discrete(name="Generator:") +
+    scale_colour_discrete(name="Generator:") +
+    theme(
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()
+    )
+temp_path <- file.path(tempdir(), "plot.png")
+ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.8) 
+"""
+
+img = Images.load(rcopy(R"temp_path"))
+Images.save(joinpath(www_path,"paper_synthetic_results.png"), img)
+```
+
+

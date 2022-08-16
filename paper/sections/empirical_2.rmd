@@ -1,10 +1,17 @@
 # Experiments {#empirical-2}
 
-Below we first present our main findings with respect to the presence of endogenous macrodynamics in Algorithmic Recourse. We then go on to introduce and test a number of potential mitigation strategies.
+Using the framework introduced in the previous section we are interested in answering the following research questions in this section:
+
+- Does the repeated implementation of recourse provided by state-of-the-art generators lead to shifts in the domain and model?
+- If so, are any of these dynamics substantial enough to be considered costly to any of the stakeholders involved in real-world automated decision-making processes?
+- Do different counterfactual generators yield significantly different outcomes in this context? Furthermore, is there any heterogeneity with respect to the chosen classifier and dataset?
+- What seem to be drivers of endogenous dynamics in Algorithmic Recourse?
+
+Below we first present our main experimental findings regarding these questions. We conclude this section with a brief recap providing answers to all of these questions.
 
 ## Endogenous Macrodynamics
 
-In light of the huge number of experiments we have conducted, we shall start this section off with a few high-level observations. Across all datasets (synthetic and real), classifiers and counterfactual generators we observe either most or all of the following dynamics at varying degrees:
+We start this section off with a few high-level observations. Across all datasets (synthetic and real), classifiers and counterfactual generators we observe either most or all of the following dynamics at varying degrees:
 
 - Statistically significant domain and model shift as measured by MMD. 
 - A deterioration in out-of-sample model performance as measured by the F-Score evaluated on a test sample. In many cases this drop in performance is substantial.
@@ -14,18 +21,33 @@ In light of the huge number of experiments we have conducted, we shall start thi
 There is also some clear heterogeneity across the results: 
 
 - The observed, adverse dynamics are generally speaking of the highest magnitude for the simple linear classifier. Differences in results for the MLP and Deep Ensemble are mostly negligible. 
-- The reduction in model performance appears to be most severe when classes are not perfectly separable.
-- With the exception of the Greedy generator, all other generators generally perform somewhat better than Wachter overall as expected. 
+- The reduction in model performance appears to be most severe when classes are not perfectly separable or the initial performance of the classifier was weak to begin with.
+- With the exception of the Greedy generator, all other generators generally perform somewhat better overall than the baseline (Wachter) as expected. 
 
-Granular tables and visualizations summarizing all of our experimental results are published in the supplementary appendix. Here we will zoom in on illustrative examples that nicely reflect some of the broader patterns we have observed and listed above. Figure \@ref(fig:syn) presents a small subset of our results for the synthetic dataset with overlapping classes. It shows the resulting values for some of our evaluation metrics at the end of the experiment, so after all $T=50$ rounds, along with error bars indicating the variation across folds. The top row shows the estimated domain shifts. While it is not straight-forward to interpret the exact magnitude of MMD, we can see clearly that the values are different from zero and there is essentially no variation across our five folds. With respect to the domain shifts, the Greedy generator actually induces the smallest shifts. In general, we have observed the opposite. The second row shows the estimated model shifts, where here we have used the meshgrid approach explained earlier. As with the domain shifts, the observed values are clearly different from zero and variation across folds is once again small. In this case, the results for this particular dataset very much reflect the broader patterns we have observed: Latent Space generators induce the smallest shifts, followed by DiCE, then Wachter and finally Greedy. The same broad pattern also emerges in the bottom row: we observe the smallest deterioration in model performance for Latent Space generators, albeit still a reduction in the F-Score of around 5 percentage points on average. 
 
-```{r syn, fig.cap="Results for synthetic data with overlapping classes. The shown model MMD (PP MMD) was computed over a meshgrid of points. Error bars indicate the standard deviation across folds."}
+Focusing first on synthetic data, Figure \@ref(fig:syn) presents our findings for the dataset with overlapping classes. It shows the resulting values for some of our evaluation metrics at the end of the experiment, so after all $T=50$ rounds, along with error bars indicating the variation across folds. 
+
+The top row shows the estimated domain shifts. While it is not straight-forward to interpret the exact magnitude of MMD, we can see clearly that the values are different from zero and there is essentially no variation across our five folds. With respect to the domain shifts, the Greedy generator actually induces the smallest shifts. In general, we have observed the opposite. 
+
+The second row shows the estimated model shifts, where here we have used the grid approach explained earlier. As with the domain shifts, the observed values are clearly different from zero and variation across folds is once again small. In this case, the results for this particular dataset very much reflect the broader patterns we have observed: Latent Space generators induce the smallest shifts, followed by DiCE, then Wachter and finally Greedy. 
+
+The same broad pattern also emerges in the third row: we observe the smallest deterioration in model performance for Latent Space generators, albeit we still find a reduction in the F-Score of around 5-10 percentage points on average. Related to this the bottom two rows indicate that the retrained classifiers disagree with their initial counterparts on the classification of up to nearly 25 percent of the individuals. We also note that the final classifiers are more decisive, although as we noted earlier this may to some extent just be a byproduct of retraining the model throughout the course of the experiment. 
+
+Figure \@ref(fig:syn) also indicates that the estimated effects are strongest for the simplest linear classifier, a pattern that we have observed fairly consistently. Conversely, there is virtually no difference in outcomes between the deep ensemble and the MLP. It is possible that the deep ensembles simply fail to capture predictive uncertainty well and hence counterfactual generators like Greedy that explicitly address this quantity fail to work as expected.
+
+```{r syn, fig.cap="Results for synthetic data with overlapping classes. The shown model MMD (PP MMD) was computed over a meshgrid of 1,000 points. Error bars indicate the standard deviation across folds."}
 knitr::include_graphics("www/synthetic_results.png")
 ```
 
-Turning to the real-world data next ...
+Turning to the real-world data we will go through the findings presented in Figure \@ref(fig:real) where each column corresponds to one of the three data sets. The results shown here are for the deep ensemble, which once again largely resemble those for the MLP. Starting from the top row, perhaps somewhat surprisingly we find no substantial domain shifts. While Latent Space search induces domain shifts that are orders of magnitude higher than for the other generators, they are still small enough to be considered negligible. 
 
-```{r real, fig.cap="Results for real-world datasets."}
+The same is not true for model shifts shown the middle row of Figure \@ref(fig:real): with the exception of GMSC, the estimated grid-based PP MMD is statistically significant and large. Here we find no evidence that Latent Space search helps to mitigate model shifts, as we did before for the synthetic data. Since these real-world datasets are arguably more complex than the synthetic data, the generative model can be expected to have a harder time at learning the data generating process and hence this increased difficult appears to affect the performance of REVISE/CLUE. 
+
+Out-of-sample model performance also deteriorates across the board and substantially so: the smallest average reduction in F-Scores of around 15-20 percentage points is observed for the California Housing dataset. For this dataset we achieved the highest initial model performance of just under 90 percent, indicating once again that weaker classifiers may be more exposed to endogenous dynamics. As with the synthetic data, the estimates for logistic regression are qualitatively in line with the above, but quantitatively even more pronounced.
+
+Zooming in on individual features we ...
+
+```{r real, fig.cap="Results for deep ensemble using real-world datasets. The shown model MMD (PP MMD) was computed over a meshgrid of 10,000 points. Error bars indicate the standard deviation across folds."}
 knitr::include_graphics("www/real_world_results.png")
 ```
 

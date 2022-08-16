@@ -1,18 +1,18 @@
 # Potential Mitigation Strategies {#mitigate}
 
-In the following we explore several ideas for strategies that may help to mitigate those types of endogenous recourse dynamics we observed in the previous subsection. All of them essentially boil down to one simple principle: to avoid substantial domain and model shifts, the generated counterfactuals should comply as much as possible with the true data generating process. This principle is really at the core of Latent Space generators, and hence it is not surprising that we have found these types of generators to perform comparably well in the previous subsection. But as we have mentioned earlier, generators that rely on separate generative models carry an additional computational cost and - perhaps more importantly - their performance hinges on the performance of said generative models. Fortunately, it turns out that we can use a number of other, much simpler strategies, which we will discuss now. 
+Having established in the previous section that endogenous macrodynamics in AR are substantial enough to warrent our attention, in this section we introduce and test a number of potential mitigation strategies. All of them essentially boil down to one simple principle: to avoid substantial domain and model shifts, the generated counterfactuals should comply as much as possible with the true data generating process. This principle is really at the core of Latent Space generators, and hence it is not surprising that we have found these types of generators to perform comparably well in the previous section. But as we have mentioned earlier, generators that rely on separate generative models carry an additional computational burden and - perhaps more importantly - their performance hinges on the performance of said generative models. Fortunately, it turns out that we can use a number of other, much simpler strategies, which we will discuss now. 
 
 ## More Conservative Decision Thresholds
 
-The most obvious and trivial mitigation strategy is to simply choose a higher decision threshold $\gamma$. Under $\gamma=0.5$, counterfactuals will end up near the decision boundary by construction. Since this is the region of maximal aleotoric uncertainty, the classifier is bound to be thrown off. By simply setting a more conservative decision threshold, we can avoid this issue to some extent. A potential drawback of this approach is that a classifier with high decisiveness may classify samples with high confidence even far away from the training data. 
+The most obvious and trivial mitigation strategy is to simply choose a higher decision threshold $\gamma$. This threshold determines when a proposed counterfactual should be considered as valid. Under $\gamma=0.5$, counterfactuals will end up near the decision boundary by construction. Since this is the region of maximal aleotoric uncertainty, the classifier is bound to be thrown off. By simply setting a more conservative decision threshold, we can avoid this issue to some extent. A potential drawback of this approach is that a classifier with high decisiveness may classify samples with high confidence even far away from the training data. 
 
 ## Classifier Preserving ROAR
 
-Another potential strategy draws inspiration from ROAR @upadhyay2021towards: to preserve the classifier, we propose to simply explicitly penalize the loss it incurs when evaluated on the counterfactual $x^\prime$ at given parameter values. Recall that $g(\cdot)$ denotes what we had defined as the external cost in Equation \@ref(eq:collective). Then formally we let
+Another potential strategy draws inspiration from ROAR @upadhyay2021towards: to preserve the classifier, we propose to simply explicitly penalize the loss it incurs when evaluated on the counterfactual $x^\prime$ at given parameter values. Recall that $\text{extcost}(\cdot)$ denotes what we had defined as the external cost in Equation \@ref(eq:collective). Then formally we let
 
 \begin{equation}
 \begin{aligned}
-g(f(s_k^\prime)) = l(M(f(s_k^\prime)),y^\prime) (\#eq:clap)
+\text{extcost}(f(s_k^\prime)) = l(M(f(s_k^\prime)),y^\prime) (\#eq:clap)
 \end{aligned}
 \end{equation} 
 
@@ -24,7 +24,7 @@ Yet another strategy simply extends Wachter as follows: instead of only penalizi
 
 \begin{equation}
 \begin{aligned}
-g(f(s_k^\prime)) = \text{dist}(f(s_k^\prime),\bar{x})  (\#eq:grav)
+\text{extcost}(f(s_k^\prime)) = \text{dist}(f(s_k^\prime),\bar{x})  (\#eq:grav)
 \end{aligned}
 \end{equation}
 
@@ -73,7 +73,7 @@ for (name,ce) ∈ counterfactuals
     plts = vcat(plts..., plt)
 end
 plt = plot(plts..., size=(750,200), layout=(1,4))
-savefig(plt, "dev/paper/www/mitigation.png")
+savefi\text{extcost}(plt, "dev/paper/www/mitigation.png")
 ```
 
 

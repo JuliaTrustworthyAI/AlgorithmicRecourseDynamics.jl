@@ -4,19 +4,19 @@ In this Section we provide a review of the relevant literature. First, Subsectio
 
 ## Algorithmic Recourse {#related-recourse}
 
-A framework for Counterfactual Explanations was first proposed in 2017 by @wachter2017counterfactual and has served as the baseline for most methodologies that have been proposed since then. Let $M: \mathcal{X} \mapsto \mathcal{Y}$ denote some pre-trained model that maps from inputs $X \in \mathcal{X}$ to outputs $Y \in \mathcal{Y}$. Then we are interested in minimizing the cost^[Equivalently, others have referred to this quantity as *complexity* or simply *distance*] $H=h(x\prime)$ incurred by individual $x$ when moving to a counterfactual state $x\prime$ such that the predicted outcome $M(x\prime)$ corresponds to some target outcome $y^*$:
+A framework for Counterfactual Explanations was first proposed in 2017 by @wachter2017counterfactual and has served as the baseline for most methodologies that have been proposed since then. Let $M: \mathcal{X} \mapsto \mathcal{Y}$ denote some pre-trained model that maps from inputs $X \in \mathcal{X}$ to outputs $Y \in \mathcal{Y}$. Then we are interested in minimizing the cost^[Equivalently, others have referred to this quantity as *complexity* or simply *distance*] $C=\text{cost}(x\prime)$ incurred by individual $x$ when moving to a counterfactual state $x\prime$ such that the predicted outcome $M(x\prime)$ corresponds to some target outcome $y^*$:
 
 \begin{equation}
-\min_{x\prime \in \mathcal{x}} h(x\prime) \ \ \ \mbox{s. t.} \ \ \ M(x\prime) = y^* (\#eq:obj)
+\min_{x\prime \in \mathcal{X}} \text{cost}(x\prime) \ \ \ \mbox{s. t.} \ \ \ M(x\prime) = y^* (\#eq:obj)
 \end{equation}
 
 For implementation purposes, \@ref(eq:obj) is typically approximated through regularization:
 
 \begin{equation}
-x\prime = \arg \min_{x\prime}  \ell(M(x\prime),y^*) + \lambda h(x\prime) (\#eq:solution)
+x\prime = \arg \min_{x\prime}  \text{yloss}(M(x\prime),y^*) + \lambda \text{cost}(x\prime) (\#eq:solution)
 \end{equation}
 
-In the baseline work [@wachter2017counterfactual], the cost function  is proxied by some distance metric based on the simple intuition that perturbations of $x$ are costly to the individual. For models that are differentiable and produce smooth predictions, \@ref(eq:solution) can be solved through gradient descent. This summarizes the approach followed in @wachter2017counterfactual which we shall refer to simply as **Wachter** - the name of the first author - in the remainder of this paper.
+In the baseline work [@wachter2017counterfactual], the cost function is proxied by some distance metric based on the simple intuition that perturbations of $x$ are costly to the individual. For models that are differentiable and produce smooth predictions, \@ref(eq:solution) can be solved through gradient descent. This summarizes the approach followed in @wachter2017counterfactual which we shall refer to simply as **Wachter** - the name of the first author - in the remainder of this paper.
 
 Many approaches for the generation of Algorithmic Recourse have been described in the literature since 2017. An October 2020 survey by Karimi et al. layed out 60 algorithms that have been proposed since 2014 [@karimi2020survey]. Another survey published around the same time by Verma et al. described 29 algorithms [@verma2020counterfactual]. Different approaches vary primarily in terms of the objective functions they impose, how they optimize said objective (from brute force through gradient-based approaches to graph traversal algorithms), and how the ensure that certain requirements for CE are met. Regarding the latter, the literature has produced an extensive list of desiderata each addressing different needs. To name but a few, we are interested in generating counterfactuals that close [@wachter2017counterfactual], actionable [@ustun2019actionable], realistic [@joshi2019towards, @schut2021generating], sparse, diverse [@mothilal2020explaining] and if possible causally founded [@karimi2021algorithmic].
 

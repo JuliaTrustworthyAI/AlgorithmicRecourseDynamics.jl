@@ -690,7 +690,7 @@ We calculate the MMD for both classes individually based on the ground truth lab
 
 As our baseline for quantifying model shifts we measure perturbations to the model parameters at each point in time \(t\) following \protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}}. We define \(\Delta=||\theta_{t+1}-\theta_{t}||^2\), that is the euclidean distance between the vectors of parameters before and after retraining the model \(M\). We shall refer to this baseline metric simply as \textbf{Perturbations}.
 
-We extend the metric in Equation \eqref{eq:mmd} for the purpose of quantifying model shifts. Specifically, we introduce \textbf{Predicted Probability MMD (PP MMD)}: instead of applying Equation \eqref{eq:mmd} to features directly, we apply it to the predicted probabilities assigned to a set of samples by the model \(M\). If the model shifts, the probabilities assigned to each sample will change; again, this metric will equal 0 only if the two classifiers are the same. We compute PP MMD in two ways: firstly, we compute it over samples drawn uniformly from the dataset, and, secondly, we compute it over points spanning a meshgrid over a subspace of the entire feature space. For the latter approach we bound the subspace by the extrema of each feature. While this approach is theoretically more robust, unfortunately, it suffers from the curse of dimensionality, since it becomes increasingly difficult to select enough points to overcome noise as the dimension \(D\) grows.
+We extend the metric in Equation \eqref{eq:mmd} for the purpose of quantifying model shifts. Specifically, we introduce \textbf{Predicted Probability MMD (PP MMD)}: instead of applying Equation \eqref{eq:mmd} to features directly, we apply it to the predicted probabilities assigned to a set of samples by the model \(M\). If the model shifts, the probabilities assigned to each sample will change; again, this metric will equal 0 only if the two classifiers are the same. We compute PP MMD in two ways: firstly, we compute it over samples drawn uniformly from the dataset, and, secondly, we compute it over points spanning a mesh grid over a subspace of the entire feature space. For the latter approach we bound the subspace by the extrema of each feature. While this approach is theoretically more robust, unfortunately, it suffers from the curse of dimensionality, since it becomes increasingly difficult to select enough points to overcome noise as the dimension \(D\) grows.
 
 As an alternative to PP MMD we use a pseudo-distance for the \textbf{Disagreement Coefficient} (Disagreement). This metric was introduced in \protect\hyperlink{ref-hanneke2007bound}{{[}28{]}} and estimates \(p(M(x) \neq M^\prime(x))\), that is the probability that two classifiers do not agree on the predicted outcome for a randomly chosen sample. Thus, it is not relevant whether the classification is correct according to the ground truth, but only whether the sample lies on the same side of the two respective decision boundaries. In our context, this metric quantifies the overlap between the initial model (trained before the application of recourse) and the updated model. A Disagreement Coefficient unequal to zero is indicative of a model shift. The opposite is not true: even if the Disagreement Coefficient is equal to zero a model shift may still have occured. This is one reason for why PP MMD is our our preferred metric.
 
@@ -766,7 +766,7 @@ We use three different real-world datasets from the Finance and Economics domain
 
 As a third dataset we include the \textbf{California Housing} dataset derived from the 1990 U.S. census and sourced through scikit-learn \protect\hyperlink{ref-pace1997sparse}{{[}34{]}}. It consists of 8 continuous features that can be used to predict the median house price for California districts. The continuous outcome variable is binarized as \(\tilde{y}=\mathbb{I}_{y>\text{median}(Y)}\) indicating whether or not the median house price of a given district is above or below the median of all districts. While we have not seen this dataset used in the previous literature on AR, others have used the Boston Housing dataset in a similar fashion (see for example \protect\hyperlink{ref-schut2021generating}{{[}6{]}}). While we initially also conducted experiments on that dataset, we eventually discarded this dataset, since it has been found to suffer from an ethical problem \protect\hyperlink{ref-carlisle2019racist}{{[}35{]}}.
 
-Since the simulations involve generating counterfactuals for a significant proportion of the entire sample of individuals, we have randomly undersampled each dataset to yield balanced subsamples consisting of 10,000 individuals each. We have also standardized all explanatory features since our chosen classifiers are sensetive to scale.
+Since the simulations involve generating counterfactuals for a significant proportion of the entire sample of individuals, we have randomly undersampled each dataset to yield balanced subsamples consisting of 2,500 individuals each. We have also standardized all explanatory features since our chosen classifiers are sensetive to scale.
 
 \hypertarget{g-generators}{%
 \subsection{\texorpdfstring{\(G\) -- Generators}{G -- Generators}}\label{g-generators}}
@@ -829,7 +829,11 @@ The second row shows the estimated model shifts, where here we have used the gri
 
 The same broad pattern also emerges in the third row: we observe the smallest deterioration in model performance for Latent Space generators, albeit we still find a reduction in the F-Score of around 5-10 percentage points on average. Related to this the bottom two rows indicate that the retrained classifiers disagree with their initial counterparts on the classification of up to nearly 25 percent of the individuals. We also note that the final classifiers are more decisive, although as we noted earlier this may to some extent just be a byproduct of retraining the model throughout the course of the experiment.
 
-Figure \ref{fig:syn} also indicates that the estimated effects are strongest for the simplest linear classifier, a pattern that we have observed fairly consistently. Conversely, there is virtually no difference in outcomes between the deep ensemble and the MLP. It is possible that the deep ensembles simply fail to capture predictive uncertainty well and hence counterfactual generators like Greedy that explicitly address this quantity fail to work as expected.
+Figure \ref{fig:syn} also indicates that the estimated effects are strongest for the simplest linear classifier, a pattern that we have observed fairly consistently. Conversely, there is virtually no difference in outcomes between the deep ensemble and the MLP. It is possible that the deep ensembles simply fail to capture predictive uncertainty well and hence counterfactual generators like Greedy, that explicitly address this quantity, fail to work as expected.
+
+The findings for the other synthetic datasets are broadly consistent with the observations above. For the Moons data the same broad patterns emerge, although in this case it is less evident that Latent Space generators induce relatively smaller shifts. For the Circles data, it also appears at first sight that Latent Space search yields better results, but it turns out that in this case counterfactual search is simply largely unsuccessful\footnote{We suspect that this in this case the generative model has failed to learn an accuracte representation of the data geenrating process.}. Model shifts and performance deterioration are also quantitatively quantitatively smaller than in what we can observe in Figure \ref{fig:syn}. The same broadly holds for the Moons data, For the Linearly Separable data we also find substantial domain and model shifts, but no reduction in model performance.
+
+Finally, it is also worth noting at this point that the observed dynamics and patterns are consistent throughout the course of the experiment. That is to say that we start observing shifts already after just a few rounds and these tends to increase proportionately for the different generators over the course of the experiment.
 
 \begin{figure}
 
@@ -837,12 +841,12 @@ Figure \ref{fig:syn} also indicates that the estimated effects are strongest for
 
 }
 
-\caption{Results for synthetic data with overlapping classes. The shown model MMD (PP MMD) was computed over a meshgrid of 1,000 points. Error bars indicate the standard deviation across folds.}\label{fig:syn}
+\caption{Results for synthetic data with overlapping classes. The shown model MMD (PP MMD) was computed over a mesh grid of 1,000 points. Error bars indicate the standard deviation across folds.}\label{fig:syn}
 \end{figure}
 
 Turning to the real-world data we will go through the findings presented in Figure \ref{fig:real} where each column corresponds to one of the three data sets. The results shown here are for the deep ensemble, which once again largely resemble those for the MLP. Starting from the top row, perhaps somewhat surprisingly we find no substantial domain shifts. While Latent Space search induces domain shifts that are orders of magnitude higher than for the other generators, they are still small enough to be considered negligible.
 
-The same is not true for model shifts shown the middle row of Figure \ref{fig:real}: with the exception of GMSC, the estimated grid-based PP MMD is statistically significant and large. Here we find no evidence that Latent Space search helps to mitigate model shifts, as we did before for the synthetic data. Since these real-world datasets are arguably more complex than the synthetic data, the generative model can be expected to have a harder time at learning the data generating process and hence this increased difficult appears to affect the performance of REVISE/CLUE.
+The same is not true for model shifts shown the middle row of Figure \ref{fig:real}: with the exception of GMSC, the estimated PP MMD is statistically significant and large. Here we find no evidence that Latent Space search helps to mitigate model shifts, as we did before for the synthetic data. Since these real-world datasets are arguably more complex than the synthetic data, the generative model can be expected to have a harder time at learning the data generating process and hence this increased difficult appears to affect the performance of REVISE/CLUE.
 
 Out-of-sample model performance also deteriorates across the board and substantially so: the smallest average reduction in F-Scores of around 15-20 percentage points is observed for the California Housing dataset. For this dataset we achieved the highest initial model performance of just under 90 percent, indicating once again that weaker classifiers may be more exposed to endogenous dynamics. As with the synthetic data, the estimates for logistic regression are qualitatively in line with the above, but quantitatively even more pronounced.
 
@@ -854,7 +858,7 @@ Zooming in on individual features we \ldots{}
 
 }
 
-\caption{Results for deep ensemble using real-world datasets. The shown model MMD (PP MMD) was computed over a meshgrid of 10,000 points. Error bars indicate the standard deviation across folds.}\label{fig:real}
+\caption{Results for deep ensemble using real-world datasets. The shown model MMD (PP MMD) was computed over actual samples, rather than a mesh grid. Error bars indicate the standard deviation across folds.}\label{fig:real}
 \end{figure}
 
 \hypertarget{mitigate}{%
@@ -912,10 +916,10 @@ Our findings indicate that all three mitigation strategies are at least at par w
 
 }
 
-\caption{The differences in counterfactual outcomes when using the various mitigation strategies compared to the baseline approach, that is Wachter with $\gamma=0.5$. Results for synthetic data with overlapping classes. The shown model MMD (PP MMD) was computed over a meshgrid of points. Error bars indicate the standard deviation across folds.}\label{fig:mitigate-results}
+\caption{The differences in counterfactual outcomes when using the various mitigation strategies compared to the baseline approach, that is Wachter with $\gamma=0.5$. Results for synthetic data with overlapping classes. The shown model MMD (PP MMD) was computed over a mesh grid of points. Error bars indicate the standard deviation across folds.}\label{fig:mitigate-results}
 \end{figure}
 
-An interesting finding is also that the proposed strategies can have a complementary effect when used in combination with Latent Space generators. In experiments we conducted on the synthetic data, the benefits of Latent Space generators were exacerbated further when using a more conservative threshold or combining it with the penalties underlying Gravitational and ClapROAR. A snapshot of the results is shown in Figure \ref{fig:mitigate-latent-results}.
+An interesting finding is also that the proposed strategies can have a complementary effect when used in combination with Latent Space generators. In experiments we conducted on the synthetic data, the apparent benefits of Latent Space generators were exacerbated further when using a more conservative threshold or combining it with the penalties underlying Gravitational and ClapROAR. In Figure \ref{fig:mitigate-latent-results} the conventional Latent Space generator with \(\gamma=0.5\) serves as our baseline. Evidently, being more conservative or using one of our proposed penalties decreases the estimated domain and model shifts.
 
 \begin{figure}
 
@@ -923,7 +927,18 @@ An interesting finding is also that the proposed strategies can have a complemen
 
 }
 
-\caption{Combinining various mitigation strategies with Latent Space search. Results for synthetic data with overlapping classes. The shown model MMD (PP MMD) was computed over a meshgrid of points. Error bars indicate the standard deviation across folds.}\label{fig:mitigate-latent-results}
+\caption{Combinining various mitigation strategies with Latent Space search. Results for synthetic data with overlapping classes. The shown model MMD (PP MMD) was computed over a mesh grid of points. Error bars indicate the standard deviation across folds.}\label{fig:mitigate-latent-results}
+\end{figure}
+
+Finally, Figure \ref{fig:mitigate-real-world-results} shows the results for our real-world data. We note that for both California Housing and Credit Default data our proposed strategies do have an attenuating effect on both models shifts and performance deterioration, even though the estimated effects are somewhat less striking than for the synthetic data in \ref{fig:mitigate-results}\footnote{Estimated domain shifts (not shown) were largely insubstantial, as in Figure \ref{fig:real} in the previous section.}. Still, both ClapROAR and Gravitational reduce the negative impact on out-of-sample model performance by around 25 percent from roughly 20 percentage points for the baseline approach to just 15 percentage points. For the GMSC dataset we observe no notable differences.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{www/mitigation_real_world_results} 
+
+}
+
+\caption{The differences in counterfactual outcomes when using the various mitigation strategies compared to the baseline approach, that is Wachter with $\gamma=0.5$. Results for deep ensemble using real-world datasets. The shown model MMD (PP MMD) was computed over actual samples, rather than a mesh grid. Error bars indicate the standard deviation across folds.}\label{fig:mitigate-real-world-results}
 \end{figure}
 
 \hypertarget{discussion}{%

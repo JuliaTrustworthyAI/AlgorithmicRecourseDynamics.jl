@@ -70,7 +70,7 @@ We use three different real-world datasets from the Finance and Economics domain
 
 As a third dataset we include the **California Housing** dataset derived from the 1990 U.S. census and sourced through scikit-learn [@pedregosa2011scikit, @pace1997sparse]. It consists of 8 continuous features that can be used to predict the median house price for California districts. The continuous outcome variable is binarized as $\tilde{y}=\mathbb{I}_{y>\text{median}(Y)}$ indicating whether or not the median house price of a given district is above or below the median of all districts. While we have not seen this dataset used in the previous literature on AR, others have used the Boston Housing dataset in a similar fashion (see for example @schut2021generating). While we initially also conducted experiments on that dataset, we eventually discarded this dataset, since it has been found to suffer from an ethical problem [@carlisle2019racist].
 
-Since the simulations involve generating counterfactuals for a significant proportion of the entire sample of individuals, we have randomly undersampled each dataset to yield balanced subsamples consisting of 10,000 individuals each. We have also standardized all explanatory features since our chosen classifiers are sensetive to scale.
+Since the simulations involve generating counterfactuals for a significant proportion of the entire sample of individuals, we have randomly undersampled each dataset to yield balanced subsamples consisting of 2,500 individuals each. We have also standardized all explanatory features since our chosen classifiers are sensetive to scale.
 
 ## $G$ -- Generators
 

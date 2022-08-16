@@ -48,8 +48,6 @@ The same is not true for model shifts shown the middle row of Figure \@ref(fig:r
 
 Out-of-sample model performance also deteriorates across the board and substantially so: the smallest average reduction in F-Scores of around 15-20 percentage points is observed for the California Housing dataset. For this dataset we achieved the highest initial model performance of just under 90 percent, indicating once again that weaker classifiers may be more exposed to endogenous dynamics. As with the synthetic data, the estimates for logistic regression are qualitatively in line with the above, but quantitatively even more pronounced.
 
-Zooming in on individual features we ...
-
 ```{r real, fig.cap="Results for deep ensemble using real-world datasets. The shown model MMD (PP MMD) was computed over actual samples, rather than a mesh grid. Error bars indicate the standard deviation across folds."}
 knitr::include_graphics("www/real_world_results.png")
 ```

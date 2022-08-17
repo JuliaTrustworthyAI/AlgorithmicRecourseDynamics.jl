@@ -130,10 +130,3 @@ for (name,ce) ∈ counterfactuals
 end
 plt = plot(plts..., size=(800,300), layout=(1,2))
 ```
-
-
-
-
-```{julia}
-
-```

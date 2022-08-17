@@ -2,16 +2,10 @@
 title: Supplementary Appendix
 format:
     html: 
-        standalone: true
+        self-contained: true
         code-fold: true
         execute:
             echo: true
-            eval: false
-            warning: false
-    gfm:
-        wrap: none
-        execute:
-            echo: false
             eval: false
             warning: false
 jupyter: julia-1.7

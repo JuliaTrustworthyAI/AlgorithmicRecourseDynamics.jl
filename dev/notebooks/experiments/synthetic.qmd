@@ -1,4 +1,8 @@
-## Synthetic Data
+## Synthetic Data {#sec-app-synthetic}
+
+This notebook was used to run the experiments for the synthetic datasets. In the following we first run the experiments and then generate visualizations and tables.
+
+### Experiments
 
 ```{julia}
 using Pkg; Pkg.activate("dev")
@@ -79,7 +83,6 @@ plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices
 savefig(plt, joinpath(www_path,"models_train_before.png"))
 ```
 
-## Strict convergence
 
 ```{julia}
 n_evals = 5
@@ -176,7 +179,7 @@ for (data_name, res) in results
 end
 ```
 
-### Chart in paper
+### Chart in paper {#sec-app-synthetic-paper}
 
 #### Line Chart
 

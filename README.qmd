@@ -4,7 +4,16 @@ format:
         wrap: none
 ---
 
-# AlgorithmicRecourseDynamics.jl - Research Paper 📝
+# AlgorithmicRecourseDynamics
+
+<!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pat-alt.github.io/CounterfactualExplanations.jl/stable) -->
+<!-- [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pat-alt.github.io/CounterfactualExplanations.jl/dev) -->
+[![Build Status](https://github.com/pat-alt/CounterfactualExplanations.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/pat-alt/CounterfactualExplanations.jl/actions/workflows/CI.yml?query=branch%3Amain)
+<!-- [![Coverage](https://codecov.io/gh/pat-alt/CounterfactualExplanations.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/pat-alt/CounterfactualExplanations.jl) -->
+
+`AlgorithmicRecourseDynamics.jl` is a Julia package for modelling Algorithmic Recourse Dynamics.
+
+## Research Paper 📝
 
 **Note** ⚠: You are on the `#original-paper` branch of `AlgorithmicRecourseDynamics.jl`. This branch is a static artifact corresponding to the state of the package at the time the paper was first published. It can be used to replicate the original findings of the paper. For an up-to-date version of the package, please switch to the [`#main`](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl) branch.
 

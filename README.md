@@ -1,5 +1,14 @@
 
-# AlgorithmicRecourseDynamics.jl - Research Paper 📝
+# AlgorithmicRecourseDynamics
+
+<!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pat-alt.github.io/CounterfactualExplanations.jl/stable) -->
+<!-- [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pat-alt.github.io/CounterfactualExplanations.jl/dev) -->
+
+[![Build Status](https://github.com/pat-alt/CounterfactualExplanations.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/pat-alt/CounterfactualExplanations.jl/actions/workflows/CI.yml?query=branch%3Amain) <!-- [![Coverage](https://codecov.io/gh/pat-alt/CounterfactualExplanations.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/pat-alt/CounterfactualExplanations.jl) -->
+
+`AlgorithmicRecourseDynamics.jl` is a Julia package for modelling Algorithmic Recourse Dynamics.
+
+## Research Paper 📝
 
 **Note** ⚠: You are on the `#original-paper` branch of `AlgorithmicRecourseDynamics.jl`. This branch is a static artifact corresponding to the state of the package at the time the paper was first published. It can be used to replicate the original findings of the paper. For an up-to-date version of the package, please switch to the [`#main`](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl) branch.
 
@@ -9,6 +18,7 @@ The paper titles **Endogenous Macrodynamics in Algorithmic Recourse** is current
 
 -   [Paper](paper/paper.pdf)
 -   [Notebooks](dev/notebooks/)
+-   [Supplementary Appendix](build/dev/notebooks/appendix.html) (download the HTML and view in browser)
 -   [Artifacts](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/releases/tag/artifacts) (including data and experimental results)
 
 In this work we investigate what happens if Algorithmic Recourse is actually implemented by a large number of individuals. The chart below illustrates what we mean by Endogenous Macrodynamics in Algorithmic Recourse: (a) we have a simple linear classifier trained for binary classification where samples from the negative class ($y=0$) are marked in blue and samples of the positive class ($y=1$) are marked in orange; (b) the implementation of AR for a random subset of individuals leads to a noticable domain shift; (c) as the classifier is retrained we observe a corresponding model shift; (d) as this process is repeated, the decision boundary moves away from the target class.

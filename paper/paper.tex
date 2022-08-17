@@ -383,6 +383,20 @@
 \usepackage{placeins}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
 
 %% END MY ADDITIONS %%
 
@@ -565,7 +579,7 @@ Figure \ref{fig:poc} illustrates this idea for a binary problem involving a prob
 
 }
 
-\caption{Dynamics in Algorithmic Recourse: we have a simple linear classifier trained for binary classification (a); the implementation of AR for a random subset of individuals leads to a noticable domain shift (b); as the classifier is retrained we observe a corresponding model shift (c); as this process is repeated, the decision boundary moves away from the target class (d).}\label{fig:poc}
+\caption{Dynamics in Algorithmic Recourse: (a) we have a simple linear classifier trained for binary classification where samples from the negative class ($y=0$) are marked in blue and samples of the positive class ($y=1$) are marked in orange; (b) the implementation of AR for a random subset of individuals leads to a noticable domain shift; (c) as the classifier is retrained we observe a corresponding model shift; (d) as this process is repeated, the decision boundary moves away from the target class.}\label{fig:poc}
 \end{figure}
 
 We think that these types of endogenous dynamics may be problematic and warrant our attention. From a purely technical we note the following: firstly, model shifts may inadvertently change classification outcomes for individuals who never received and implemented recourse. Secondly, we observe in Figure \ref{fig:poc} that as the decision boundary moves in the direction of the non-target class, counterfactual paths become shorter. We would argue that in some practical applications this can be expected to generate costs for the involved stakeholders. To follow our argument, consider the following two examples:
@@ -638,7 +652,7 @@ As we will see next, all of them can be described by the following generalized f
 
 \begin{equation}
 \begin{aligned}
-\mathbf{s}^\prime &= \arg \min_{\mathbf{s}^\prime \in \mathcal{S}} \left\{ \sum_{k=1}^{K} {\text{yloss}(M(f(s_k^\prime)),y^*)}+ \lambda {\text{cost}(f(s_k^\prime)) }  \right\} \label{eq:general}
+\mathbf{s}^\prime &= \arg \min_{\mathbf{s}^\prime \in \mathcal{S}} \left\{  {\text{yloss}(M(f(\mathbf{s}^\prime)),y^*)}+ \lambda {\text{cost}(f(\mathbf{s}^\prime)) }  \right\} \label{eq:general}
 \end{aligned} 
 \end{equation}
 
@@ -646,7 +660,7 @@ Here \(\mathbf{s}^\prime=\left\{s_k^\prime\right\}_K\) is the stacked \(K\)-dime
 
 CLUE distinguishes itself from REVISE and other counterfactual generators in that it aims to minimize the predictive uncertainty of the model in question, \(M\). To quantify predictive uncertainty the authors rely on entropy estimates for probabilistic models. The approach proposed by \protect\hyperlink{ref-schut2021generating}{{[}6{]}}, which we shall refer to as \textbf{Greedy}, also works with the subclass of models \(\tilde{\mathcal{M}}\subset\mathcal{M}\) that can produce predictive uncertainty estimates. The authors show that in this setting the cost function \(\text{cost}(\cdot)\) in Equation \eqref{eq:general} is redundant and meaningful counterfactuals can be generated in a fast and efficient manner through a modified Jacobian-based Saliency Map Attack (JSMA). Schut et al. \protect\hyperlink{ref-schut2021generating}{{[}6{]}} also show that by maximizing the predicted probability of \(x^\prime\) being assigned to target class \(y^*\) we also implicitly minimize predictive entropy - as in CLUE. In that sense, CLUE can be seen as equivalent to REVISE in the Bayesian context and we shall therefore refer to both approaches collectively as \textbf{Latent Space} generators\footnote{In fact, there are a number of other recently proposed approaches to counterfactual search that also broadly fall in this same category. They largely differ with respect to the chosen generative model: for example, the generator proposed by \protect\hyperlink{ref-dombrowski2021diffeomorphic}{{[}23{]}} relies on normalizing flows.}.
 
-Finally, DiCE \protect\hyperlink{ref-mothilal2020explaining}{{[}8{]}} distinguishes itself from all other generators considered here in that it aims to generate a diverse set of \(K>1\) counterfactuals. Wachter et al. \protect\hyperlink{ref-wachter2017counterfactual}{{[}4{]}} show that diverse outcomes can in principal be achieved simply rerunning counterfactual search multiple times using stochastic gradient descent (or by randomly initializing the counterfactual). In \protect\hyperlink{ref-mothilal2020explaining}{{[}8{]}} diversity is explicitly proxied via Determinantal Point Processes (DDP): the authors simply introduce DDP as a component of the cost function \(\text{cost}(\mathbf{s}^\prime)\) and therebt produce counterfactuals \(s_1, ... , s_K\) that look as different from each other as possible. The implementation of DiCE in the our library of choice - \texttt{CounterfactualExplanations.jl} - uses that exact approach. It is worth noting that for \(k=1\), DiCE reduces to Wachter since the DDP is constant and therefore does not affect the objective function in Equation \eqref{eq:general}.
+Finally, DiCE \protect\hyperlink{ref-mothilal2020explaining}{{[}8{]}} distinguishes itself from all other generators considered here in that it aims to generate a diverse set of \(K>1\) counterfactuals. Wachter et al. \protect\hyperlink{ref-wachter2017counterfactual}{{[}4{]}} show that diverse outcomes can in principal be achieved simply rerunning counterfactual search multiple times using stochastic gradient descent (or by randomly initializing the counterfactual)\footnote{Note, in fact, that \eqref{eq:general} naturally lends itself to that idea: setting \(K\) to some value greater than one and using the Wachter objective essentially boils down to computing multiple counterfactuals in parallel. Here, \(yloss(\cdot)\) is first broadcasted over elements of \(\mathbf{s}^\prime\) and then aggregated. This is exactly how counterfactual search is implemented in \texttt{CounterfactualExplanations.jl}.}. In \protect\hyperlink{ref-mothilal2020explaining}{{[}8{]}} diversity is explicitly proxied via Determinantal Point Processes (DDP): the authors simply introduce DDP as a component of the cost function \(\text{cost}(\mathbf{s}^\prime)\) and thereby produce counterfactuals \(s_1, ... , s_K\) that look as different from each other as possible. The implementation of DiCE in the our library of choice - \texttt{CounterfactualExplanations.jl} - uses that exact approach. It is worth noting that for \(k=1\), DiCE reduces to Wachter since the DDP is constant and therefore does not affect the objective function in Equation \eqref{eq:general}.
 
 \hypertarget{towards-collective-recourse}{%
 \subsection{\ldots{} towards collective recourse}\label{towards-collective-recourse}}
@@ -655,11 +669,11 @@ All of the different approaches introduced above tackle the problem of Algorithm
 
 \begin{equation}
 \begin{aligned}
-\mathbf{s}^\prime &= \arg \min_{\mathbf{s}^\prime \in \mathcal{S}}  \sum_{k=1}^{K} {\text{yloss}(M(f(s_k^\prime)),y^*)} \\ &+ \lambda_1 {\text{cost}(f(s_k^\prime))} + \lambda_2 {\text{extcost}(f(s_k^\prime))}  \label{eq:collective}
+\mathbf{s}^\prime &= \arg \min_{\mathbf{s}^\prime \in \mathcal{S}} \{ {\text{yloss}(M(f(\mathbf{s}^\prime)),y^*)} \\ &+ \lambda_1 {\text{cost}(f(\mathbf{s}^\prime))} + \lambda_2 {\text{extcost}(f(\mathbf{s}^\prime))} \}  \label{eq:collective}
 \end{aligned} 
 \end{equation}
 
-Here \(\text{cost}(f(s_k^\prime))\) denotes the proxy for private costs faced by the individual as before and \(\lambda_1\) governs to what extent that private cost ought to be penalized. The newly introduced term \(\text{extcost}(f(s_k^\prime))\) is meant to capture and address external costs incurred by the collective of individuals in response to changes in \(\mathbf{s}^\prime\). The underlying concept of private and external costs is borrowed from Economics and well-established in that field: when the decisions or actions by some individual market participant generate external costs, then the market is said to suffer from negative externalities and considered inefficient \protect\hyperlink{ref-pindyck2014microeconomics}{{[}24{]}}. We think that this concept describes the endogenous dynamics of algorithmic recourse oberserved here very well. As with individual recourse, the exact choice of \(\text{extcost}(\cdot)\) is not obvious, nor do we intend to provide a definite answer in this work, if such even exists. That being said, we do propose a few potential mitigation strategies in Section \ref{mitigate}.
+Here \(\text{cost}(f(\mathbf{s}^\prime))\) denotes the proxy for private costs faced by the individual as before and \(\lambda_1\) governs to what extent that private cost ought to be penalized. The newly introduced term \(\text{extcost}(f(\mathbf{s}^\prime))\) is meant to capture and address external costs incurred by the collective of individuals in response to changes in \(\mathbf{s}^\prime\). The underlying concept of private and external costs is borrowed from Economics and well-established in that field: when the decisions or actions by some individual market participant generate external costs, then the market is said to suffer from negative externalities and considered inefficient \protect\hyperlink{ref-pindyck2014microeconomics}{{[}24{]}}. We think that this concept describes the endogenous dynamics of algorithmic recourse observed here very well. As with individual recourse, the exact choice of \(\text{extcost}(\cdot)\) is not obvious, nor do we intend to provide a definite answer in this work, if such even exists. That being said, we do propose a few potential mitigation strategies in Section \ref{mitigate}.
 
 \hypertarget{method-2}{%
 \section{Modeling Endogenous Macrodynamics in Algorithmic Recourse}\label{method-2}}
@@ -669,24 +683,31 @@ In the following we describe the framework we propose for modeling and analysing
 \hypertarget{method-2-experiment}{%
 \subsection{Simulations}\label{method-2-experiment}}
 
-The dynamics illustrated in Figure \ref{fig:poc} in Section \ref{intro} were generated through a simple experiment that aims to simulate the process of Algorithmic Recourse in practice. We begin in the static setting at time time \(t=0\): given some classifier \(M\) that was pre-trained on data \(\mathcal{D}=\mathcal{D}_0 \cup \mathcal{D}_1\) we generate recourse for a random batch of \(B\) individuals in the non-target class (\(\mathcal{D}_0\)). Note that we focus our attention on classification problems, since classification poses the most common practical use-case for Algorithmic Recourse. In order to simulate the dynamic process, we suppose that the model \(M\) is retrained following the actual implementation of recourse in time \(t=0\). Following the update to the model, we assume that at time \(t=1\) recourse is generated for yet another random subset of individuals in the non-target class. This process is repeated for a number of time periods \(T\). To get a clean read on endogenous dynamics we keep the total population of samples closed: we allow existing samples to move from factual to counterfactual states, but do not allow any entirely new samples to enter the population. The experimental setup is summarized in Algorithm \ref{algo-experiment}
+The dynamics illustrated in Figure \ref{fig:poc} in Section \ref{intro} were generated through a simple experiment that aims to simulate the process of Algorithmic Recourse in practice. We begin in the static setting at time time \(t=0\): firstly, we have some binary classifier \(M\) that was pre-trained on data \(\mathcal{D}=\mathcal{D}_0 \cup \mathcal{D}_1\), where \(\mathcal{D}_0\) and \(\mathcal{D}_1\) denote samples in the non-target and target class, respectively; secondly, we generate recourse for a random batch of \(B\) individuals in the non-target class (\(\mathcal{D}_0\)). Note that we focus our attention on classification problems, since classification poses the most common practical use-case for Algorithmic Recourse\footnote{To keep notation simple we have also restricted ourselves to binary classification here, but \texttt{AlgorithmicRecourseDynamics.jl} can also be used for multi-class problems.}.
+
+In order to simulate the dynamic process, we suppose that the model \(M\) is retrained following the actual implementation of recourse in time \(t=0\). Following the update to the model, we assume that at time \(t=1\) recourse is generated for yet another random subset of individuals in the non-target class. This process is repeated for a number of time periods \(T\). To get a clean read on endogenous dynamics we keep the total population of samples closed: we allow existing samples to move from factual to counterfactual states, but do not allow any entirely new samples to enter the population. The experimental setup is summarized in Algorithm \ref{algo-experiment}
 
 \begin{algorithm}
 \caption{Simulation Experiment}\label{algo-experiment}
 \begin{algorithmic}[1]
 \Procedure{Experiment}{$M,\mathcal{D},G$}
+\State $E\gets \emptyset$ \Comment{Initialize evaluation $E$.}
 \State $t\gets 0$
 \While{$t<T$}
-\State $\mathcal{D}_B \subset \mathcal{D}_0$ \Comment{Sample from $\mathcal{D}_0$.}
-\State $\mathcal{D}_B\gets G(\mathcal{D}_B)$ \Comment{Generate counterfactuals.}
+\State $\text{batch} \subset \mathcal{D}_0$ \Comment{Sample from $\mathcal{D}_0$  (assignment).}
+\State $\text{batch}\gets G(\text{batch})$ \Comment{Generate counterfactuals.}
 \State $M\gets M(\mathcal{D})$ \Comment{Retrain model.}
+\State $E\gets \text{eval}(M,\mathcal{D}) \cup E$ \Comment{Update evaluation.}
+\State $t\gets t+1$ \Comment{Increment $t$.}
 \EndWhile
-\State \textbf{return} $M,\mathcal{D}$
+\State \textbf{return} $E, M,\mathcal{D}$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
-A noteworthy practical consideration is the choice of \(T\) and \(B\). The higher these values, the more factual instances undergo recourse throughout the entire experiment. Of course, this is likely to lead to more pronounced domain and model shifts by time \(T\). At the same time, it is generally improbable that a very large part of the population would request an explanation of the algorithm's decisions. In our experiments, we choose the values such that \(T \cdot B\) corresponds to the application of recourse on \(\approx50\%\) of the negative instances from the initial dataset. As we collect data at each time \(t\), we can also verify the impact of recourse when it is implemented for a smaller number of individuals.
+Note that the operation in line 4 is an assignment, rather than a copy operation, so any updates to `batch' will also affect \(\mathcal{D}\). The function \(\text{eval}(M,\mathcal{D})\) loosely denotes the computation of various evaluation metrics introduced below. In practice, these metrics can also be computed at regular intervals as opposed to every round.
+
+Along with any other fixed parameters affecting the counterfactual search, the parameters \(T\) and \(B\) are assumed as given in Algorithm \ref{algo-experiment}. Still, it worth noting that the higher these values, the more factual instances undergo recourse throughout the entire experiment. Of course, this is likely to lead to more pronounced domain and model shifts by time \(T\). In our experiments, we choose the values such that \(T \cdot B\) corresponds to the application of recourse on \(\approx50\%\) of the negative instances from the initial dataset. As we compute evaluation metrics at regular intervals throughout the procedure, we can also verify the impact of recourse when it is implemented for a smaller number of individuals.
 
 Algorithm \ref{algo-experiment} summarizes the proposed simulation experiment for a given dataset \(\mathcal{D}\), model \(M\) and generator \(G\), but naturally we are interested in comparing simulation outcomes for different sources of data, models and generators. The framework we have built facilitates this, making use of multi-threading in order to speed up computations. Holding the initial model and dataset constant the experiments are run for all generators, since our primary concern is to benchmark different recourse methods. To ensure that each generator is faced with the exact same initial conditions in each round \(t\), the candidate batch of individuals from the non-target class is randomly drawn from the intersection of all individuals in the non-target class across all experiments \(\left\{\textsc{Experiment}(M,\mathcal{D},G)\right\}_{j=1}^J\) where \(J\) is the total number of generators.
 
@@ -733,36 +754,32 @@ This section presents the exact ingredients and parameter choices describing the
 \hypertarget{empirical-classifiers}{%
 \subsection{\texorpdfstring{\(M\) -- Classifiers and Generative Models}{M -- Classifiers and Generative Models}}\label{empirical-classifiers}}
 
-For each dataset and generator we look at three different types of classifiers all of them built and trained using \texttt{Flux.jl} \protect\hyperlink{ref-innes2018fashionable}{{[}29{]}}: firstly, a simple linear classifier - \textbf{Logistic Regression} - implemented as single linear layer with sigmoid activation; secondly, a multilayer perceptron (\textbf{MLP}); and finally, a \textbf{Deep Ensemble} composed of five MLPs following \protect\hyperlink{ref-lakshminarayanan2016simple}{{[}30{]}} that serves as our only probabilistic classifier. We have chosen to work with deep ensembles both for their simplicity and effectiveness at modelling predictive uncertainty. They are also the model of choice in \protect\hyperlink{ref-schut2021generating}{{[}6{]}}. The actual neural network architectures are kept simple (Table \ref{tab:mlp}), since we are only marginally concerned with achieving good initial classifier performance. For the real-world datasets we using mini-batch training and dropout regularization.
+For each dataset and generator we look at three different types of classifiers all of them built and trained using \texttt{Flux.jl} \protect\hyperlink{ref-innes2018fashionable}{{[}29{]}}: firstly, a simple linear classifier - \textbf{Logistic Regression} - implemented as single linear layer with sigmoid activation; secondly, a multilayer perceptron (\textbf{MLP}); and finally, a \textbf{Deep Ensemble} composed of five MLPs following \protect\hyperlink{ref-lakshminarayanan2016simple}{{[}30{]}} that serves as our only probabilistic classifier. We have chosen to work with deep ensembles both for their simplicity and effectiveness at modelling predictive uncertainty. They are also the model of choice in \protect\hyperlink{ref-schut2021generating}{{[}6{]}}. The actual neural network architectures are kept simple (top half of Table \ref{tab:architecture}), since we are only marginally concerned with achieving good initial classifier performance.
 
-The Latent Space generator relies on a separate generative model. Following the authors of both REVISE and CLUE we use Variational Autoencoders (\textbf{VAE}) for this purpose. As with the classifiers, we deliberately choose to work with fairly simple architectures (Table \ref{tab:vae}). More expressive generative models generally also lead to more meaningful counterfactuals produced by Latent Space generators. But in our view this should simply be considered as a vulnerability of counterfactual generators that rely on surrogate models to learn what realistic representations of the underlying data.
-
-\begin{table}
-
-\caption{\label{tab:mlp}MLP architecture and training parameters.}
-\centering
-\begin{tabular}[t]{lrrll}
-\toprule
-  & Hidden Dim. & Hidden Layers & Batch & Dropout\\
-\midrule
-Synthetic & 32 & 1 & - & -\\
-Real-World & 32 & 2 & 50 & 0.25\\
-\bottomrule
-\end{tabular}
-\end{table}
+The Latent Space generator relies on a separate generative model. Following the authors of both REVISE and CLUE we use Variational Autoencoders (\textbf{VAE}) for this purpose. As with the classifiers, we deliberately choose to work with fairly simple architectures (bottom half of Table \ref{tab:architecture}). More expressive generative models generally also lead to more meaningful counterfactuals produced by Latent Space generators. But in our view this should simply be considered as a vulnerability of counterfactual generators that rely on surrogate models to learn what realistic representations of the underlying data.
 
 \begin{table}
 
-\caption{\label{tab:vae}VAE architecture and training parameters.}
+\caption{\label{tab:architecture}Neural network architectures and training parameters.}
 \centering
-\begin{tabular}[t]{lrr}
+\resizebox{\linewidth}{!}{
+\begin{tabular}[t]{llrlrllr}
 \toprule
-  & Hidden Dim. & Epochs\\
+ & Data & Hidden Dim. & Latent Dim. & Hidden Layers & Batch & Dropout & Epochs\\
 \midrule
-Synthetic & 2 & 100\\
-Real-World & 8 & 250\\
+\addlinespace[0.3em]
+\multicolumn{8}{l}{\textbf{MLP}}\\
+\hspace{1em} & Synthetic & 32 & - & 1 & - & - & 100\\
+\cmidrule{2-8}
+\hspace{1em} & Real-World & 32 & - & 2 & 50 & 0.25 & 100\\
+\cmidrule{1-8}
+\addlinespace[0.3em]
+\multicolumn{8}{l}{\textbf{VAE}}\\
+\hspace{1em} & Synthetic & 32 & 2 & 1 & - & - & 100\\
+\cmidrule{2-8}
+\hspace{1em} & Real-World & 32 & 8 & 1 & - & - & 250\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \hypertarget{empirical-data}{%
@@ -773,7 +790,7 @@ We have chosen to work with both synthetic and real-world datasets. Using synthe
 \hypertarget{synthetic-data}{%
 \subsubsection{Synthetic data}\label{synthetic-data}}
 
-We use four synthetic binary classification datasets consisting of 1000 samples each. The datasets are presented in Figure \ref{fig:synthetic-data} (see also Appendix A for a formal description). Samples from the negative class are marked in blue while samples of the positive class are marked in orange.
+We use four synthetic binary classification datasets consisting of 1000 samples each: \textbf{Overlapping}, \textbf{Linearly Separable}, \textbf{Circles} and \textbf{Moons}. The datasets are presented in Figure \ref{fig:synthetic-data}. Samples from the negative class are marked in blue while samples of the positive class are marked in orange.
 
 \begin{figure}
 
@@ -781,7 +798,7 @@ We use four synthetic binary classification datasets consisting of 1000 samples 
 
 }
 
-\caption{Synthetic classification datasets used in our experiments.}\label{fig:synthetic-data}
+\caption{Synthetic classification datasets used in our experiments. Samples from the negative class ($y=0$) are marked in blue while samples of the positive class ($y=1$) are marked in orange.}\label{fig:synthetic-data}
 \end{figure}
 
 Ex-ante we expect to see that by construction Wachter will create a new cluster of counterfactual instances in the proximity of the initial decision boundary. Thus, the choice of a black-box model may have an impact on the paths of the recourse. For generators that use latent space search (REVISE \protect\hyperlink{ref-joshi2019towards}{{[}7{]}}, CLUE \protect\hyperlink{ref-antoran2020getting}{{[}9{]}}) or rely on (and have access to) probabilistic models (CLUE \protect\hyperlink{ref-antoran2020getting}{{[}9{]}}, Greedy \protect\hyperlink{ref-schut2021generating}{{[}6{]}}) we expect that counterfactuals will end up in regions of the target domain that are densely populated by training samples. Of course, this is expectation hinges on how effective said probabilistic models are at capturing predictive uncertainty. Finally, we expect to see the counterfactuals generated by DiCE to be uniformly spread around the feature space inside the target class\footnote{As we mentioned earlier, the diversity constraint used by DiCE is only effective for when at least two counterfactuals are being generated. We have therefore decided to always generate 5 counterfactuals for each generator and randomly pick one of them.}. In summary, we expect that the endogenous shifts induced by Wachter outsize those induced by all other generators, since Wachter is the only approach that is not concered with generating what we have defined as meaningful counterfactuals.
@@ -886,6 +903,8 @@ Out-of-sample model performance also deteriorates across the board and substanti
 \caption{Results for deep ensemble using real-world datasets. The shown model MMD (PP MMD) was computed over actual samples, rather than a mesh grid. Error bars indicate the standard deviation across folds.}\label{fig:real}
 \end{figure}
 
+To recap, we can answer our research questions as follows: firstly, endogenous dynamics do emerge in our experiments and we find them substantial enough to be considered costly; secondly, the choice of the counterfactual generator does matter, with Latent Space search generally having a dampening effect. The observed dynamics therefore seem to be driven by a discrepancy between counterfactual outcomes that minimize costs to the individual and outcomes that comply with the data generating process.
+
 \hypertarget{mitigate}{%
 \section{Potential Mitigation Strategies}\label{mitigate}}
 
@@ -903,7 +922,7 @@ Another potential strategy draws inspiration from ROAR \protect\hyperlink{ref-up
 
 \begin{equation}
 \begin{aligned}
-\text{extcost}(f(s_k^\prime)) = l(M(f(s_k^\prime)),y^\prime) \label{eq:clap}
+\text{extcost}(f(\mathbf{s}^\prime)) = l(M(f(\mathbf{s}^\prime)),y^\prime) \label{eq:clap}
 \end{aligned}
 \end{equation}
 
@@ -916,7 +935,7 @@ Yet another strategy simply extends Wachter as follows: instead of only penalizi
 
 \begin{equation}
 \begin{aligned}
-\text{extcost}(f(s_k^\prime)) = \text{dist}(f(s_k^\prime),\bar{x})  \label{eq:grav}
+\text{extcost}(f(\mathbf{s}^\prime)) = \text{dist}(f(\mathbf{s}^\prime),\bar{x})  \label{eq:grav}
 \end{aligned}
 \end{equation}
 
@@ -930,7 +949,7 @@ Figure \ref{fig:mitigation} shows an illustrative example that demonstrates the 
 
 }
 
-\caption{Illustrative example demonstrating the properties of the various mitigation strategies.}\label{fig:mitigation}
+\caption{Illustrative example demonstrating the properties of the various mitigation strategies. Samples from the negative class ($y=0$) are marked in blue while samples of the positive class ($y=1$) are marked in orange.}\label{fig:mitigation}
 \end{figure}
 
 Our findings indicate that all three mitigation strategies are at least at par with Latent Space generators with respect to their effectiveness at mitigating domain and model shifts. Figure \ref{fig:mitigate-results} presents a subset of the evaluation metrics for our synthetic data with overlapping classes. The top row in Figure \ref{fig:mitigate-results} indicates that while domain shifts are of roughly the same magnitude for both Wachter and Latent Space generators, our proposed strategies effectively mitigate these shifts. ClapROAR appears to be particularly effective, which is positively surprising, since it is designed to explicitly address model shifts, not domain shifts. As evident from the middle row in Figure \ref{fig:mitigate-results} model shifts can also be reduced: for the deep ensemble Latent Space search yields results that are at par with the mitigation strategies, while for both the simple MLP and logistic regression our simple strategies are actually more effective. The same overall pattern can be observed for out-of-sample model performance. With respect to the other synthetic datasets we found the following: for the Moons dataset the emerging patterns are largely the same, but the estimated model shifts are insignificant as noted earlier; the same holds for the Circles dataset, but there is no significant reduction in model performance for our neural networks; in the case of linearly separable data we find the Gravitational generator to be most effective at mitigating shifts.

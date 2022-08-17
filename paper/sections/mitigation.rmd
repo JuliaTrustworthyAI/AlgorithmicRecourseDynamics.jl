@@ -12,7 +12,7 @@ Another potential strategy draws inspiration from ROAR @upadhyay2021towards: to 
 
 \begin{equation}
 \begin{aligned}
-\text{extcost}(f(s_k^\prime)) = l(M(f(s_k^\prime)),y^\prime) (\#eq:clap)
+\text{extcost}(f(\mathbf{s}^\prime)) = l(M(f(\mathbf{s}^\prime)),y^\prime) (\#eq:clap)
 \end{aligned}
 \end{equation} 
 
@@ -24,7 +24,7 @@ Yet another strategy simply extends Wachter as follows: instead of only penalizi
 
 \begin{equation}
 \begin{aligned}
-\text{extcost}(f(s_k^\prime)) = \text{dist}(f(s_k^\prime),\bar{x})  (\#eq:grav)
+\text{extcost}(f(\mathbf{s}^\prime)) = \text{dist}(f(\mathbf{s}^\prime),\bar{x})  (\#eq:grav)
 \end{aligned}
 \end{equation}
 
@@ -77,7 +77,7 @@ savefi\text{extcost}(plt, "dev/paper/www/mitigation.png")
 ```
 
 
-```{r mitigation, fig.cap="Illustrative example demonstrating the properties of the various mitigation strategies."}
+```{r mitigation, fig.cap="Illustrative example demonstrating the properties of the various mitigation strategies. Samples from the negative class ($y=0$) are marked in blue while samples of the positive class ($y=1$) are marked in orange."}
 knitr::include_graphics("www/mitigation.png")
 ```
 

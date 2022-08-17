@@ -52,3 +52,5 @@ Out-of-sample model performance also deteriorates across the board and substanti
 knitr::include_graphics("www/real_world_results.png")
 ```
 
+To recap, we can answer our research questions as follows: firstly, endogenous dynamics do emerge in our experiments and we find them substantial enough to be considered costly; secondly, the choice of the counterfactual generator does matter, with Latent Space search generally having a dampening effect. The observed dynamics therefore seem to be driven by a discrepancy between counterfactual outcomes that minimize costs to the individual and outcomes that comply with the data generating process. 
+

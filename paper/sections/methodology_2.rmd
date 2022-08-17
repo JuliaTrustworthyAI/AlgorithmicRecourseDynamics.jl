@@ -4,25 +4,31 @@ In the following we describe the framework we propose for modeling and analysing
 
 ## Simulations {#method-2-experiment}
 
-The dynamics illustrated in Figure \@ref(fig:poc) in Section \@ref(intro) were generated through a simple experiment that aims to simulate the process of Algorithmic Recourse in practice. We begin in the static setting at time time $t=0$: given some classifier $M$ that was pre-trained on data $\mathcal{D}=\mathcal{D}_0 \cup \mathcal{D}_1$ we generate recourse for a random batch of $B$ individuals in the non-target class ($\mathcal{D}_0$). Note that we focus our attention on classification problems, since classification poses the most common practical use-case for Algorithmic Recourse. In order to simulate the dynamic process, we suppose that the model $M$ is retrained following the actual implementation of recourse in time $t=0$. Following the update to the model, we assume that at time $t=1$ recourse is generated for yet another random subset of individuals in the non-target class. This process is repeated for a number of time periods $T$. To get a clean read on endogenous dynamics we keep the total population of samples closed: we allow existing samples to move from factual to counterfactual states, but do not allow any entirely new samples to enter the population. The experimental setup is summarized in Algorithm \ref{algo-experiment}
+The dynamics illustrated in Figure \@ref(fig:poc) in Section \@ref(intro) were generated through a simple experiment that aims to simulate the process of Algorithmic Recourse in practice. We begin in the static setting at time time $t=0$: firstly, we have some binary classifier $M$ that was pre-trained on data $\mathcal{D}=\mathcal{D}_0 \cup \mathcal{D}_1$, where $\mathcal{D}_0$ and $\mathcal{D}_1$ denote samples in the non-target and target class, respectively; secondly, we generate recourse for a random batch of $B$ individuals in the non-target class ($\mathcal{D}_0$). Note that we focus our attention on classification problems, since classification poses the most common practical use-case for Algorithmic Recourse^[To keep notation simple we have also restricted ourselves to binary classification here, but `AlgorithmicRecourseDynamics.jl` can also be used for multi-class problems.]. 
+
+In order to simulate the dynamic process, we suppose that the model $M$ is retrained following the actual implementation of recourse in time $t=0$. Following the update to the model, we assume that at time $t=1$ recourse is generated for yet another random subset of individuals in the non-target class. This process is repeated for a number of time periods $T$. To get a clean read on endogenous dynamics we keep the total population of samples closed: we allow existing samples to move from factual to counterfactual states, but do not allow any entirely new samples to enter the population. The experimental setup is summarized in Algorithm \ref{algo-experiment}
 
 \begin{algorithm}
 \caption{Simulation Experiment}\label{algo-experiment}
 \begin{algorithmic}[1]
 \Procedure{Experiment}{$M,\mathcal{D},G$}
+\State $E\gets \emptyset$ \Comment{Initialize evaluation $E$.}
 \State $t\gets 0$
 \While{$t<T$}
-\State $\mathcal{D}_B \subset \mathcal{D}_0$ \Comment{Sample from $\mathcal{D}_0$.}
-\State $\mathcal{D}_B\gets G(\mathcal{D}_B)$ \Comment{Generate counterfactuals.}
+\State $\text{batch} \subset \mathcal{D}_0$ \Comment{Sample from $\mathcal{D}_0$  (assignment).}
+\State $\text{batch}\gets G(\text{batch})$ \Comment{Generate counterfactuals.}
 \State $M\gets M(\mathcal{D})$ \Comment{Retrain model.}
+\State $E\gets \text{eval}(M,\mathcal{D}) \cup E$ \Comment{Update evaluation.}
+\State $t\gets t+1$ \Comment{Increment $t$.}
 \EndWhile
-\State \textbf{return} $M,\mathcal{D}$
+\State \textbf{return} $E, M,\mathcal{D}$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
+Note that the operation in line 4 is an assignment, rather than a copy operation, so any updates to 'batch' will also affect $\mathcal{D}$. The function $\text{eval}(M,\mathcal{D})$ loosely denotes the computation of various evaluation metrics introduced below. In practice, these metrics can also be computed at regular intervals as opposed to every round. 
 
-A noteworthy practical consideration is the choice of $T$ and $B$. The higher these values, the more factual instances undergo recourse throughout the entire experiment. Of course, this is likely to lead to more pronounced domain and model shifts by time $T$. At the same time, it is generally improbable that a very large part of the population would request an explanation of the algorithm’s decisions. In our experiments, we choose the values such that $T \cdot B$ corresponds to the application of recourse on $\approx50\%$ of the negative instances from the initial dataset. As we collect data at each time $t$, we can also verify the impact of recourse when it is implemented for a smaller number of individuals. 
+Along with any other fixed parameters affecting the counterfactual search, the parameters $T$ and $B$ are assumed as given in Algorithm \ref{algo-experiment}. Still, it worth noting that the higher these values, the more factual instances undergo recourse throughout the entire experiment. Of course, this is likely to lead to more pronounced domain and model shifts by time $T$. In our experiments, we choose the values such that $T \cdot B$ corresponds to the application of recourse on $\approx50\%$ of the negative instances from the initial dataset. As we compute evaluation metrics at regular intervals throughout the procedure, we can also verify the impact of recourse when it is implemented for a smaller number of individuals. 
 
 Algorithm \ref{algo-experiment} summarizes the proposed simulation experiment for a given dataset $\mathcal{D}$, model $M$ and generator $G$, but naturally we are interested in comparing simulation outcomes for different sources of data, models and generators. The framework we have built facilitates this, making use of multi-threading in order to speed up computations. Holding the initial model and dataset constant the experiments are run for all generators, since our primary concern is to benchmark different recourse methods. To ensure that each generator is faced with the exact same initial conditions in each round $t$, the candidate batch of individuals from the non-target class is randomly drawn from the intersection of all individuals in the non-target class across all experiments $\left\{\textsc{Experiment}(M,\mathcal{D},G)\right\}_{j=1}^J$ where $J$ is the total number of generators. 
 

@@ -1,10 +1,12 @@
 ## Mitigation Strategies
 
 ```{julia}
+#| eval: true
 using Pkg; Pkg.activate("dev")
 ```
 
 ```{julia}
+#| eval: true
 include("dev/utils.jl")
 using AlgorithmicRecourseDynamics
 using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
@@ -28,7 +30,7 @@ generators = Dict(
 )
 ```
 
-## Synthetic
+### Synthetic
 
 ```{julia}
 max_obs = 1000

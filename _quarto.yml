@@ -1,0 +1,13 @@
+project:
+  title: "AlgorithmicRecourseDynamics.jl"
+  output-dir: build
+  execute-dir: project
+filters:
+  - lua/abstract-to-meta.lua
+  - quarto
+bibliography: https://raw.githubusercontent.com/pat-alt/bib/main/bib.bib
+execute:
+  freeze: auto  # re-render only when source changes
+
+
+

@@ -1,8 +1,0 @@
-project:
-  title: "Endogenous Dynamics in Algorithmic Recourse"
-  output-dir: build
-filters:
-  - ../lua/abstract-to-meta.lua
-  - quarto
-bibliography: https://raw.githubusercontent.com/pat-alt/bib/main/bib.bib
-

@@ -96,6 +96,7 @@ function kable(result::ExperimentResults,n::Vector{Int}; format="latex")
         column_spec(1, bold = T, width = "5em") %>%
         collapse_rows(columns = 1:3, latex_hline = "major", valign = "middle")
     """
+    return println(rcopy(R"ktab"))
 end
 
 using DataFrames
@@ -128,4 +129,5 @@ function kable(
         column_spec(1, bold = T, width = "5em") %>%
         collapse_rows(columns = 1:4, latex_hline = "major", valign = "middle")
     """
+    return println(rcopy(R"ktab"))
 end

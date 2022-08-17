@@ -5,16 +5,18 @@ This notebook was used to run the experiments for the synthetic datasets. In the
 ### Experiments
 
 ```{julia}
+#| eval: true
 using Pkg; Pkg.activate("dev")
 ```
 
 ```{julia}
+#| eval: true
 include("dev/utils.jl")
 using AlgorithmicRecourseDynamics
-using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
+using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra, Images
 theme(:wong)
 output_path = output_dir("synthetic")
-www_path = www_dir("synthetic")
+www_path = www_dir("synthetic");
 ```
 
 ```{julia}
@@ -65,6 +67,15 @@ plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices
 savefig(plt, joinpath(www_path,"models_test_before.png"))
 ```
 
+@fig-test-before shows the test data before running the experiment.
+
+```{julia}
+#| label: fig-test-before
+#| fig-cap: "Test data before experiment"
+#| eval: true
+load(joinpath(www_path,"models_test_before.png"))
+```
+
 ```{julia}
 using AlgorithmicRecourseDynamics.Models: model_evaluation
 plts = []
@@ -81,6 +92,15 @@ for (exp_name, exp_) in experiments
 end
 plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
 savefig(plt, joinpath(www_path,"models_train_before.png"))
+```
+
+@fig-train-before shows the training data before running the experiment.
+
+```{julia}
+#| label: fig-train-before
+#| fig-cap: "Training data before experiment"
+#| eval: true
+load(joinpath(www_path,"models_train_before.png"))
 ```
 
 
@@ -124,7 +144,26 @@ end
 plot_dict = Dict(key => reduce(vcat, [plots[key] for plots in values(plot_dict)]) for (key, value) in generators)
 for (name, plts) in plot_dict
     plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
-    savefig(plt, joinpath(www_path,"models_test_after_$(name)_strict.png"))
+    savefig(plt, joinpath(www_path,"models_test_after_$(name).png"))
+end
+```
+
+@fig-test-after shows the test data after running the experiment.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Test data after experiment"
+#| fig-subcap: 
+#|      - "DICE"
+#|      - "Generic"
+#|      - "Greedy"
+#|      - "Latent"
+#| layout-ncol: 1
+#| label: fig-test-after
+img_files = readdir(www_path)[contains.(readdir(www_path),"models_test_after")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
 end
 ```
 
@@ -158,12 +197,32 @@ for (name, plts) in plot_dict
 end
 ```
 
+@fig-train-after shows the training data after running the experiment.
+
 ```{julia}
-using Serialization
-results = Serialization.deserialize(joinpath(output_path,"results.jls"))
+#| eval: true
+#| fig-cap: "Training data after experiment"
+#| fig-subcap: 
+#|      - "DICE"
+#|      - "Generic"
+#|      - "Greedy"
+#|      - "Latent"
+#| layout-ncol: 1
+#| label: fig-train-after
+img_files = readdir(www_path)[contains.(readdir(www_path),"models_train_after")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
 ```
 
 ### Plots
+
+```{julia}
+#| eval: true
+using Serialization
+results = Serialization.deserialize(joinpath(output_path,"results.jls"))
+```
 
 ```{julia}
 using Images
@@ -179,62 +238,64 @@ for (data_name, res) in results
 end
 ```
 
-### Chart in paper {#sec-app-synthetic-paper}
+#### Line Charts
 
-#### Line Chart
+@fig-line shows the evolution of the evaluation metrics over the course of the experiment.
 
 ```{julia}
-using DataFrames, Statistics
-df = results[:overlapping].output
-# df = df[df.n .== maximum(df.n),:]
-gdf = groupby(df, [:generator, :model, :n, :name, :scope])
-df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
-df_plot = df_plot[[name in [:decisiveness, :disagreement, :mmd, :mmd_grid, :model_performance] for name in df_plot.name],:]
-df_plot = df_plot[.!(df_plot.name.==:mmd .&& df_plot.scope.==:model),:]
-df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
-transform!(df_plot, :name => (X -> [x=="decisiveness" ? "Decisiveness" : x for x in X]) => :name)
-transform!(df_plot, :name => (X -> [x=="disagreement" ? "Disagreement" : x for x in X]) => :name)
-transform!(df_plot, :name => (X -> [x=="mmd" ? "MMD (domain)" : x for x in X]) => :name)
-transform!(df_plot, :name => (X -> [x=="mmd_grid" ? "MMD (model)" : x for x in X]) => :name)
-transform!(df_plot, :name => (X -> [x=="model_performance" ? "Performance" : x for x in X]) => :name)
-transform!(df_plot, :generator => (X -> [x=="REVISE" ? "Latent" : x for x in X]) => :generator)
-transform!(df_plot, :model => (X -> [x=="FluxEnsemble" ? "Deep Ensemble" : x for x in X]) => :model)
-transform!(df_plot, :model => (X -> [x=="FluxModel" ? "MLP" : x for x in X]) => :model)
-transform!(df_plot, :model => (X -> [x=="LogisticRegression" ? "Linear" : x for x in X]) => :model)
-
-ncol = length(unique(df_plot.model))
-nrow = length(unique(df_plot.name))
-
-using RCall
-scale_ = 1.5
-R"""
-library(ggplot2)
-plt <- ggplot($df_plot, aes(x=n, y=mean, ymin=ymin, ymax=ymax, color=generator)) +
-    geom_ribbon(aes(fill=generator), alpha=0.5) +
-    geom_line() +
-    facet_grid(
-        rows = vars(name),
-        cols =  vars(model), 
-        scales = "free_y"
-    ) +
-    labs(y = "Value") + 
-    scale_fill_discrete(name="Generator:") +
-    scale_colour_discrete(name="Generator:") +
-    theme(
-        axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        legend.position="bottom"
-    )
-temp_path <- file.path(tempdir(), "plot.png")
-ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.75) 
-"""
-
-img = Images.load(rcopy(R"temp_path"))
-Images.save(joinpath(www_path,"paper_synthetic_results_line.png"), img)
+#| eval: true
+#| fig-cap: "Line Charts"
+#| fig-subcap: 
+#|      - "Circles"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-line
+img_files = readdir(www_path)[contains.(readdir(www_path),"line_chart")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
 ```
 
-#### Errorbar
+#### Error Bar Charts
+
+@fig-error shows the evaluation metrics at the end of the experiments.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Error Bar Charts"
+#| fig-subcap: 
+#|      - "Circles"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-error
+img_files = readdir(www_path)[contains.(readdir(www_path),"errorbar_chart")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
+### Tables
+
+@tbl-results shows a summary of all results.
+
+```{julia}
+#| label: tbl-results
+#| tbl-cap: "Summary of all results"
+#| eval: true
+#| results: asis
+using AlgorithmicRecourseDynamics: kable
+kable(results, [50]; format="html")
+```
+
+### Chart in paper {#sec-app-synthetic-paper}
+
+@fig-paper shows the chart that went into the paper.
 
 ```{julia}
 using DataFrames, Statistics
@@ -299,3 +360,10 @@ img = Images.load(rcopy(R"temp_path"))
 Images.save(joinpath(www_path,"paper_synthetic_results.png"), img)
 ```
 
+
+```{julia}
+#| label: fig-paper
+#| fig-cap: "Chart in paper"
+#| eval: true
+Images.load(joinpath(www_path,"paper_synthetic_results.png"))
+```

@@ -1,16 +1,18 @@
 ## Real-World Data
 
 ```{julia}
+#| eval: true
 using Pkg; Pkg.activate("dev")
 ```
 
 ```{julia}
+#| eval: true
 include("dev/utils.jl")
 using AlgorithmicRecourseDynamics
 using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
 theme(:wong)
 output_path = output_dir("real_world")
-www_path = www_dir("real_world")
+www_path = www_dir("real_world");
 ```
 
 ```{julia}
@@ -58,7 +60,7 @@ experiments = set_up_experiments(
 )
 ```
 
-## Running Experiment
+### Experiment
 
 ```{julia}
 n_evals = 5
@@ -77,6 +79,8 @@ results = run_experiments(
 )
 Serialization.serialize(joinpath(output_path,"results.jls"),results)
 ```
+
+### Plots
 
 ```{julia}
 using Serialization
@@ -97,7 +101,49 @@ for (data_name, res) in results
 end
 ```
 
+#### Line Charts
+
+@fig-real-line shows the evolution of the evaluation metrics over the course of the experiment.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Line Charts"
+#| fig-subcap: 
+#|      - "California Housing"
+#|      - "Credit Default"
+#|      - "GMSC"
+#| layout-ncol: 1
+#| label: fig-real-line
+img_files = readdir(www_path)[contains.(readdir(www_path),"line_chart")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
+#### Error Bar Charts
+
+@fig-real-error shows the evaluation metrics at the end of the experiments.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Error Bar Charts"
+#| fig-subcap: 
+#|      - "California Housing"
+#|      - "Credit Default"
+#|      - "GMSC"
+#| layout-ncol: 1
+#| label: fig-real-error
+img_files = readdir(www_path)[contains.(readdir(www_path),"errorbar_chart")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
 ### Chart in paper
+
+@fig-real-paper shows the chart that went into the paper.
 
 ```{julia}
 using DataFrames, Statistics
@@ -154,6 +200,13 @@ ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.8)
 
 img = Images.load(rcopy(R"temp_path"))
 Images.save(joinpath(www_path,"paper_real_world_results.png"), img)
+```
+
+```{julia}
+#| label: fig-real-paper
+#| fig-cap: "Chart in paper"
+#| eval: true
+Images.load(joinpath(www_path,"paper_real_world_results.png"))
 ```
 
 

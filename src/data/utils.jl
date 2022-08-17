@@ -19,10 +19,9 @@ function train_test_split(data::CounterfactualData;test_size=0.2)
     return train_data, test_data
 end
 
-using CounterfactualExplanations.DataPreprocessing: unpack
 function undersample(data::CounterfactualData, n_per_class::Int)
     
-    X,y = unpack(data)
+    X,y = CounterfactualExplanations.DataPreprocessing.unpack(data)
     n_classes, N = size(y)
     if n_classes > 2
         y_cls = Flux.onecold(y,1:n_classes)

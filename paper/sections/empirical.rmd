@@ -29,9 +29,6 @@ kbl(
   kable_styling(latex_options = c("scale_down"))
 ```
 
-
-
-
 ## $\mathcal{D}$ -- Data {#empirical-data}
 
 We have chosen to work with both synthetic and real-world datasets. Using synthetic data allows us to impose distributional properties that may affect the resulting recourse dynamics. Following @upadhyay2021towards, we generate synthetic data in $\mathbb{R}^2$ to also allow for a visual interpretation of the results. Real-world data is used in order to assess if endogenous dynamics also occur in higher-dimensional settings.

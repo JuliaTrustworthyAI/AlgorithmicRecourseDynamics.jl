@@ -99,7 +99,12 @@ function kable(result::ExperimentResults,n::Vector{Int}; format="latex")
 end
 
 using DataFrames
-function kable(results::Dict{Symbol,ExperimentResults},n::Vector{Int}; format="latex")
+function kable(
+    results::Dict{Symbol,ExperimentResults},
+    n::Vector{Int}; 
+    format="latex",
+    exclude_metric::Vector{Symbol}=[:mmd_grid]
+)
     df = DataFrame() 
     for (key, val) in results
         df_ = deepcopy(val.output)
@@ -112,7 +117,7 @@ function kable(results::Dict{Symbol,ExperimentResults},n::Vector{Int}; format="l
     dt <- data.table($df)
     n_ <- $n
     dt <- dt[n %in% n_]
-    dt[,name:=ifelse(name=="mmd",paste0(name,scope),name)][,scope:=NULL]
+    dt[,name:=ifelse(name=="mmd",paste0(name,"_",scope),name)][,scope:=NULL]
     dt <- dt[,.(value=mean(value,na.rm=TRUE),sd=sd(value)),by=.(dataset,model,generator,name,n)]
     dt[,text:=sprintf("%0.3f (%0.3f)",value,sd)][,value:=NULL][,sd:=NULL]
     dt <- dcast(dt, ... ~ name, value.var="text")

@@ -181,44 +181,121 @@ end
 
 ### Chart in paper
 
+#### Line Chart
+
 ```{julia}
 using DataFrames, Statistics
 df = results[:overlapping].output
-df = df[df.n .== maximum(df.n),:]
+# df = df[df.n .== maximum(df.n),:]
 gdf = groupby(df, [:generator, :model, :n, :name, :scope])
 df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
-df_plot = df_plot[[name in [:mmd, :mmd_grid, :model_performance] for name in df_plot.name],:]
+df_plot = df_plot[[name in [:decisiveness, :disagreement, :mmd, :mmd_grid, :model_performance] for name in df_plot.name],:]
 df_plot = df_plot[.!(df_plot.name.==:mmd .&& df_plot.scope.==:model),:]
 df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
+transform!(df_plot, :name => (X -> [x=="decisiveness" ? "Decisiveness" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="disagreement" ? "Disagreement" : x for x in X]) => :name)
 transform!(df_plot, :name => (X -> [x=="mmd" ? "MMD (domain)" : x for x in X]) => :name)
 transform!(df_plot, :name => (X -> [x=="mmd_grid" ? "MMD (model)" : x for x in X]) => :name)
 transform!(df_plot, :name => (X -> [x=="model_performance" ? "Performance" : x for x in X]) => :name)
+transform!(df_plot, :generator => (X -> [x=="REVISE" ? "Latent" : x for x in X]) => :generator)
+transform!(df_plot, :model => (X -> [x=="FluxEnsemble" ? "Deep Ensemble" : x for x in X]) => :model)
+transform!(df_plot, :model => (X -> [x=="FluxModel" ? "MLP" : x for x in X]) => :model)
+transform!(df_plot, :model => (X -> [x=="LogisticRegression" ? "Linear" : x for x in X]) => :model)
 
 ncol = length(unique(df_plot.model))
 nrow = length(unique(df_plot.name))
 
 using RCall
-scale_ = 2
+scale_ = 1.5
 R"""
 library(ggplot2)
-plt <- ggplot($df_plot) +
-    geom_bar(aes(x=n, y=mean, fill=generator), stat="identity", alpha=0.5, position="dodge") +
-    geom_pointrange( aes(x=n, y=mean, ymin=ymin, ymax=ymax, colour=generator), alpha=0.9, position=position_dodge(width=0.9), size=0.5) +
-    facet_wrap(name ~ model, scale="free_y", ncol=$ncol) +
+plt <- ggplot($df_plot, aes(x=n, y=mean, ymin=ymin, ymax=ymax, color=generator)) +
+    geom_ribbon(aes(fill=generator), alpha=0.5) +
+    geom_line() +
+    facet_grid(
+        rows = vars(name),
+        cols =  vars(model), 
+        scales = "free_y"
+    ) +
     labs(y = "Value") + 
     scale_fill_discrete(name="Generator:") +
     scale_colour_discrete(name="Generator:") +
     theme(
         axis.title.x=element_blank(),
         axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()
+        axis.ticks.x=element_blank(),
+        legend.position="bottom"
     )
 temp_path <- file.path(tempdir(), "plot.png")
-ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.8) 
+ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.75) 
+"""
+
+img = Images.load(rcopy(R"temp_path"))
+Images.save(joinpath(www_path,"paper_synthetic_results_line.png"), img)
+```
+
+#### Errorbar
+
+```{julia}
+using DataFrames, Statistics
+df = results[:overlapping].output
+df = df[[x ∈ [50] for x in df.n],:]
+gdf = groupby(df, [:generator, :model, :n, :name, :scope])
+df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
+df_plot = df_plot[[name in [:decisiveness, :disagreement, :mmd, :mmd_grid, :model_performance] for name in df_plot.name],:]
+df_plot = df_plot[.!(df_plot.name.==:mmd .&& df_plot.scope.==:model),:]
+df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
+transform!(df_plot, :name => (X -> [x=="decisiveness" ? "Decisiveness" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="disagreement" ? "Disagreement" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="mmd" ? "MMD (domain)" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="mmd_grid" ? "MMD (model)" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="model_performance" ? "Performance" : x for x in X]) => :name)
+transform!(df_plot, :generator => (X -> [x=="REVISE" ? "Latent" : x for x in X]) => :generator)
+transform!(df_plot, :model => (X -> [x=="FluxEnsemble" ? "Deep Ensemble" : x for x in X]) => :model)
+transform!(df_plot, :model => (X -> [x=="FluxModel" ? "MLP" : x for x in X]) => :model)
+transform!(df_plot, :model => (X -> [x=="LogisticRegression" ? "Linear" : x for x in X]) => :model)
+
+ncol = length(unique(df_plot.model))
+nrow = length(unique(df_plot.name))
+
+using RCall
+scale_ = 1.5
+R"""
+library(data.table)
+df_plot <- data.table($df_plot)
+name_order <- c(
+    "MMD (domain)",
+    "MMD (model)",
+    "Performance",
+    "Disagreement",
+    "Decisiveness"
+)
+df_plot[,name:=factor(name, levels=name_order)]
+model_order <- c("Linear", "MLP", "Deep Ensemble")
+df_plot[,model:=factor(model, levels=model_order)]
+library(ggplot2)
+plt <- ggplot(df_plot) +
+    geom_bar(aes(x=n, y=mean, fill=generator), stat="identity", alpha=0.5, position="dodge") +
+    geom_pointrange(aes(x=n, y=mean, ymin=ymin, ymax=ymax, colour=generator), alpha=0.9, position=position_dodge(width=c(0.9,0.9)), size=0.5) +
+    facet_grid(
+        rows = vars(name),
+        cols =  vars(model), 
+        scales = "free_y"
+    ) +
+    labs(y = "Value") + 
+    scale_fill_discrete(name="Generator:") +
+    scale_colour_discrete(name="Generator:") +
+    theme(
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.position="bottom"
+    )
+temp_path <- file.path(tempdir(), "plot.png")
+ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.75) 
 """
 
 img = Images.load(rcopy(R"temp_path"))
 Images.save(joinpath(www_path,"paper_synthetic_results.png"), img)
 ```
-
 

@@ -1,7 +1,4 @@
----
-title: ClapROAR Generator
-jupyter: julia-1.7
----
+## ClapROAR Generator
 
 ```{julia}
 using Pkg; Pkg.activate("dev")

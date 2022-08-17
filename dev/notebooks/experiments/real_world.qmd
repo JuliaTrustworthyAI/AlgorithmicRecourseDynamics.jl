@@ -1,7 +1,4 @@
----
-title: Experiments with Credit Data
-jupyter: julia-1.7
----
+## Real-World Data
 
 ```{julia}
 using Pkg; Pkg.activate("dev")

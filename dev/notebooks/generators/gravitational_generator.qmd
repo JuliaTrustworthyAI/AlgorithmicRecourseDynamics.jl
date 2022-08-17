@@ -1,7 +1,4 @@
----
-title: Gravitational Generator
-jupyter: julia-1.7
----
+## Gravitational Generator
 
 ```{julia}
 using Pkg; Pkg.activate("dev")

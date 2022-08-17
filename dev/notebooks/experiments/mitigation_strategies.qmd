@@ -1,7 +1,4 @@
----
-title: Mitigation Strategies
-jupyter: julia-1.7
----
+## Mitigation Strategies
 
 ```{julia}
 using Pkg; Pkg.activate("dev")

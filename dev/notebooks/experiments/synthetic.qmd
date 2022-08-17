@@ -1,7 +1,4 @@
----
-title: Experiments with Synthetic Data
-jupyter: julia-1.7
----
+## Synthetic Data
 
 ```{julia}
 using Pkg; Pkg.activate("dev")

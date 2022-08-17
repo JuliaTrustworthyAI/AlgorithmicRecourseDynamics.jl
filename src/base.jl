@@ -227,7 +227,7 @@ struct ExperimentResults
     experiment::Experiment
 end
 
-using DataFrames, CSV, BSON
+using DataFrames, CSV
 """
     run_experiment(
         experiment::Experiment; evaluate_every::Int=2,

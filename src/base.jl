@@ -12,11 +12,11 @@ is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true
 
 function collect_output(
     experiment::Experiment, recourse_system::RecourseSystem, chosen_individuals::Union{Nothing,AbstractArray}, k::Int, n::Int, m::Int;
-    n_bootstrap=1000
+    n_bootstrap=1000, n_samples=1000
 )
 
     # Evaluate:
-    output = evaluate_system(recourse_system, experiment, n=n_bootstrap)
+    output = evaluate_system(recourse_system, experiment, n=n_bootstrap, n_samples=n_samples)
     
     # Add additional information:
     output.k .= k
@@ -43,7 +43,7 @@ end
 A wrapper function that runs the experiment for endogenous models shifts.
 """
 function run!(
-    experiment::Experiment; evaluate_every=10, n_bootstrap=1000, forward=false, show_progress=!is_logging(stderr), fixed_parameters...
+    experiment::Experiment; evaluate_every=10, n_bootstrap=1000, n_samples=1000, forward=false, show_progress=!is_logging(stderr), fixed_parameters...
 )
 
     # Load fixed hyperparameters:
@@ -91,7 +91,7 @@ function run!(
                 end
                 # Evaluate:
                 if n % evaluate_every == 0 
-                    output_checkpoint = collect_output(experiment, recourse_system, chosen_individuals[m], k, n, m, n_bootstrap=n_bootstrap)
+                    output_checkpoint = collect_output(experiment, recourse_system, chosen_individuals[m], k, n, m, n_bootstrap=n_bootstrap, n_samples=n_samples)
                     output[m] = vcat(output[m], output_checkpoint, cols=:union)
                 end
             end

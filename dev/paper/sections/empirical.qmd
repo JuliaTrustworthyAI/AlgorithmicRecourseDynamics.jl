@@ -38,13 +38,13 @@ using Plots, PlotThemes
 theme(:wong)
 catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic()
 function plot_data(data,title)
-    plt = plot(title=title)
+    plt = plot(title=uppercasefirst(replace(string(title),"_" => " ")))
     scatter!(data)
     return plt
 end
 plts = [plot_data(data,name) for (name, data) in catalogue]
 plt = plot(plts..., layout=(1,4), size=(850,200))
-savefig(plt, "dev/paper/www/synthetic_data.png")
+savefig(plt, "paper/www/synthetic_data.png")
 ```
 
 We use four synthetic binary classification datasets consisting of 1000 samples each. The datasets are presented in @fig-synthetic-data (see also Appendix A for a formal description). Samples from the negative class are marked in blue while samples of the positive class are marked in orange.

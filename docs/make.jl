@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(AlgorithmicRecourseDynamics, :DocTestSetup, :(using Algorith
 
 makedocs(;
     modules=[AlgorithmicRecourseDynamics],
-    authors="Patrick Altmeyer",
+    authors="Anonymous",
     repo="https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/blob/{commit}{path}#{line}",
     sitename="AlgorithmicRecourseDynamics.jl",
     format=Documenter.HTML(;

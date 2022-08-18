@@ -1,6 +1,6 @@
 name = "AlgorithmicRecourseDynamics"
 uuid = "3d1ede72-abb8-4340-bf8e-2ae06849b5ec"
-authors = ["Patrick Altmeyer"]
+authors = ["Anonymous"]
 version = "0.1.0"
 
 [deps]

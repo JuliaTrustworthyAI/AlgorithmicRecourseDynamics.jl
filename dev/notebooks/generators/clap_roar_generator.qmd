@@ -13,8 +13,6 @@ output_path = output_dir("generator")
 www_path = www_dir("generator")
 ```
 
-# `ClapROARGenerator`
-
 ```{julia}
 using MLJ
 N = 1000
@@ -129,4 +127,5 @@ for (name,ce) ∈ counterfactuals
     plts = vcat(plts..., plt)
 end
 plt = plot(plts..., size=(800,300), layout=(1,2))
+display(plt)
 ```

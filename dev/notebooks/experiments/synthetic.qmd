@@ -283,7 +283,7 @@ end
 ### Bootstrap
 
 ```{julia}
-n_bootstrap = 1
+n_bootstrap = 1000
 using AlgorithmicRecourseDynamics.Evaluation: evaluate_system
 using DataFrames
 df = DataFrame()
@@ -303,19 +303,9 @@ for (key, val) in results
 end
 df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
 using RCall
-save_path = joinpath(output_path, "bootstrap.html")
-R"""
-dt <- DT::datatable($df) |>
-    DT::formatRound(columns=c("value"), digits=3)
-DT::saveWidget(dt, $save_path)
-"""
-```
-
-```{julia}
-#| eval: true
-using Gumbo
-save_path = joinpath(output_path, "bootstrap.html")
-parsehtml(read(save_path, String))
+save_path = joinpath(output_path, "bootstrap.csv")
+using CSV
+CSV.write(save_path)
 ```
 
 ### Chart in paper {#sec-app-synthetic-paper}

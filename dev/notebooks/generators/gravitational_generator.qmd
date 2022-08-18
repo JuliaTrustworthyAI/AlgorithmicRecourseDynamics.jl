@@ -13,8 +13,6 @@ output_path = output_dir("generator")
 www_path = www_dir("generator")
 ```
 
-# `GravitationalGenerator`
-
 ```{julia}
 using MLJ
 N = 1000
@@ -139,5 +137,3 @@ plt = plot(plt1, plt2, size=(850,350), layout=(1,2))
 savefig(plt, joinpath(www_path,"gravitational_generator_comparison.png"))
 ```
 
-
-# References

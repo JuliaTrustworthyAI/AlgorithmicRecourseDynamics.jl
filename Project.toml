@@ -31,6 +31,13 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
 MLUtils = "0.2"
+CounterfactualExplanations = "0.1"
+LaplaceRedux = "0.1"
+Distances = "0.10"
+Parameters = "0.12"
+Images = "0.25"
+ProgressMeter = "1"
+Plots = "1"
 julia = "1.6"
 
 [extras]

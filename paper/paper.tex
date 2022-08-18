@@ -383,20 +383,6 @@
 \usepackage{placeins}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
-\usepackage{threeparttablex}
-\usepackage[normalem]{ulem}
-\usepackage{makecell}
-\usepackage{xcolor}
 
 %% END MY ADDITIONS %%
 
@@ -407,7 +393,7 @@
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}{Lemma}[section]
 \newtheorem{corollary}{Corollary}[section]
-\newtheorem{proposition}{Proposition}[section]
+\newtheorem{proposition}{Research Question}[section]
 \newtheorem{conjecture}{Conjecture}[section]
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
@@ -594,9 +580,7 @@ We think that these types of endogenous dynamics may be problematic and warrant 
 
 Both of these examples are exaggerated simplifications of potential real-world scenarios, but they serve to illustrate the point that recourse for one single individual may exert negative externalities on other individuals.
 
-To the best of our knowledge this is the first work investigating endogenous macrodynamics in AR. Our contributions to the state of knowledge are as follows: firstly, we posit a compelling argument that calls for a novel perspective on Algorithmic Recourse extending our focus from single individuals to groups. Secondly, we introduce an experimental framework extending previous work by \protect\hyperlink{ref-altmeyer2022CounterfactualExplanations}{{[}5{]}}, which enables us to study macrodynamics of Algorithmic Recourse through simulations that can be fully parallelized. Thirdly, we use this framework to provide a first in-depth analysis of endogenous recourse dynamics induced by various popular counterfactual generators including \protect\hyperlink{ref-wachter2017counterfactual}{{[}4{]}}, \protect\hyperlink{ref-schut2021generating}{{[}6{]}}, \protect\hyperlink{ref-joshi2019towards}{{[}7{]}}, \protect\hyperlink{ref-mothilal2020explaining}{{[}8{]}} and \protect\hyperlink{ref-antoran2020getting}{{[}9{]}}. To this end we propose a number of novel evaluation metrics that can be used to quantify and benchmark the macrodynamics introduced by the different generators. Finally, we also discuss what drives endogenous dynamics and propose strategies to mitigate them.
-
-The remainder of the paper is structured as follows: Section \ref{related} places our work in the broader context of related literature. Section \ref{method} posits a generalized framework for gradient-based Algorithmic Recourse and introduces the notion of hidden external costs. Section \ref{method-2} sets out our experimental framework for modeling endogenous macrodynamics in AR. Section \ref{empirical} presents our experimental setup, including the data, classifiers and counterfactual generators that we have employed. Section \ref{empirical-2} presents the results for synthetic and real-world datasets along with evidence for the effectiveness of various proposed mitigation strategies. Our findings are then discussed in the broader context of the literature in Section \ref{discussion}, before pointing to some of the limitations of our work as well as avenues for future research in Section \ref{limit}. Finally, Section \ref{conclusion} concludes.
+To the best of our knowledge this is the first work investigating endogenous macrodynamics in AR. Our contributions to the state of knowledge are as follows: firstly, we posit a compelling argument that calls for a novel perspective on Algorithmic Recourse extending our focus from single individuals to groups (Section \ref{related} and \ref{method}). Secondly, we introduce an experimental framework extending previous work by \protect\hyperlink{ref-altmeyer2022CounterfactualExplanations}{{[}5{]}}, which enables us to study macrodynamics of Algorithmic Recourse through simulations that can be fully parallelized (\ref{method-2}). Thirdly, we use this framework to provide a first in-depth analysis of endogenous recourse dynamics induced by various popular counterfactual generators including \protect\hyperlink{ref-wachter2017counterfactual}{{[}4{]}}, \protect\hyperlink{ref-schut2021generating}{{[}6{]}}, \protect\hyperlink{ref-joshi2019towards}{{[}7{]}}, \protect\hyperlink{ref-mothilal2020explaining}{{[}8{]}} and \protect\hyperlink{ref-antoran2020getting}{{[}9{]}} (\ref{empirical} and \ref{empirical-2}). Fourthly, given that we find substantial impact of recourse, we propose key mitigation strategies and measure their impact experimentally (Section \ref{mitigate}). Finally, we discuss our findings in the broader context of the literature in Section \ref{discussion}, before pointing to some of the limitations of our work as well as avenues for future research in Section \ref{limit}. Section \ref{conclusion} concludes.
 
 \hypertarget{related}{%
 \section{Background}\label{related}}
@@ -678,7 +662,25 @@ Here \(\text{cost}(f(\mathbf{s}^\prime))\) denotes the proxy for private costs f
 \hypertarget{method-2}{%
 \section{Modeling Endogenous Macrodynamics in Algorithmic Recourse}\label{method-2}}
 
-In the following we describe the framework we propose for modeling and analysing endogenous macrodynamics in Algorithmic Recourse. We first describe the basic simulations that were generated to produce the findings in this work and also constitute the core of \href{https://anonymous.4open.science/r/AlgorithmicRecourseDynamics/README.md}{\texttt{AlgorithmicRecourseDynamics.jl}} - the Julia package we introduced earlier. The remainder of this section then introduces various evaluation metrics that can be used to benchmark different counterfactual generators with respect to how they perform in the dynamic setting.
+In the following we describe the framework we propose for modeling and analysing endogenous macrodynamics in Algorithmic Recourse. We introduce this framework with the ambition to shed light on the following research questions:
+
+\begin{proposition}[Endogenous Shifts]
+\protect\hypertarget{prp:shifts}{}\label{prp:shifts}Does the repeated implementation of recourse provided by state-of-the-art generators lead to shifts in the domain and model?
+\end{proposition}
+
+\begin{proposition}[Costs]
+\protect\hypertarget{prp:costs}{}\label{prp:costs}If so, are any of these dynamics substantial enough to be considered costly to any of the stakeholders involved in real-world automated decision-making processes?
+\end{proposition}
+
+\begin{proposition}[Heterogeneity]
+\protect\hypertarget{prp:het}{}\label{prp:het}Do different counterfactual generators yield significantly different outcomes in this context? Furthermore, is there any heterogeneity with respect to the chosen classifier and dataset?
+\end{proposition}
+
+\begin{proposition}[Drivers]
+\protect\hypertarget{prp:drive}{}\label{prp:drive}What are drivers of endogenous dynamics in Algorithmic Recourse?
+\end{proposition}
+
+Below we first describe the basic simulations that were generated to produce the findings in this work and also constitute the core of \href{https://anonymous.4open.science/r/AlgorithmicRecourseDynamics/README.md}{\texttt{AlgorithmicRecourseDynamics.jl}} - the Julia package we introduced earlier. The remainder of this section then introduces various evaluation metrics that can be used to benchmark different counterfactual generators with respect to how they perform in the dynamic setting.
 
 \hypertarget{method-2-experiment}{%
 \subsection{Simulations}\label{method-2-experiment}}
@@ -820,26 +822,12 @@ All generators introduced earlier are included in the experiments: Wachter \prot
 \hypertarget{empirical-2}{%
 \section{Experiments}\label{empirical-2}}
 
-Using the framework introduced in the previous section we are interested in answering the following research questions in this section:
-
-\begin{itemize}
-\tightlist
-\item
-  Does the repeated implementation of recourse provided by state-of-the-art generators lead to shifts in the domain and model?
-\item
-  If so, are any of these dynamics substantial enough to be considered costly to any of the stakeholders involved in real-world automated decision-making processes?
-\item
-  Do different counterfactual generators yield significantly different outcomes in this context? Furthermore, is there any heterogeneity with respect to the chosen classifier and dataset?
-\item
-  What seem to be drivers of endogenous dynamics in Algorithmic Recourse?
-\end{itemize}
-
 Below we first present our main experimental findings regarding these questions. We conclude this section with a brief recap providing answers to all of these questions.
 
 \hypertarget{endogenous-macrodynamics}{%
 \subsection{Endogenous Macrodynamics}\label{endogenous-macrodynamics}}
 
-We start this section off with a few high-level observations. Across all datasets (synthetic and real), classifiers and counterfactual generators we observe either most or all of the following dynamics at varying degrees:
+We start this section off with the key high-level observations. Across all datasets (synthetic and real), classifiers and counterfactual generators we observe either most or all of the following dynamics at varying degrees:
 
 \begin{itemize}
 \tightlist
@@ -903,22 +891,28 @@ Out-of-sample model performance also deteriorates across the board and substanti
 \caption{Results for deep ensemble using real-world datasets. The shown model MMD (PP MMD) was computed over actual samples, rather than a mesh grid. Error bars indicate the standard deviation across folds.}\label{fig:real}
 \end{figure}
 
-To recap, we can answer our research questions as follows: firstly, endogenous dynamics do emerge in our experiments and we find them substantial enough to be considered costly; secondly, the choice of the counterfactual generator does matter, with Latent Space search generally having a dampening effect. The observed dynamics therefore seem to be driven by a discrepancy between counterfactual outcomes that minimize costs to the individual and outcomes that comply with the data generating process.
+To recap, we can answer our research questions as follows: firstly, endogenous dynamics do emerge in our experiments (RQ \ref{prp:shifts}) and we find them substantial enough to be considered costly (RQ \ref{prp:costs}); secondly, the choice of the counterfactual generator does matter, with Latent Space search generally having a dampening effect (RQ \ref{prp:het}). The observed dynamics therefore seem to be driven by a discrepancy between counterfactual outcomes that minimize costs to the individual and outcomes that comply with the data generating process (RQ \ref{prp:drive}).
 
 \hypertarget{mitigate}{%
-\section{Potential Mitigation Strategies}\label{mitigate}}
+\section{Mitigation Strategies and Experiments}\label{mitigate}}
 
-Having established in the previous section that endogenous macrodynamics in AR are substantial enough to warrant our attention, in this section we introduce and test a number of potential mitigation strategies. All of them essentially boil down to one simple principle: to avoid substantial domain and model shifts, the generated counterfactuals should comply as much as possible with the true data generating process. This principle is really at the core of Latent Space generators, and hence it is not surprising that we have found these types of generators to perform comparably well in the previous section. But as we have mentioned earlier, generators that rely on separate generative models carry an additional computational burden and - perhaps more importantly - their performance hinges on the performance of said generative models. Fortunately, it turns out that we can use a number of other, much simpler strategies, which we will discuss now.
+Having established in the previous section that endogenous macrodynamics in AR are substantial enough to warrant our attention, in this section we ask ourselves:
+
+\begin{proposition}[Mitigation Strategies]
+\protect\hypertarget{prp:mitigate}{}\label{prp:mitigate}What are potential mitigation strategies with respect to endogenous macrodynamics in AR?
+\end{proposition}
+
+We proposed and test a number of simple mitigation strategies. All of them essentially boil down to one simple principle: to avoid substantial domain and model shifts, the generated counterfactuals should comply as much as possible with the true data generating process. This principle is really at the core of Latent Space generators, and hence it is not surprising that we have found these types of generators to perform comparably well in the previous section. But as we have mentioned earlier, generators that rely on separate generative models carry an additional computational burden and - perhaps more importantly - their performance hinges on the performance of said generative models. Fortunately, it turns out that we can use a number of other, much simpler strategies, which we will discuss now.
 
 \hypertarget{more-conservative-decision-thresholds}{%
 \subsection{More Conservative Decision Thresholds}\label{more-conservative-decision-thresholds}}
 
-The most obvious and trivial mitigation strategy is to simply choose a higher decision threshold \(\gamma\). This threshold determines when a proposed counterfactual should be considered as valid. Under \(\gamma=0.5\), counterfactuals will end up near the decision boundary by construction. Since this is the region of maximal aleotoric uncertainty, the classifier is bound to be thrown off. By simply setting a more conservative decision threshold, we can avoid this issue to some extent. A potential drawback of this approach is that a classifier with high decisiveness may classify samples with high confidence even far away from the training data.
+The most obvious and trivial mitigation strategy is to simply choose a higher decision threshold \(\gamma\). This threshold determines when a proposed counterfactual should be considered as valid. Under \(\gamma=0.5\), counterfactuals will end up near the decision boundary by construction. Since this is the region of maximal aleotoric uncertainty, the classifier is bound to be thrown off. By simply setting a more conservative decision threshold, we can avoid this issue to some extent. A drawback of this approach is that a classifier with high decisiveness may classify samples with high confidence even far away from the training data.
 
 \hypertarget{classifier-preserving-roar}{%
 \subsection{Classifier Preserving ROAR}\label{classifier-preserving-roar}}
 
-Another potential strategy draws inspiration from ROAR \protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}}: to preserve the classifier, we propose to simply explicitly penalize the loss it incurs when evaluated on the counterfactual \(x^\prime\) at given parameter values. Recall that \(\text{extcost}(\cdot)\) denotes what we had defined as the external cost in Equation \eqref{eq:collective}. Then formally we let
+Another strategy draws inspiration from ROAR \protect\hyperlink{ref-upadhyay2021towards}{{[}14{]}}: to preserve the classifier, we propose to simply explicitly penalize the loss it incurs when evaluated on the counterfactual \(x^\prime\) at given parameter values. Recall that \(\text{extcost}(\cdot)\) denotes what we had defined as the external cost in Equation \eqref{eq:collective}. Then formally we let
 
 \begin{equation}
 \begin{aligned}
@@ -939,7 +933,7 @@ Yet another strategy simply extends Wachter as follows: instead of only penalizi
 \end{aligned}
 \end{equation}
 
-Once again we can putting this in the context of Equation \eqref{eq:collective}, the former penalty can be thought of here as the private cost incurred by the individual, while the latter reflects the external cost incurred by other individuals. Higher choices of \(\lambda_2\) relative to \(\lambda_1\) will lead counterfactuals to gravitate towards the specified point \(\bar{x}\) in the target domain. In the remainder of this paper we will therefore refer to this approach as \textbf{Gravitational} generator, when we investigate its potential usefulness for mitigating endongenous macrodynamics\footnote{Note that despite the naming convention our goal here is not to provide yet another counterfactual generator, but merely investigate the most simple penalty we can think of with respect to its effectiveness.}.
+Once again we can putting this in the context of Equation \eqref{eq:collective}, the former penalty can be thought of here as the private cost incurred by the individual, while the latter reflects the external cost incurred by other individuals. Higher choices of \(\lambda_2\) relative to \(\lambda_1\) will lead counterfactuals to gravitate towards the specified point \(\bar{x}\) in the target domain. In the remainder of this paper we will therefore refer to this approach as \textbf{Gravitational} generator, when we investigate its usefulness for mitigating endongenous macrodynamics\footnote{Note that despite the naming convention our goal here is not to provide yet another counterfactual generator, but merely investigate the most simple penalty we can think of with respect to its effectiveness.}.
 
 Figure \ref{fig:mitigation} shows an illustrative example that demonstrates the differences in counterfactual outcomes when using the various mitigation strategies compared to the baseline approach, that is Wachter with \(\gamma=0.5\): choosing a higher decision threshold pushes the counterfactual a little further into the target domain; this effect is even stronger for ClapROAR; finally, using the Gravitational generator the counterfactual ends up all the way inside the target domain in the neighbourhood of \(\bar{x}\)\footnote{In order for the Gravitational generator and ClapROAR to work as expected, one needs to ensure that counterfactual search continues, independent of the threshold probability \(\gamma\).}.
 

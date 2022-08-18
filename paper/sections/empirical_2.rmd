@@ -1,17 +1,10 @@
 # Experiments {#empirical-2}
 
-Using the framework introduced in the previous section we are interested in answering the following research questions in this section:
-
-- Does the repeated implementation of recourse provided by state-of-the-art generators lead to shifts in the domain and model?
-- If so, are any of these dynamics substantial enough to be considered costly to any of the stakeholders involved in real-world automated decision-making processes?
-- Do different counterfactual generators yield significantly different outcomes in this context? Furthermore, is there any heterogeneity with respect to the chosen classifier and dataset?
-- What seem to be drivers of endogenous dynamics in Algorithmic Recourse?
-
 Below we first present our main experimental findings regarding these questions. We conclude this section with a brief recap providing answers to all of these questions.
 
 ## Endogenous Macrodynamics
 
-We start this section off with a few high-level observations. Across all datasets (synthetic and real), classifiers and counterfactual generators we observe either most or all of the following dynamics at varying degrees:
+We start this section off with the key high-level observations. Across all datasets (synthetic and real), classifiers and counterfactual generators we observe either most or all of the following dynamics at varying degrees:
 
 - Statistically significant domain and model shift as measured by MMD. 
 - A deterioration in out-of-sample model performance as measured by the F-Score evaluated on a test sample. In many cases this drop in performance is substantial.
@@ -52,5 +45,5 @@ Out-of-sample model performance also deteriorates across the board and substanti
 knitr::include_graphics("www/real_world_results.png")
 ```
 
-To recap, we can answer our research questions as follows: firstly, endogenous dynamics do emerge in our experiments and we find them substantial enough to be considered costly; secondly, the choice of the counterfactual generator does matter, with Latent Space search generally having a dampening effect. The observed dynamics therefore seem to be driven by a discrepancy between counterfactual outcomes that minimize costs to the individual and outcomes that comply with the data generating process. 
+To recap, we can answer our research questions as follows: firstly, endogenous dynamics do emerge in our experiments (RQ \@ref(prp:shifts)) and we find them substantial enough to be considered costly (RQ \@ref(prp:costs)); secondly, the choice of the counterfactual generator does matter, with Latent Space search generally having a dampening effect (RQ \@ref(prp:het)). The observed dynamics therefore seem to be driven by a discrepancy between counterfactual outcomes that minimize costs to the individual and outcomes that comply with the data generating process (RQ \@ref(prp:drive)). 
 

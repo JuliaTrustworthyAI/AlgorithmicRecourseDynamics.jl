@@ -1,6 +1,24 @@
 # Modeling Endogenous Macrodynamics in Algorithmic Recourse {#method-2}
 
-In the following we describe the framework we propose for modeling and analysing endogenous macrodynamics in Algorithmic Recourse. We first describe the basic simulations that were generated to produce the findings in this work and also constitute the core of [`AlgorithmicRecourseDynamics.jl`](https://anonymous.4open.science/r/AlgorithmicRecourseDynamics/README.md) - the Julia package we introduced earlier. The remainder of this section then introduces various evaluation metrics that can be used to benchmark different counterfactual generators with respect to how they perform in the dynamic setting. 
+In the following we describe the framework we propose for modeling and analysing endogenous macrodynamics in Algorithmic Recourse. We introduce this framework with the ambition to shed light on the following research questions:
+
+::: {.proposition #shifts name="Endogenous Shifts"}
+Does the repeated implementation of recourse provided by state-of-the-art generators lead to shifts in the domain and model?
+:::
+
+::: {.proposition #costs name="Costs"}
+If so, are any of these dynamics substantial enough to be considered costly to any of the stakeholders involved in real-world automated decision-making processes?
+:::
+
+::: {.proposition #het name="Heterogeneity"}
+Do different counterfactual generators yield significantly different outcomes in this context? Furthermore, is there any heterogeneity with respect to the chosen classifier and dataset?
+:::
+
+::: {.proposition #drive name="Drivers"}
+What are drivers of endogenous dynamics in Algorithmic Recourse?
+:::
+
+Below we first describe the basic simulations that were generated to produce the findings in this work and also constitute the core of [`AlgorithmicRecourseDynamics.jl`](https://anonymous.4open.science/r/AlgorithmicRecourseDynamics/README.md) - the Julia package we introduced earlier. The remainder of this section then introduces various evaluation metrics that can be used to benchmark different counterfactual generators with respect to how they perform in the dynamic setting. 
 
 ## Simulations {#method-2-experiment}
 

@@ -8,6 +8,7 @@ format:
             echo: true
             eval: false
             warning: false
+        toc: true
 jupyter: julia-1.7
 ---
 

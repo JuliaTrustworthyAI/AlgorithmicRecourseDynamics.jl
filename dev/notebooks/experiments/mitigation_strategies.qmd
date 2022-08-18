@@ -9,10 +9,10 @@ using Pkg; Pkg.activate("dev")
 #| eval: true
 include("dev/utils.jl")
 using AlgorithmicRecourseDynamics
-using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
+using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra, Images
 theme(:wong)
 output_path = output_dir("mitigation_strategies")
-www_path = www_dir("mitigation_strategies")
+www_path = www_dir("mitigation_strategies");
 ```
 
 ```{julia}
@@ -49,42 +49,6 @@ experiments = set_up_experiments(data_sets,models,generators)
 ```
 
 ```{julia}
-using AlgorithmicRecourseDynamics.Models: model_evaluation
-plts = []
-for (exp_name, exp_) in experiments
-    for (M_name, M) in exp_.models
-        score = round(model_evaluation(M, exp_.test_data),digits=2)
-        plt = plot(M, exp_.test_data, title="$exp_name;\n $M_name ($score)")
-        # Errors:
-        ids = findall(vec(round.(probs(M, exp_.test_data.X)) .!= exp_.test_data.y))
-        x_wrongly_labelled = exp_.test_data.X[:,ids]
-        scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
-        plts = vcat(plts..., plt)
-    end
-end
-plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
-savefig(plt, joinpath(www_path,"models_test_before.png"))
-```
-
-```{julia}
-using AlgorithmicRecourseDynamics.Models: model_evaluation
-plts = []
-for (exp_name, exp_) in experiments
-    for (M_name, M) in exp_.models
-        score = round(model_evaluation(M, exp_.train_data),digits=2)
-        plt = plot(M, exp_.train_data, title="$exp_name;\n $M_name ($score)")
-        # Errors:
-        ids = findall(vec(round.(probs(M, exp_.train_data.X)) .!= exp_.train_data.y))
-        x_wrongly_labelled = exp_.train_data.X[:,ids]
-        scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
-        plts = vcat(plts..., plt)
-    end
-end
-plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
-savefig(plt, joinpath(www_path,"models_train_before.png"))
-```
-
-```{julia}
 n_evals = 5
 n_rounds = 50
 evaluate_every = Int(round(n_rounds/n_evals))
@@ -99,64 +63,7 @@ results = run_experiments(
 Serialization.serialize(joinpath(output_path,"results_synthetic.jls"),results)
 ```
 
-```{julia}
-using AlgorithmicRecourseDynamics.Models: model_evaluation
-plot_dict = Dict(key => Dict() for (key,val) in results)
-fold = 1
-for (name, res) in results
-    exp_ = res.experiment
-    plot_dict[name] = Dict(key => [] for (key,val) in exp_.generators)
-    rec_sys = exp_.recourse_systems[fold]
-    sys_ids = collect(exp_.system_identifiers)
-    M = length(rec_sys)
-    for m in 1:M
-        model_name, generator_name = sys_ids[m]
-        M = rec_sys[m].model
-        score = round(model_evaluation(M, exp_.test_data),digits=2)
-        plt = plot(M, exp_.test_data, title="$name;\n $model_name ($score)")
-        # Errors:
-        ids = findall(vec(round.(probs(M, exp_.test_data.X)) .!= exp_.test_data.y))
-        x_wrongly_labelled = exp_.test_data.X[:,ids]
-        scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
-        plot_dict[name][generator_name] = vcat(plot_dict[name][generator_name], plt)
-    end
-end
-plot_dict = Dict(key => reduce(vcat, [plots[key] for plots in values(plot_dict)]) for (key, value) in generators)
-for (name, plts) in plot_dict
-    plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
-    savefig(plt, joinpath(www_path,"models_test_after_$(name).png"))
-end
-```
-
-```{julia}
-using AlgorithmicRecourseDynamics.Models: model_evaluation
-plot_dict = Dict(key => Dict() for (key,val) in results)
-fold = 1
-for (name, res) in results
-    exp_ = res.experiment
-    plot_dict[name] = Dict(key => [] for (key,val) in exp_.generators)
-    rec_sys = exp_.recourse_systems[fold]
-    sys_ids = collect(exp_.system_identifiers)
-    M = length(rec_sys)
-    for m in 1:M
-        model_name, generator_name = sys_ids[m]
-        M = rec_sys[m].model
-        data = rec_sys[m].data
-        score = round(model_evaluation(M, data),digits=2)
-        plt = plot(M, data, title="$name;\n $model_name ($score)")
-        # Errors:
-        ids = findall(vec(round.(probs(M, data.X)) .!= data.y))
-        x_wrongly_labelled = data.X[:,ids]
-        scatter!(plt, x_wrongly_labelled[1,:], x_wrongly_labelled[2,:], ms=7.5, color=:red, label="")
-        plot_dict[name][generator_name] = vcat(plot_dict[name][generator_name], plt)
-    end
-end
-plot_dict = Dict(key => reduce(vcat, [plots[key] for plots in values(plot_dict)]) for (key, value) in generators)
-for (name, plts) in plot_dict
-    plt = plot(plts..., layout=(length(choices),length(models)),size=(length(choices)*300,length(models)*300))
-    savefig(plt, joinpath(www_path,"models_train_after_$(name).png"))
-end
-```
+### Plots
 
 ```{julia}
 using Serialization
@@ -177,7 +84,57 @@ for (data_name, res) in results
 end
 ```
 
+#### Line Charts
+
+@fig-mit-line shows the evolution of the evaluation metrics over the course of the experiment.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Line Charts"
+#| fig-subcap: 
+#|      - "California Housing"
+#|      - "Circles"
+#|      - "Credit Default"
+#|      - "GMSC"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-mit-line
+img_files = readdir(www_path)[contains.(readdir(www_path),"line_chart") .&& .!contains.(readdir(www_path),"latent")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
+#### Error Bar Charts
+
+@fig-mit-error shows the evaluation metrics at the end of the experiments.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Error Bar Charts"
+#| fig-subcap: 
+#|      - "California Housing"
+#|      - "Circles"
+#|      - "Credit Default"
+#|      - "GMSC"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-mit-error
+img_files = readdir(www_path)[contains.(readdir(www_path),"errorbar_chart") .&& .!contains.(readdir(www_path),"latent")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
 ### Chart in paper
+
+@fig-mit-paper shows the chart that went into the paper.
 
 ```{julia}
 using DataFrames, Statistics
@@ -234,6 +191,13 @@ img = Images.load(rcopy(R"temp_path"))
 Images.save(joinpath(www_path,"paper_synthetic_results.png"), img)
 ```
 
+```{julia}
+#| label: fig-mit-paper
+#| fig-cap: "Chart in paper"
+#| eval: true
+Images.load(joinpath(www_path,"paper_synthetic_results.png"))
+```
+
 
 ### Latent Space Search
 
@@ -284,7 +248,53 @@ for (data_name, res) in results
 end
 ```
 
+### Plots
+
+#### Line Charts
+
+@fig-mit-line-latent shows the evolution of the evaluation metrics over the course of the experiment.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Line Charts"
+#| fig-subcap: 
+#|      - "Circles"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-mit-line-latent
+img_files = readdir(www_path)[contains.(readdir(www_path),"line_chart") .&& contains.(readdir(www_path),"latent")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
+#### Error Bar Charts
+
+@fig-mit-error-latent shows the evaluation metrics at the end of the experiments.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Error Bar Charts"
+#| fig-subcap: 
+#|      - "Circles"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-mit-error-latent
+img_files = readdir(www_path)[contains.(readdir(www_path),"errorbar_chart") .&& contains.(readdir(www_path),"latent")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
 ### Chart in paper
+
+@fig-mit-latent-paper shows the chart that went into the paper.
 
 ```{julia}
 using DataFrames, Statistics
@@ -339,6 +349,13 @@ ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.8)
 
 img = Images.load(rcopy(R"temp_path"))
 Images.save(joinpath(www_path,"paper_synthetic_latent_results.png"), img)
+```
+
+```{julia}
+#| label: fig-mit-latent-paper
+#| fig-cap: "Chart in paper"
+#| eval: true
+Images.load(joinpath(www_path,"paper_synthetic_latent_results.png"))
 ```
 
 ## Real World
@@ -419,6 +436,8 @@ end
 
 ### Chart in paper
 
+@fig-mit-latent-paper shows the chart that went into the paper.
+
 ```{julia}
 using DataFrames, Statistics
 model_ = :FluxEnsemble
@@ -475,4 +494,11 @@ ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.85)
 
 img = Images.load(rcopy(R"temp_path"))
 Images.save(joinpath(www_path,"paper_real_world_results.png"), img)
+```
+
+```{julia}
+#| label: fig-mit-real-paper
+#| fig-cap: "Chart in paper"
+#| eval: true
+Images.load(joinpath(www_path,"paper_real_world_results.png"))
 ```

@@ -221,7 +221,7 @@ end
 ```{julia}
 #| eval: true
 using Serialization
-results = Serialization.deserialize(joinpath(output_path,"results.jls"))
+results = Serialization.deserialize(joinpath(output_path,"results.jls"));
 ```
 
 ```{julia}
@@ -280,17 +280,42 @@ for img in img_files
 end
 ```
 
-### Tables
-
-@tbl-results shows a summary of all results.
+### Bootstrap
 
 ```{julia}
-#| label: tbl-results
-#| tbl-cap: "Summary of all results"
+n_bootstrap = 1
+using AlgorithmicRecourseDynamics.Evaluation: evaluate_system
+using DataFrames
+df = DataFrame()
+for (key, val) in results
+    n_folds = length(val.experiment.recourse_systems)
+    for fold in 1:n_folds
+        for i in length(val.experiment.system_identifiers)
+            rec_sys = val.experiment.recourse_systems[fold][i]
+            model_name, gen_name = collect(val.experiment.system_identifiers)[i]
+            df_ = evaluate_system(rec_sys, val.experiment; n=n_bootstrap)
+            df_.model .= model_name
+            df_.generator .= gen_name
+            df_.fold .= fold
+            df = vcat(df, df_)
+        end
+    end
+end
+df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
+using RCall
+save_path = joinpath(output_path, "bootstrap.html")
+R"""
+dt <- DT::datatable($df) |>
+    DT::formatRound(columns=c("value"), digits=3)
+DT::saveWidget(dt, $save_path)
+"""
+```
+
+```{julia}
 #| eval: true
-#| results: asis
-using AlgorithmicRecourseDynamics: kable
-kable(results, [50]; format="html")
+using Gumbo
+save_path = joinpath(output_path, "bootstrap.html")
+parsehtml(read(save_path, String))
 ```
 
 ### Chart in paper {#sec-app-synthetic-paper}

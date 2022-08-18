@@ -13,7 +13,7 @@ end
 
 using Flux
 using Flux.Optimise: update!
-using CounterfactualExplanations
+using CounterfactualExplanations.Models: LaplaceReduxModel
 """
     train(M::LaplaceModel, data::CounterfactualData; kwargs...)
 
@@ -38,7 +38,7 @@ function train(M::LaplaceReduxModel, data::CounterfactualData; kwargs...)
     # Fit Laplace:
     la = Laplace(model, λ=args.λ, H₀=args.H₀)
     LaplaceRedux.fit!(la, data)
-    M = LaplaceReduxModel(la)
+    M = CounterfactualExplanations.Models.LaplaceReduxModel(la)
 
     return M
     

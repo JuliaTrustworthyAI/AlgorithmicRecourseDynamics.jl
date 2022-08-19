@@ -29,7 +29,7 @@ docs/site/
 # environment.
 Manifest.toml
 # ignore Artifacts.toml due to double-blind: 
-Artifacts.toml 
+Artifacts.toml
 
 /.quarto/
 

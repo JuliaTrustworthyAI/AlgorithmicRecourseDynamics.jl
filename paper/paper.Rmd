@@ -1,5 +1,5 @@
 ---
-title: Endogenous Macrodynamics in Algorithmic Recourse
+title: "SoK: Endogenous Macrodynamics in Algorithmic Recourse"
 affiliation:
   ## use one only of the following
   # author-columnar: true         ## one column per author

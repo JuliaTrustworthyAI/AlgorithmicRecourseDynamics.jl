@@ -290,10 +290,11 @@ df = DataFrame()
 for (key, val) in results
     n_folds = length(val.experiment.recourse_systems)
     for fold in 1:n_folds
-        for i in length(val.experiment.system_identifiers)
+        for i in 1:length(val.experiment.system_identifiers)
             rec_sys = val.experiment.recourse_systems[fold][i]
             model_name, gen_name = collect(val.experiment.system_identifiers)[i]
             df_ = evaluate_system(rec_sys, val.experiment; n=n_bootstrap)
+            df_.data .= key
             df_.model .= model_name
             df_.generator .= gen_name
             df_.fold .= fold
@@ -305,7 +306,7 @@ df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
 using RCall
 save_path = joinpath(output_path, "bootstrap.csv")
 using CSV
-CSV.write(save_path)
+CSV.write(save_path, df)
 ```
 
 ### Chart in paper {#sec-app-synthetic-paper}

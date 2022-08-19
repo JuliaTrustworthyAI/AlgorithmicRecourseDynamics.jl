@@ -74,7 +74,7 @@ with_amsmath: true
 # with_array: true
 # with_dblfloatfix: true
 
-bibliography: https://raw.githubusercontent.com/pat-alt/bib/main/bib.bib
+bibliography: ../bib.bib
 csl: ieee.csl
 output: 
   bookdown::pdf_book:

@@ -164,7 +164,7 @@ function set_up_experiment(
     kwargs...
 )
 
-    available_models = [:LogisticRegression, :FluxModel, :FluxEnsemble, :LaplaceReduxModel]
+    available_models = [:LogisticRegression, :FluxModel, :FluxEnsemble]
     @assert all(map(model -> model in available_models, models)) "`models` can only be $(available_models)"
 
     models = Dict([(model,getfield(AlgorithmicRecourseDynamics.Models, model)(data; model_params...)) for model in models])

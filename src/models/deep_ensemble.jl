@@ -38,10 +38,12 @@ end
 using Flux
 using Flux.Optimise: update!
 using CounterfactualExplanations
-"""
-    train(M::LaplaceModel, data::CounterfactualData; kwargs...)
+using CounterfactualExplanations.Models: FluxEnsemble
 
-Wrapper function to retrain `LaplaceReduxModel`.
+"""
+    train(M::FluxEnsemble, data::CounterfactualData; kwargs...)
+
+Wrapper function to retrain.
 """
 function train(M::FluxEnsemble, data::CounterfactualData; kwargs...)
 

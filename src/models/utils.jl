@@ -1,4 +1,9 @@
-using MLUtils, CounterfactualExplanations
+using CounterfactualExplanations
+using CounterfactualExplanations.DataPreprocessing
+using Flux
+using MLJ
+using MLUtils
+
 """
     data_loader(data::CounterfactualData)
 
@@ -11,9 +16,6 @@ function data_loader(data::CounterfactualData)
     return data
 end
 
-using CounterfactualExplanations
-using CounterfactualExplanations.DataPreprocessing
-using MLJ, Flux
 function model_evaluation(M::CounterfactualExplanations.AbstractFittedModel, test_data::CounterfactualData)
     X, y = DataPreprocessing.unpack(test_data)
     m = MulticlassFScore()

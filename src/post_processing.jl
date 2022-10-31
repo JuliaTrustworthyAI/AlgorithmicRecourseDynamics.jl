@@ -1,10 +1,10 @@
-using RCall
-import Plots: plot
-using DataFrames
-using Statistics
 using Images
+using DataFrames
+using RCall
+using Plots
+using Statistics
 
-function plot(results::ExperimentResults, variable::Symbol=:mmd, scope::Symbol=:model; size=3, title=nothing, kwargs...)
+function Plots.plot(results::ExperimentResults, variable::Symbol=:mmd, scope::Symbol=:model; size=3, title=nothing, kwargs...)
     
     df = results.output
     @assert variable in unique(df.name) "Not a valid variable."
@@ -37,7 +37,7 @@ function plot(results::ExperimentResults, variable::Symbol=:mmd, scope::Symbol=:
 
 end
 
-function plot(results::ExperimentResults, n::Int, variable::Symbol=:mmd, scope::Symbol=:model; size=3, title=nothing, kwargs...)
+function Plots.plot(results::ExperimentResults, n::Int, variable::Symbol=:mmd, scope::Symbol=:model; size=3, title=nothing, kwargs...)
     
     df = results.output
     @assert variable in unique(df.name) "Not a valid variable."

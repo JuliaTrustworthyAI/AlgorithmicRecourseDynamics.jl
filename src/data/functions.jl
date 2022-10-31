@@ -1,6 +1,9 @@
-using Pkg.Artifacts
+using LazyArtifacts
+using CounterfactualExplanations
+using CSV
+using DataFrames
+using StatsBase
 
-using CSV, DataFrames, CounterfactualExplanations
 function load_synthetic(max_obs::Union{Nothing, Int}=nothing)
     data_dir = joinpath(artifact"data","data/synthetic")
     files = readdir(data_dir)
@@ -20,7 +23,6 @@ function load_synthetic(max_obs::Union{Nothing, Int}=nothing)
     return data
 end
 
-using CounterfactualExplanations
 function load_real_world(max_obs::Union{Nothing, Int}=nothing)
     data_dir = joinpath(artifact"data","data/real_world")
     files = readdir(data_dir)
@@ -41,7 +43,7 @@ function load_real_world(max_obs::Union{Nothing, Int}=nothing)
     return data
 end
 
-using StatsBase
+
 function scale(X, dim)
     dt = fit(ZScoreTransform, X, dim=dim)
     X_scaled = StatsBase.transform(dt, X)

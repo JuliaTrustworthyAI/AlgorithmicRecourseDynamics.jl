@@ -1,6 +1,6 @@
 # Fdb version 3
-["pdflatex"] 1667482825 "/Users/FA31DU/code/AlgorithmicRecourseDynamics.jl/paper/paper.tex" "paper.pdf" "paper" 1667482827
-  "/Users/FA31DU/code/AlgorithmicRecourseDynamics.jl/paper/paper.tex" 1667482819 112064 6a98c9b171e29e953eb99428d4c261d2 ""
+["pdflatex"] 1667497253 "/Users/FA31DU/code/AlgorithmicRecourseDynamics.jl/paper/paper.tex" "paper.pdf" "paper" 1667497255
+  "/Users/FA31DU/code/AlgorithmicRecourseDynamics.jl/paper/paper.tex" 1667497247 111666 5c23eaf3af478ae4fe9bf7f5cfe98c0f ""
   "/usr/local/texlive/2022/texmf-dist/fonts/enc/dvips/base/8r.enc" 1165713224 4850 80dc9bab7f31fb78a000ccfed0e27cab ""
   "/usr/local/texlive/2022/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2022/texmf-dist/fonts/tfm/adobe/courier/pcrr7t.tfm" 1136768653 960 379cc0019370a9e0208a0a3f949f847a ""
@@ -133,9 +133,9 @@
   "/usr/local/texlive/2022/texmf-var/web2c/pdftex/pdflatex.fmt" 1649828967 2826441 25557c603d1b120c5ae526d9d48800f2 ""
   "/usr/local/texlive/2022/texmf.cnf" 1647878952 577 209b46be99c9075fd74d4c0369380e8c ""
   "IEEEtran.cls" 1660725262 281786 6728957f298086dedcfad85b7a6811a7 ""
-  "paper.aux" 1667482827 15693 97f69715688eb254bfc742371fe5636c "pdflatex"
-  "paper.out" 1667482827 5798 5ed7fdc58c9a8a1450abbb2650d5aba7 "pdflatex"
-  "paper.tex" 1667482819 112064 6a98c9b171e29e953eb99428d4c261d2 ""
+  "paper.aux" 1667497255 15693 97f69715688eb254bfc742371fe5636c "pdflatex"
+  "paper.out" 1667497255 5798 5ed7fdc58c9a8a1450abbb2650d5aba7 "pdflatex"
+  "paper.tex" 1667497247 111666 5c23eaf3af478ae4fe9bf7f5cfe98c0f ""
   "www/mitigation.png" 1660725262 54604 1b8c5fbc6be2c30f8a95feae7dceb780 ""
   "www/mitigation_real_world_results.png" 1660725262 154827 29509583dbb3849c8337bc2009fab7f0 ""
   "www/mitigation_synthetic_latent_results.png" 1660725262 188261 d1e4c43a6aa99c27fc2b45c6a05e766a ""

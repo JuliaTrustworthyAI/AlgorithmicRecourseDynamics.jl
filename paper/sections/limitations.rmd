@@ -12,7 +12,7 @@ The experimental setup proposed here is designed to mimic a real-world recourse 
 
 ## Causal Modelling
 
-In this work we have focused on popular counterfactual generators that do not incorporate any causal knowledge. The generated perturbations therefore may involve changes to variables that affect the outcome predicted by the black-box model, but not the true outcome. In the context of Example \@ref(exm:student), the generators may, for example, propose that students improve their results on some aptitude test, that is recognized as a signal by the university's hiring committee. Changes to those test scores can be expected to affect the underlying machine learning model even if there is no causal link between test outcomes and students' chances of graduating. The implementation of such changes is typically described as **gaming** @miller2020strategic. Preventing such gaming may help to avoid the macrodynamics we have pointed to in this work. Future work would therefore likely benefit from including recent approaches to AR that incorporate causal knowledge such as Karimi et al. @karimi2021algorithmic. 
+In this work we have focused on popular counterfactual generators that do not incorporate any causal knowledge. The generated perturbations therefore may involve changes to variables that affect the outcome predicted by the black-box model, but not the true outcome. The implementation of such changes is typically described as **gaming** @miller2020strategic. Preventing such gaming may help to avoid the macrodynamics we have pointed to in this work. Future work would therefore likely benefit from including recent approaches to AR that incorporate causal knowledge such as Karimi et al. @karimi2021algorithmic. 
 
 ## Data {#limit-data}
 

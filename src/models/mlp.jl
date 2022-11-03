@@ -1,4 +1,10 @@
+using CounterfactualExplanations
+using Flux
+using Flux.Optimise: update!
+using LinearAlgebra
 using Parameters
+using Statistics
+
 @with_kw struct FluxModelParams 
     loss::Symbol = :logitbinarycrossentropy
     opt::Symbol = :Adam
@@ -6,15 +12,12 @@ using Parameters
     data_loader::Function = data_loader
 end
 
-using Flux
-using Flux.Optimise: update!
-using CounterfactualExplanations
 """
-    train(M::FluxModel, data::CounterfactualData; kwargs...)
+    train(M::CounterfactualExplanations.Models.FluxModel, data::CounterfactualData; kwargs...)
 
 Wrapper function to retrain `FluxModel`.
 """
-function train(M::FluxModel, data::CounterfactualData; kwargs...)
+function train(M::CounterfactualExplanations.Models.FluxModel, data::CounterfactualData; kwargs...)
 
     args = FluxModelParams(; kwargs...)
 
@@ -34,7 +37,6 @@ function train(M::FluxModel, data::CounterfactualData; kwargs...)
     
 end
 
-using Statistics
 function forward!(model::Flux.Chain, data; loss::Symbol, opt::Symbol, n_epochs::Int=10)
 
     # Loss:
@@ -121,8 +123,7 @@ function build_mlp(;
 
 end
 
-import CounterfactualExplanations.Models: FluxModel
-function FluxModel(data::CounterfactualData;kwargs...)
+function CounterfactualExplanations.Models.FluxModel(data::CounterfactualData;kwargs...)
     X, y = CounterfactualExplanations.DataPreprocessing.unpack(data)
     input_dim = size(X,1)
     output_dim = length(unique(y))
@@ -152,8 +153,7 @@ function LogisticRegression(data::CounterfactualData;kwargs...)
     return M
 end
 
-using LinearAlgebra, Flux, Statistics
-function perturbation(model::FluxModel, new_model::FluxModel)
+function perturbation(model::CounterfactualExplanations.Models.FluxModel, new_model::CounterfactualExplanations.Models.FluxModel)
     mlp = model.model
     new_mlp = new_model.model
     Δ = mean(map(x -> norm(x)/length(x),Flux.params(new_mlp).-Flux.params(mlp)))

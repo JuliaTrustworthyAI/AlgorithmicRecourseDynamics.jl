@@ -1,14 +1,3 @@
-```@meta
-CurrentModule = AlgorithmicRecourseDynamics
-```
+# AlgorithmicRecourseDynamics.jl
 
-# AlgorithmicRecourseDynamics
-
-Documentation for [AlgorithmicRecourseDynamics](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl).
-
-```@index
-```
-
-```@autodocs
-Modules = [AlgorithmicRecourseDynamics]
-```
+Documentation for AlgorithmicRecourseDynamics.jl

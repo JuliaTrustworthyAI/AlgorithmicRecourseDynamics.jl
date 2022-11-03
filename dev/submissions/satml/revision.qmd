@@ -53,6 +53,10 @@ Regarding your two main remarks:
 
 With respect to SoK, please also see the general comment.
 
+### 2nd Response
+
+Thanks again! For MMD we have added a sentence explaining that intuitively, larger values indicate that it is more likely that the two distributions are different. And that "In our context, large values therefore indicate that a domain shift indeed seems to have occurred." We state this just before we go on to explain the bootstrap procedure. We have also now linked the mitigation strategies back to the university example.
+
 ## Reviewer vV4a
 
 ### Review
@@ -117,5 +121,7 @@ Currently, due to anonymization the online appendix only lives as a HTML documen
 
 Regarding your point on SoK, please so our general comment. 
 
+### 2nd Response
 
+Thanks again! We have added the remark now as a footnote. We'll aim to polish the online appendix further, to make it as easy as possible to direct readers to the charts showing dynamics.
 

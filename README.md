@@ -1,4 +1,6 @@
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pat-alt.github.io/CounterfactualExplanations.jl/stable) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pat-alt.github.io/CounterfactualExplanations.jl/dev) [![Build Status](https://github.com/pat-alt/CounterfactualExplanations.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/pat-alt/CounterfactualExplanations.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/pat-alt/CounterfactualExplanations.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/pat-alt/CounterfactualExplanations.jl)
+
 # AlgorithmicRecourseDynamics
 
 `AlgorithmicRecourseDynamics.jl` is a Julia package for modelling Algorithmic Recourse Dynamics.
@@ -11,10 +13,10 @@
 
 The paper titles **Endogenous Macrodynamics in Algorithmic Recourse** is currently under review and not yet published. You can find a preprint along with other resources right here on this branch of the repository:
 
--   [Paper](paper/paper.pdf)
--   [Notebooks](dev/notebooks/)
--   [Supplementary Appendix](build/dev/notebooks/appendix.html) generated from notebooks (download the HTML and view in browser)
--   [Artifacts]() (including data and experimental results; link currently exluded due to double-blind review process)
+- [Paper](paper/paper.pdf)
+- [Notebooks](dev/notebooks/)
+- [Supplementary Appendix](build/dev/notebooks/appendix.html) generated from notebooks (download the HTML and view in browser)
+- [Artifacts]() (including data and experimental results; link currently exluded due to double-blind review process)
 
 In this work we investigate what happens if Algorithmic Recourse is actually implemented by a large number of individuals. The chart below illustrates what we mean by Endogenous Macrodynamics in Algorithmic Recourse: (a) we have a simple linear classifier trained for binary classification where samples from the negative class (y=0) are marked in blue and samples of the positive class (y=1) are marked in orange; (b) the implementation of AR for a random subset of individuals leads to a noticable domain shift; (c) as the classifier is retrained we observe a corresponding model shift; (d) as this process is repeated, the decision boundary moves away from the target class.
 

@@ -6,15 +6,15 @@ Having established in the previous section that endogenous macrodynamics in AR a
 What are potential mitigation strategies with respect to endogenous macrodynamics in AR?
 :::
 
-We proposed and test a number of simple mitigation strategies. All of them essentially boil down to one simple principle: to avoid substantial domain and model shifts, the generated counterfactuals should comply as much as possible with the true data generating process. This principle is really at the core of Latent Space generators, and hence it is not surprising that we have found these types of generators to perform comparably well in the previous section. But as we have mentioned earlier, generators that rely on separate generative models carry an additional computational burden and, perhaps more importantly, their performance hinges on the performance of said generative models. Fortunately, it turns out that we can use a number of other, much simpler strategies, which we will discuss now. 
+We proposed and test a number of simple mitigation strategies. All of them essentially boil down to one simple principle: to avoid substantial domain and model shifts, the generated counterfactuals should comply as much as possible with the true data generating process. This principle is really at the core of Latent Space generators, and hence it is not surprising that we have found these types of generators to perform comparably well in the previous section. But as we have mentioned earlier, generators that rely on separate generative models carry an additional computational burden and, perhaps more importantly, their performance hinges on the performance of said generative models. Fortunately, it turns out that we can use a number of other, much simpler strategies.
 
 ## More Conservative Decision Thresholds
 
-The most obvious and trivial mitigation strategy is to simply choose a higher decision threshold $\gamma$. This threshold determines when a proposed counterfactual should be considered as valid. Under $\gamma=0.5$, counterfactuals will end up near the decision boundary by construction. Since this is the region of maximal aleatoric uncertainty, the classifier is bound to be thrown off. By simply setting a more conservative decision threshold, we can avoid this issue to some extent. A drawback of this approach is that a classifier with high decisiveness may classify samples with high confidence even far away from the training data. 
+The most obvious and trivial mitigation strategy is to simply choose a higher decision threshold $\gamma$. This threshold determines when a counterfactual should be considered as valid. Under $\gamma=0.5$, counterfactuals will end up near the decision boundary by construction. Since this is the region of maximal aleatoric uncertainty, the classifier is bound to be thrown off. By setting a more conservative threshold, we can avoid this issue to some extent. A drawback of this approach is that a classifier with high decisiveness may classify samples with high confidence even far away from the training data. 
 
 ## Classifier Preserving ROAR (ClaPROAR)
 
-Another strategy draws inspiration from ROAR @upadhyay2021robust: to preserve the classifier, we propose to simply explicitly penalize the loss it incurs when evaluated on the counterfactual $x^\prime$ at given parameter values. Recall that $\text{extcost}(\cdot)$ denotes what we had defined as the external cost in Equation \@ref(eq:collective). Then formally we let
+Another strategy draws inspiration from ROAR @upadhyay2021robust: to preserve the classifier, we propose to explicitly penalize the loss it incurs when evaluated on the counterfactual $x^\prime$ at given parameter values. Recall that $\text{extcost}(\cdot)$ denotes what we had defined as the external cost in Equation \@ref(eq:collective). Formally, we let
 
 \begin{equation}
 \begin{aligned}
@@ -26,11 +26,11 @@ for each counterfactual $k$ where $l$ denotes the loss function used to train $M
 
 ## Gravitational Counterfactual Explanations 
 
-Yet another strategy simply extends Wachter as follows: instead of only penalizing the distance of the individuals' counterfactual to its factual, we propose penalizing its distance to some sensible point in the target domain, for example the sample average $\bar{x}$:
+Yet another strategy extends Wachter as follows: instead of only penalizing the distance of the individuals' counterfactual to its factual, we propose penalizing its distance to some sensible point in the target domain, for example the subsample average $\bar{x}^*=\text{mean}(x)$, $x \in \mathcal{D}_1$:
 
 \begin{equation}
 \begin{aligned}
-\text{extcost}(f(\mathbf{s}^\prime)) = \text{dist}(f(\mathbf{s}^\prime),\bar{x})  (\#eq:grav)
+\text{extcost}(f(\mathbf{s}^\prime)) = \text{dist}(f(\mathbf{s}^\prime),\bar{x}^*)  (\#eq:grav)
 \end{aligned}
 \end{equation}
 

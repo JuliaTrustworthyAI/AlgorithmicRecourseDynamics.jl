@@ -4,7 +4,7 @@ In this section we provide a review of the relevant literature. First, Subsectio
 
 ## Algorithmic Recourse {#related-recourse}
 
-A framework for Counterfactual Explanations was first proposed in 2017 by Wachter et al. @wachter2017counterfactual and has served as the baseline for most methodologies that have been proposed since then. Let $M: \mathcal{X} \mapsto \mathcal{Y}$ denote some pre-trained model that maps from inputs $X \in \mathcal{X}$ to outputs $Y \in \mathcal{Y}$. Then we are interested in minimizing the cost^[Equivalently, others have referred to this quantity as *complexity* or simply *distance*] $C=\text{cost}(x^\prime)$ incurred by individual $x$ when moving to a counterfactual state $x^\prime$ such that the predicted outcome $M(x^\prime)$ corresponds to some target outcome $y^*$:
+A framework for Counterfactual Explanations was first proposed in 2017 by Wachter et al. @wachter2017counterfactual and has served as the baseline for most methodologies that have been proposed since then. Let $M: \mathcal{X} \mapsto \mathcal{Y}$ denote some pre-trained model that maps from inputs $X \in \mathcal{X}$ to outputs $Y \in \mathcal{Y}$. Then we are interested in minimizing the cost^[Equivalently, others have referred to this quantity as *complexity* or simply *distance*.] $C=\text{cost}(x^\prime)$ incurred by individual $x$ when moving to a counterfactual state $x^\prime$ such that the predicted outcome $M(x^\prime)$ corresponds to some target outcome $y^*$:
 
 \begin{equation}
 \min_{x^\prime \in \mathcal{X}} \text{cost}(x^\prime) \ \ \ \mbox{s. t.} \ \ \ M(x^\prime) = y^* (\#eq:obj)

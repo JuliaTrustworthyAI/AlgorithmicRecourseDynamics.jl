@@ -78,6 +78,7 @@ bibliography: ../bib.bib
 csl: ieee.csl
 output: 
   bookdown::pdf_book:
+    keep_tex:  true
     base_format: rticles::ieee_article
     includes:
       in_header: "tex/preamble.tex"

@@ -33,14 +33,26 @@ affiliation:
   #    - name: Eldon Tyrell
   #      mark: 4
 
-  # institution:
-  #   - name: Georgia Institute of Technology
-  #     department: School of Electrical and Computer Engineering
-  #     location: Atlanta, Georgia 30332--0250
-  #     email: ece@datech.edu
-  #     mark: 1
-  #     author:
-  #       - name: Michael Shell
+  institution:
+    - name: |
+        *Delft University of Technology*
+      department: |
+        *Faculty of Electrical Engineering, Mathematics and Computer Science*
+      location: 2628 XE Delft, The Netherlands
+      mark: 1
+      author:
+        - name: Patrick Altmeyer
+          email: P.Altmeyer@tudelft.nl
+        - name: Giovan Angela
+          # email: G.J.A.Angela@student.tudelft.nl
+        - name: Aleksander Buszydlik
+          # email: A.J.Buszydlik@student.tudelft.nl
+        - name: Karol Dobiczek
+          # email: K.T.Dobiczek@student.tudelft.nl
+        - name: Arie van Deursen
+          # email: Arie.vanDeursen@tudelft.nl
+        - name: Cynthia C. S. Liem
+          # email: C.C.S.Liem@tudelft.nl
   #   - name: Twentieth Century Fox
   #     location: Springfield, USA
   #     mark: 2

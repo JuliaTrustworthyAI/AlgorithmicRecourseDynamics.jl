@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - original-paper
     tags: '*'
   pull_request:
 concurrency:

@@ -1,0 +1,24 @@
+`AlgorithmicRecourseDynamics.jl` is a Julia package for modeling Algorithmic Recourse Dynamics.
+
+## Research Paper 📝
+
+**Note** ⚠: You are browsing the [`#original-paper`](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/tree/original-paper) branch of `AlgorithmicRecourseDynamics.jl`. This branch is a static artifact corresponding to the state of the package at the time the paper was first published. It can be used to replicate the original findings of the paper.
+
+## At a Glance
+
+You can find resources relevant to the paper right here on this branch of the
+repository:
+
+- [Paper](paper/paper.pdf)
+- [Notebooks](dev/notebooks/)
+- [Supplementary Appendix](build/dev/notebooks/appendix.html) generated from notebooks (download the HTML and view in browser)
+- [Artifacts]() (including data and experimental results; link currently exluded due to double-blind review process) 
+
+In this work we investigate what happens if Algorithmic Recourse is actually implemented by a large number of individuals. The chart below illustrates what we mean by Endogenous Macrodynamics in Algorithmic Recourse: (a) we have a simple linear classifier trained for binary classification where samples from the negative class (y=0) are marked in blue and samples of the positive class (y=1) are marked in orange; (b) the implementation of AR for a random subset of individuals leads to a noticable domain shift; (c) as the classifier is retrained we observe a corresponding model shift; (d) as this process is repeated, the decision boundary moves away from the target class.
+
+![](paper/www/poc.png)
+
+## Paper Abstract
+
+Existing work on Counterfactual Explanations (CE) and Algorithmic Recourse (AR) has largely focused on single individuals in a static environment: given some estimated model, the goal is to find valid counterfactuals for an individual instance that fulfill various desiderata. The ability of such counterfactuals to handle dynamics like data and model drift remains a largely unexplored research challenge. There has also been surprisingly little work on the related question of how the actual implementation of recourse by one individual may affect other individuals. Through this work we aim to close that gap. We first show that many of the existing methodologies can be collectively described by a generalized framework. We then argue that the existing framework does not account for a hidden external cost of recourse, that only reveals itself when studying the endogenous dynamics of recourse at the group level. Through simulation experiments involving various state-of-the-art counterfactual generators and several benchmark datasets, we generate large numbers of counterfactuals and study the resulting domain and model shifts. We find that the induced shifts are substantial enough to likely impede the applicability of Algorithmic Recourse in some situations. Fortunately, we find various strategies to mitigate these concerns. Our simulation framework for studying recourse dynamics is fast and open-sourced. 
+

@@ -1,0 +1,29 @@
+---
+title: Supplementary Appendix
+format:
+    html: 
+        self-contained: true
+        code-fold: true
+        execute:
+            echo: true
+            eval: false
+            warning: false
+        toc: true
+jupyter: julia-1.7
+---
+
+This is a supplementary appendix to the research paper **Endogenous Macrodynamics in Algorithmic Recourse**. It contains all of the experimental results, including those not highlighted in the actual paper. It also contains additional information about the proposed counterfactual generators.
+
+# Experimental Results {#sec-results}
+
+{{< include experiments/synthetic.qmd >}}
+
+{{< include experiments/real_world.qmd >}}
+
+{{< include experiments/mitigation_strategies.qmd >}}
+ 
+# Generators {#sec-generators}
+
+{{< include generators/gravitational_generator.qmd >}}
+
+{{< include generators/clap_roar_generator.qmd >}}

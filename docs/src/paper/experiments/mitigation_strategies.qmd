@@ -1,0 +1,588 @@
+## Mitigation Strategies
+
+```{julia}
+#| eval: true
+using Pkg; Pkg.activate("dev")
+```
+
+```{julia}
+#| eval: true
+include("dev/utils.jl")
+using AlgorithmicRecourseDynamics
+using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra, Images
+theme(:wong)
+output_path = output_dir("mitigation_strategies")
+www_path = www_dir("mitigation_strategies");
+```
+
+```{julia}
+models = [
+    :LogisticRegression, 
+    :FluxModel, 
+    :FluxEnsemble,
+]
+generators = Dict(
+    :Generic=>GenericGenerator(decision_threshold=0.5),
+    :Latent=>REVISEGenerator(),
+    :Generic_conservative=>GenericGenerator(decision_threshold=0.9),
+    :Gravitational=>GravitationalGenerator(),
+    :ClapROAR=>ClapROARGenerator()
+)
+```
+
+### Synthetic
+
+```{julia}
+max_obs = 1000
+catalogue = AlgorithmicRecourseDynamics.Data.load_synthetic(max_obs)
+choices = [
+    :linearly_separable, 
+    :overlapping, 
+    :circles, 
+    :moons,
+]
+data_sets = filter(p -> p[1] in choices, catalogue)
+```
+
+```{julia}
+experiments = set_up_experiments(data_sets,models,generators)
+```
+
+```{julia}
+n_evals = 5
+n_rounds = 50
+evaluate_every = Int(round(n_rounds/n_evals))
+n_folds = 5
+n_bootstrap = 1
+T = 100
+using Serialization
+results = run_experiments(
+    experiments;
+    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap, T=T
+)
+Serialization.serialize(joinpath(output_path,"results_synthetic.jls"),results)
+```
+
+### Plots
+
+```{julia}
+using Serialization
+results = Serialization.deserialize(joinpath(output_path,"results_synthetic.jls"))
+```
+
+```{julia}
+using Images
+line_charts = Dict()
+errorbar_charts = Dict()
+for (data_name, res) in results
+    plt = plot(res)
+    Images.save(joinpath(www_path, "line_chart_$(data_name).png"), plt)
+    line_charts[data_name] = plt
+    plt = plot(res,maximum(res.output.n))
+    Images.save(joinpath(www_path, "errorbar_chart_$(data_name).png"), plt)
+    errorbar_charts[data_name] = plt
+end
+```
+
+#### Line Charts
+
+@fig-mit-line shows the evolution of the evaluation metrics over the course of the experiment.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Line Charts"
+#| fig-subcap: 
+#|      - "California Housing"
+#|      - "Circles"
+#|      - "Credit Default"
+#|      - "GMSC"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-mit-line
+img_files = readdir(www_path)[contains.(readdir(www_path),"line_chart") .&& .!contains.(readdir(www_path),"latent")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
+#### Error Bar Charts
+
+@fig-mit-error shows the evaluation metrics at the end of the experiments.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Error Bar Charts"
+#| fig-subcap: 
+#|      - "California Housing"
+#|      - "Circles"
+#|      - "Credit Default"
+#|      - "GMSC"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-mit-error
+img_files = readdir(www_path)[contains.(readdir(www_path),"errorbar_chart") .&& .!contains.(readdir(www_path),"latent")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
+### Bootstrap
+
+```{julia}
+n_bootstrap = 1000
+using AlgorithmicRecourseDynamics.Evaluation: evaluate_system
+using DataFrames
+df = DataFrame()
+for (key, val) in results
+    n_folds = length(val.experiment.recourse_systems)
+    for fold in 1:n_folds
+        for i in length(val.experiment.system_identifiers)
+            rec_sys = val.experiment.recourse_systems[fold][i]
+            model_name, gen_name = collect(val.experiment.system_identifiers)[i]
+            df_ = evaluate_system(rec_sys, val.experiment; n=n_bootstrap)
+            df_.model .= model_name
+            df_.generator .= gen_name
+            df_.fold .= fold
+            df = vcat(df, df_)
+        end
+    end
+end
+df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
+using RCall
+save_path = joinpath(output_path, "bootstrap_synthetic.csv")
+using CSV
+CSV.write(save_path)
+```
+
+### Chart in paper
+
+@fig-mit-paper shows the chart that went into the paper.
+
+```{julia}
+using DataFrames, Statistics
+df = results[:overlapping].output
+df = df[df.n .== maximum(df.n),:]
+gdf = groupby(df, [:generator, :model, :n, :name, :scope])
+df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
+df_plot = df_plot[[name in [:mmd, :mmd_grid, :model_performance] for name in df_plot.name],:]
+df_plot = df_plot[.!(df_plot.name.==:mmd .&& df_plot.scope.==:model),:]
+df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
+transform!(df_plot, :name => (X -> [x=="mmd" ? "MMD (domain)" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="mmd_grid" ? "MMD (model)" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="model_performance" ? "Performance" : x for x in X]) => :name)
+transform!(df_plot, :generator => (X -> [x=="Generic" ? "Generic (γ=0.5)" : x for x in X]) => :generator)
+transform!(df_plot, :generator => (X -> [x=="Generic_conservative" ? "Generic (γ=0.9)" : x for x in X]) => :generator)
+transform!(df_plot, :model => (X -> [x=="FluxEnsemble" ? "Deep Ensemble" : x for x in X]) => :model)
+transform!(df_plot, :model => (X -> [x=="FluxModel" ? "MLP" : x for x in X]) => :model)
+transform!(df_plot, :model => (X -> [x=="LogisticRegression" ? "Linear" : x for x in X]) => :model)
+
+ncol = length(unique(df_plot.model))
+nrow = length(unique(df_plot.name))
+
+using RCall
+scale_ = 2.0
+R"""
+library(data.table)
+df_plot <- data.table($df_plot)
+model_order <- c("Linear", "MLP", "Deep Ensemble")
+df_plot[,model:=factor(model, levels=model_order)]
+library(ggplot2)
+plt <- ggplot($df_plot) +
+    geom_bar(aes(x=n, y=mean, fill=generator), stat="identity", alpha=0.5, position="dodge") +
+    geom_pointrange( aes(x=n, y=mean, ymin=ymin, ymax=ymax, colour=generator), alpha=0.9, position=position_dodge(width=0.9), size=0.5) +
+    facet_grid(
+        rows = vars(name),
+        cols =  vars(model), 
+        scales = "free_y"
+    ) +
+    labs(y = "Value") + 
+    scale_fill_discrete(name="Generator:") +
+    scale_colour_discrete(name="Generator:") +
+    theme(
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.position="bottom"
+    ) +
+    guides(fill=guide_legend(ncol=3))
+temp_path <- file.path(tempdir(), "plot.png")
+ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.8) 
+"""
+
+img = Images.load(rcopy(R"temp_path"))
+Images.save(joinpath(www_path,"paper_synthetic_results.png"), img)
+```
+
+```{julia}
+#| label: fig-mit-paper
+#| fig-cap: "Chart in paper"
+#| eval: true
+Images.load(joinpath(www_path,"paper_synthetic_results.png"))
+```
+
+
+### Latent Space Search
+
+```{julia}
+generators = Dict(
+    :Latent=>GenericGenerator(decision_threshold=0.5),
+    :Latent_conservative=>GenericGenerator(decision_threshold=0.9),
+    :Gravitational=>GravitationalGenerator(),
+    :ClapROAR=>ClapROARGenerator()
+)
+```
+
+```{julia}
+experiments = set_up_experiments(data_sets,models,generators)
+```
+
+```{julia}
+n_evals = 5
+n_rounds = 50
+evaluate_every = Int(round(n_rounds/n_evals))
+n_folds = 5
+n_bootstrap = 1
+T = 100
+using Serialization
+results = run_experiments(
+    experiments;
+    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap, T=T
+)
+Serialization.serialize(joinpath(output_path,"results_synthetic_latent.jls"),results)
+```
+
+```{julia}
+using Serialization
+results = Serialization.deserialize(joinpath(output_path,"results_synthetic_latent.jls"))
+```
+
+```{julia}
+using Images
+line_charts = Dict()
+errorbar_charts = Dict()
+for (data_name, res) in results
+    plt = plot(res)
+    Images.save(joinpath(www_path, "line_chart_latent_$(data_name).png"), plt)
+    line_charts[data_name] = plt
+    plt = plot(res,maximum(res.output.n))
+    Images.save(joinpath(www_path, "errorbar_chart_latent_$(data_name).png"), plt)
+    errorbar_charts[data_name] = plt
+end
+```
+
+### Plots
+
+#### Line Charts
+
+@fig-mit-line-latent shows the evolution of the evaluation metrics over the course of the experiment.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Line Charts"
+#| fig-subcap: 
+#|      - "Circles"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-mit-line-latent
+img_files = readdir(www_path)[contains.(readdir(www_path),"line_chart") .&& contains.(readdir(www_path),"latent")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
+#### Error Bar Charts
+
+@fig-mit-error-latent shows the evaluation metrics at the end of the experiments.
+
+```{julia}
+#| eval: true
+#| fig-cap: "Error Bar Charts"
+#| fig-subcap: 
+#|      - "Circles"
+#|      - "Linearly Separable"
+#|      - "Moons"
+#|      - "Overlapping"
+#| layout-ncol: 1
+#| label: fig-mit-error-latent
+img_files = readdir(www_path)[contains.(readdir(www_path),"errorbar_chart") .&& contains.(readdir(www_path),"latent")]
+img_files = joinpath.(www_path,img_files)
+for img in img_files
+    display(load(img))
+end
+```
+
+### Bootstrap
+
+```{julia}
+n_bootstrap = 1000
+using AlgorithmicRecourseDynamics.Evaluation: evaluate_system
+using DataFrames
+df = DataFrame()
+for (key, val) in results
+    n_folds = length(val.experiment.recourse_systems)
+    for fold in 1:n_folds
+        for i in length(val.experiment.system_identifiers)
+            rec_sys = val.experiment.recourse_systems[fold][i]
+            model_name, gen_name = collect(val.experiment.system_identifiers)[i]
+            df_ = evaluate_system(rec_sys, val.experiment; n=n_bootstrap)
+            df_.model .= model_name
+            df_.generator .= gen_name
+            df_.fold .= fold
+            df = vcat(df, df_)
+        end
+    end
+end
+df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
+using RCall
+save_path = joinpath(output_path, "bootstrap_latent.csv")
+using CSV
+CSV.write(save_path)
+```
+
+### Chart in paper
+
+@fig-mit-latent-paper shows the chart that went into the paper.
+
+```{julia}
+using DataFrames, Statistics
+df = results[:overlapping].output
+df = df[df.n .== maximum(df.n),:]
+gdf = groupby(df, [:generator, :model, :n, :name, :scope])
+df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
+df_plot = df_plot[[name in [:mmd, :mmd_grid, :model_performance] for name in df_plot.name],:]
+df_plot = df_plot[.!(df_plot.name.==:mmd .&& df_plot.scope.==:model),:]
+df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
+transform!(df_plot, :name => (X -> [x=="mmd" ? "MMD (domain)" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="mmd_grid" ? "MMD (model)" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="model_performance" ? "Performance" : x for x in X]) => :name)
+transform!(df_plot, :generator => (X -> [x=="Latent" ? "Latent (γ=0.5)" : x for x in X]) => :generator)
+transform!(df_plot, :generator => (X -> [x=="Latent_conservative" ? "Latent (γ=0.9)" : x for x in X]) => :generator)
+transform!(df_plot, :model => (X -> [x=="FluxEnsemble" ? "Deep Ensemble" : x for x in X]) => :model)
+transform!(df_plot, :model => (X -> [x=="FluxModel" ? "MLP" : x for x in X]) => :model)
+transform!(df_plot, :model => (X -> [x=="LogisticRegression" ? "Linear" : x for x in X]) => :model)
+
+ncol = length(unique(df_plot.model))
+nrow = length(unique(df_plot.name))
+
+using RCall
+scale_ = 1.9
+R"""
+library(data.table)
+df_plot <- data.table($df_plot)
+model_order <- c("Linear", "MLP", "Deep Ensemble")
+df_plot[,model:=factor(model, levels=model_order)]
+library(ggplot2)
+plt <- ggplot($df_plot) +
+    geom_bar(aes(x=n, y=mean, fill=generator), stat="identity", alpha=0.5, position="dodge") +
+    geom_pointrange( aes(x=n, y=mean, ymin=ymin, ymax=ymax, colour=generator), alpha=0.9, position=position_dodge(width=0.9), size=0.5) +
+    facet_grid(
+        rows = vars(name),
+        cols =  vars(model), 
+        scales = "free_y"
+    ) +
+    labs(y = "Value") + 
+    scale_fill_discrete(name="Generator:") +
+    scale_colour_discrete(name="Generator:") +
+    theme(
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.position="bottom"
+    ) +
+    guides(fill=guide_legend(ncol=4))
+temp_path <- file.path(tempdir(), "plot.png")
+ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.8) 
+"""
+
+img = Images.load(rcopy(R"temp_path"))
+Images.save(joinpath(www_path,"paper_synthetic_latent_results.png"), img)
+```
+
+```{julia}
+#| label: fig-mit-latent-paper
+#| fig-cap: "Chart in paper"
+#| eval: true
+Images.load(joinpath(www_path,"paper_synthetic_latent_results.png"))
+```
+
+## Real World
+
+```{julia}
+generators = Dict(
+    :Generic=>GenericGenerator(decision_threshold=0.5),
+    :Latent=>REVISEGenerator(),
+    :Generic_conservative=>GenericGenerator(decision_threshold=0.9),
+    :Gravitational=>GravitationalGenerator(),
+    :ClapROAR=>ClapROARGenerator()
+)
+```
+
+```{julia}
+max_obs = 2500
+data_sets = AlgorithmicRecourseDynamics.Data.load_real_world(max_obs)
+```
+
+```{julia}
+using CounterfactualExplanations.DataPreprocessing: unpack
+bs = 50
+function data_loader(data::CounterfactualData)
+    X, y = unpack(data)
+    data = Flux.DataLoader((X,y),batchsize=bs)
+    return data
+end
+model_params = (batch_norm=false,n_hidden=32,n_layers=3,dropout=true,p_dropout=0.25)
+```
+
+```{julia}
+experiments = set_up_experiments(
+    data_sets,models,generators; 
+    pre_train_models=100, model_params=model_params, 
+    data_loader=data_loader
+)
+```
+
+```{julia}
+n_evals = 5
+n_rounds = 50
+evaluate_every = Int(round(n_rounds/n_evals))
+n_folds = 5
+n_bootstrap = 1
+n_samples = 10000
+T = 250
+using Serialization
+results = run_experiments(
+    experiments;
+    save_path=output_path,
+    evaluate_every=evaluate_every,
+    n_rounds=n_rounds, 
+    n_folds=n_folds, 
+    n_bootstrap=n_bootstrap, 
+    T=T
+)
+Serialization.serialize(joinpath(output_path,"results_real_world.jls"),results)
+```
+
+```{julia}
+using Serialization
+results = Serialization.deserialize(joinpath(output_path,"results_real_world.jls"))
+```
+
+```{julia}
+using Images
+line_charts = Dict()
+errorbar_charts = Dict()
+for (data_name, res) in results
+    plt = plot(res)
+    Images.save(joinpath(www_path, "line_chart_$(data_name).png"), plt)
+    line_charts[data_name] = plt
+    plt = plot(res,maximum(res.output.n))
+    Images.save(joinpath(www_path, "errorbar_chart_$(data_name).png"), plt)
+    errorbar_charts[data_name] = plt
+end
+```
+
+### Bootstrap
+
+```{julia}
+n_bootstrap = 1000
+using AlgorithmicRecourseDynamics.Evaluation: evaluate_system
+using DataFrames
+df = DataFrame()
+for (key, val) in results
+    n_folds = length(val.experiment.recourse_systems)
+    for fold in 1:n_folds
+        for i in length(val.experiment.system_identifiers)
+            rec_sys = val.experiment.recourse_systems[fold][i]
+            model_name, gen_name = collect(val.experiment.system_identifiers)[i]
+            df_ = evaluate_system(rec_sys, val.experiment; n=n_bootstrap)
+            df_.model .= model_name
+            df_.generator .= gen_name
+            df_.fold .= fold
+            df = vcat(df, df_)
+        end
+    end
+end
+df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
+using RCall
+save_path = joinpath(output_path, "bootstrap_real_world.csv")
+using CSV
+CSV.write(save_path)
+```
+
+### Chart in paper
+
+@fig-mit-latent-paper shows the chart that went into the paper.
+
+```{julia}
+using DataFrames, Statistics
+model_ = :FluxEnsemble
+df = DataFrame() 
+for (key, val) in results
+    df_ = deepcopy(val.output)
+    df_.dataset .= key
+    df = vcat(df,df_)
+end
+df = df[df.n .== maximum(df.n),:]
+df = df[df.model .== model_,:]
+filter!(:value => x -> !any(f -> f(x), (ismissing, isnothing, isnan)), df)
+gdf = groupby(df, [:generator, :dataset, :n, :name, :scope])
+df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
+df_plot = df_plot[[name in [:mmd, :model_performance] for name in df_plot.name],:]
+df_plot = df_plot[.!(df_plot.name.==:mmd .&& df_plot.scope.!=:model),:]
+df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
+transform!(df_plot, :dataset => (X -> [x=="cal_housing" ? "California Housing" : x for x in X]) => :dataset)
+transform!(df_plot, :dataset => (X -> [x=="credit_default" ? "Credit Default" : x for x in X]) => :dataset)
+transform!(df_plot, :dataset => (X -> [x=="gmsc" ? "GMSC" : x for x in X]) => :dataset)
+transform!(df_plot, :name => (X -> [x=="mmd" ? "MMD (model)" : x for x in X]) => :name)
+transform!(df_plot, :name => (X -> [x=="model_performance" ? "Performance" : x for x in X]) => :name)
+transform!(df_plot, :generator => (X -> [x=="Generic" ? "Generic (γ=0.5)" : x for x in X]) => :generator)
+transform!(df_plot, :generator => (X -> [x=="Generic_conservative" ? "Generic (γ=0.9)" : x for x in X]) => :generator)
+
+ncol = length(unique(df_plot.dataset))
+nrow = length(unique(df_plot.name))
+
+using RCall
+scale_ = 2.0
+R"""
+library(ggplot2)
+plt <- ggplot($df_plot) +
+    geom_bar(aes(x=n, y=mean, fill=generator), stat="identity", alpha=0.5, position="dodge") +
+    geom_pointrange( aes(x=n, y=mean, ymin=ymin, ymax=ymax, colour=generator), alpha=0.9, position=position_dodge(width=0.9), size=0.5) +
+    facet_grid(
+        rows = vars(name),
+        cols =  vars(dataset), 
+        scales = "free_y"
+    ) +
+    labs(y = "Value") + 
+    scale_fill_discrete(name="Generator:") +
+    scale_colour_discrete(name="Generator:") +
+    theme(
+        axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        legend.position="bottom"
+    ) +
+    guides(fill=guide_legend(ncol=3))
+temp_path <- file.path(tempdir(), "plot.png")
+ggsave(temp_path,width=$ncol * $scale_,height=$nrow * $scale_ * 0.85) 
+"""
+
+img = Images.load(rcopy(R"temp_path"))
+Images.save(joinpath(www_path,"paper_real_world_results.png"), img)
+```
+
+```{julia}
+#| label: fig-mit-real-paper
+#| fig-cap: "Chart in paper"
+#| eval: true
+Images.load(joinpath(www_path,"paper_real_world_results.png"))
+```

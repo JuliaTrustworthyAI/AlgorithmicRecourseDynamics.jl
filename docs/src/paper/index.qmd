@@ -1,0 +1,26 @@
+---
+title: Endogenous Macrodynamics in Algorithmic Recourse
+subtitle: Research Paper
+--- 
+
+```@meta
+CurrentModule = ConformalPrediction
+```
+
+This part of the documentation is specific to the research paper "Endogenous Macrodynamics in Algorithmic Recourse". To allow for reproducibility of the results at the time of publication, there is a specific package environment linked to this part of the documentation that **will not be updated**. It can be activated as follows:
+
+```{julia}
+using Pkg; Pkg.activate("docs/src/paper")
+```
+
+
+The status of this package environment is shown below:
+
+```{julia}
+#| output: true
+
+Pkg.status()
+```
+
+
+

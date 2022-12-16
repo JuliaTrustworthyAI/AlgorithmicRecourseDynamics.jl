@@ -1,15 +1,31 @@
-using Documenter
 using AlgorithmicRecourseDynamics
+using Documenter
 
-makedocs(
-    sitename = "AlgorithmicRecourseDynamics",
-    format = Documenter.HTML(),
-    modules = [AlgorithmicRecourseDynamics]
+ex_meta = quote
+    # Import module(s):
+    using AlgorithmicRecourseDynamics
+end
+
+DocMeta.setdocmeta!(AlgorithmicRecourseDynamics, :DocTestSetup, ex_meta; recursive = true)
+
+makedocs(;
+    modules = [AlgorithmicRecourseDynamics],
+    authors = "Patrick Altmeyer",
+    repo = "https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/blob/{commit}{path}#{line}",
+    sitename = "AlgorithmicRecourseDynamics.jl",
+    format = Documenter.HTML(;
+        prettyurls = get(ENV, "CI", "false") == "true",
+        canonical = "https://pat-alt.github.io/AlgorithmicRecourseDynamics.jl",
+        edit_link = "main",
+        assets = String[],
+    ),
+    pages = [
+        "🏠 Home" => "index.md",
+        "🎓 Research Paper" => [
+            "Overview" => "paper/index.md",
+        ],
+        "🧐 Reference" => "_reference.md",
+    ],
 )
 
-# Documenter can also automatically deploy documentation to gh-pages.
-# See "Hosting Documentation" and deploydocs() in the Documenter manual
-# for more information.
-#=deploydocs(
-    repo = "<repository url>"
-)=#
+deploydocs(; repo = "github.com/pat-alt/AlgorithmicRecourseDynamics.jl", devbranch = "main")

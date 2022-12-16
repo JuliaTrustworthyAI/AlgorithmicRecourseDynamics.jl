@@ -4,27 +4,38 @@ jupyter: julia-1.7
 ---
 
 ```{julia}
-using Pkg; Pkg.activate("dev")
-```
+#| echo: false
 
+# Environment:
+using Pkg; Pkg.activate("docs/src/paper")
 
-In this notebook we will use toy data to see how endogenous domain shifts and the resulting model shifts can have implications on the validity and cost of algorithmic recourse.
+# Deps:
+using CounterfactualExplanations
+using Flux
+using LaplaceRedux
+using MLJBase
+using Plots
+using Random
 
-```{julia}
-include("dev/utils.jl")
-using AlgorithmicRecourseDynamics
-using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
+# Setup
+Random.seed!(1234)
 theme(:wong)
-output_path = output_dir("poc")
-www_path = www_dir("poc")
+include("docs/src/utils.jl")    # some helper functions
+output_path = output_dir("poc") # output directory for artifacts
+www_path = www_dir("poc")       # output directory for images
 ```
+
+To start with, we will look at a proof-of-concept that demonstrates the main observation underlying that paper is framed around. In particular, we will use synthetic data to see how endogenous domain shifts and the resulting model shifts can have implications on the validity and cost of algorithmic recourse.
 
 ## Classifiers
 
 ```{julia}
-using MLJ
 N = 1000
-X, ys = make_blobs(N, 2; centers=2, as_table=false, center_box=(-2 => 2), cluster_std=0.1)
+xmax = 2
+X, ys = make_blobs(
+    N, 2; 
+    centers=2, as_table=false, center_box=(-xmax => xmax), cluster_std=0.1
+)
 ys .= ys.==2
 X = X'
 xs = Flux.unstack(X,2)
@@ -35,65 +46,33 @@ counterfactual_data = CounterfactualData(X,ys')
 ### Logistic Regression
 
 ```{julia}
-using Flux
-model = Chain(Dense(2,1))
-M = FluxModel(model)
-```
-
-
-```{julia}
 n_epochs = 10
-using AlgorithmicRecourseDynamics.Models
-M = Models.train(M,counterfactual_data; n_epochs=n_epochs)
+model = Chain(Dense(2,1))
+Models.forward!(model, data; loss=:logitbinarycrossentropy, opt=:Adam, n_epochs=n_epochs)
 ```
 
 ```{julia}
-plt_nn = plot(M,counterfactual_data;zoom=0)
-savefig(plt_nn, joinpath(www_path, "nn_contour.png"))
-```
-
-![](../artifacts/upload/www/synthetic/nn_contour.png)
-
-### Laplace Redux
-
-```{julia}
-λ = 0.1
-model_laplace = Laplace(M.model, λ=λ)
-LaplaceRedux.fit!(model_laplace, data)
+model = Laplace(model, likelihood=:classification)
+LaplaceRedux.fit!(model, data)      # fit Laplace Approximation
+optimize_prior!(model)              # optimize prior
+mod = LaplaceReduxModel(model)
 ```
 
 ```{julia}
-M_laplace = Models.LaplaceModel(model_laplace)
-```
+#| output: true
+#| label: fig-model
+#| fig-cap: "The baseline model: contours indicate the predicted label; dots indicate observed data points."
 
-```{julia}
-plt_laplace = plot(M_laplace, counterfactual_data;zoom=0)
-savefig(plt_laplace, joinpath(www_path, "la_contour.png"))
+plt_original = plot(mod, counterfactual_data; zoom=0, colorbar=false, title="(a)")
 ```
-
-![](../artifacts/upload/www/synthetic/la_contour.png)
 
 ## Single Round
-
-```{julia}
-# Models:
-models = (Bayesian=M_laplace, Plugin=M)
-# Generators:
-generators = (
-    Greedy=GreedyGenerator(loss=:logitbinarycrossentropy), 
-    Generic=GenericGenerator(loss=:logitbinarycrossentropy),
-    REVISE=REVISEGenerator(loss=:logitbinarycrossentropy)
-)
-```
 
 ### Generate counterfactual
 
 ```{julia}
-cb = false
 γ = 0.75
-mod = M_laplace
-gen = generators[:Greedy]
-plt_original = plot(mod,counterfactual_data;zoom=0,colorbar=false,title="(a)")
+gen = GenericGenerator(;decision_threshold=γ)
 ```
 
 ```{julia}
@@ -105,7 +84,7 @@ y′ = copy(ys)
 using CounterfactualExplanations.Counterfactuals: counterfactual, counterfactual_label
 for i in chosen
     x = X[:,i]
-    outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen,γ=γ)
+    outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen)
     X′[:,i] = counterfactual(outcome)
     y′[i] = first(counterfactual_label(outcome))
 end
@@ -116,7 +95,9 @@ plt_single = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title="(b)")
 ### Retrain
 
 ```{julia}
-mod = Models.train(mod, counterfactual_data′; n_epochs=n_epochs)
+Models.forward!(mod.model.model, data; loss=:logitbinarycrossentropy, opt=:Adam, n_epochs=n_epochs)
+LaplaceRedux.fit!(mod.model, data)      # fit Laplace Approximation
+optimize_prior!(mod.model)              # optimize prior
 plt_single_retrained = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title="(c)")
 ```
 
@@ -129,10 +110,12 @@ while i <= 10
     candidates = findall(y′.==0)
     chosen = rand(candidates, Int(round(μ*length(candidates))))
     H₀ = mod.model.H # use posterior as new prior
-    mod = Models.train(mod, counterfactual_data′; n_epochs=n_epochs, H₀=H₀)
+    Models.forward!(mod.model.model, data; loss=:logitbinarycrossentropy, opt=:Adam, n_epochs=n_epochs)
+    LaplaceRedux.fit!(mod.model, data)      # fit Laplace Approximation
+    optimize_prior!(mod.model)              # optimize prior
     for i in chosen
         x = X′[:,i]
-        outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen; γ=γ)
+        outcome = generate_counterfactual(x, 1, counterfactual_data, mod, gen)
         X′[:,i] = counterfactual(outcome)
         y′[i] = first(counterfactual_label(outcome))
     end
@@ -143,7 +126,12 @@ plt_single_repeat = plot(mod,counterfactual_data′;zoom=0,colorbar=false,title=
 
 ```{julia}
 plt = plot(plt_original, plt_single, plt_single_retrained, plt_single_repeat, layout=(1,4), legend=false, axis=nothing, size=(600,165))
-savefig(plt, joinpath(www_path, "poc.png"))
+# savefig(plt, joinpath(www_path, "poc.png"))
 ```
+
+```{julia}
+
+```
+
 
 ![](../artifacts/upload/www/synthetic/poc.png)

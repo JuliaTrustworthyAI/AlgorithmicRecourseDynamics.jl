@@ -23,6 +23,7 @@ makedocs(;
         "🏠 Home" => "index.md",
         "🎓 Research Paper" => [
             "Overview" => "paper/index.md",
+            "Proof-of-Concept" => "paper/proof_of_concept.md",
         ],
         "🧐 Reference" => "_reference.md",
     ],

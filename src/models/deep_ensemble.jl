@@ -12,8 +12,6 @@ using Statistics
     data_loader::Function = data_loader
 end
 
-@info println(names(CounterfactualExplanations.Models))
-
 """
     train(M::CounterfactualExplanations.Models.FluxEnsemble, data::CounterfactualData; kwargs...)
 

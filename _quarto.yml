@@ -1,6 +1,5 @@
 project:
   title: "AlgorithmicRecourseDynamics.jl"
-  output-dir: build
   execute-dir: project
 filters:
   - lua/abstract-to-meta.lua

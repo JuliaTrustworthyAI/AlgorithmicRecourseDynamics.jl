@@ -1,8 +1,9 @@
+using AlgorithmicRecourseDynamics
 using .Experiments: Experiment, FixedParameters, RecourseSystem, set_up_system_grid!, update!, choose_individuals
 using .Evaluation: evaluate_system
 using Random, StatsBase, LinearAlgebra, Flux
 using DataFrames
-using ProgressMeter
+using ProgressMeter: Progress, next!
 using Logging
 using Statistics
 using CounterfactualExplanations
@@ -87,7 +88,7 @@ function run!(
                 recourse_system.chosen_individuals = chosen_individuals[m]
                 # Update experiment
                 with_logger(NullLogger()) do
-                    update!(experiment, recourse_system, chosen_individuals_m)
+                    AlgorithmicRecourseDynamics.update!(experiment, recourse_system, chosen_individuals_m)
                 end
                 # Evaluate:
                 if n % evaluate_every == 0 

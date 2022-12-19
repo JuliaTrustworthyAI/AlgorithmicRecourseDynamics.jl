@@ -141,7 +141,7 @@ end
 
 using CounterfactualExplanations.DataPreprocessing: unpack
 using CounterfactualExplanations
-using CounterfactualExplanations.Counterfactuals: counterfactual, counterfactual_label
+using CounterfactualExplanations: counterfactual, counterfactual_label
 using ..Models
 """
 
@@ -170,7 +170,7 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
     indices_ = rand(1:experiment.num_counterfactuals,length(results)) # randomly draw from generated counterfactuals
 
     X′ = reduce(hcat,@.(selectdim(counterfactual(results),3,indices_)))
-    y′ = reduce(hcat,@.(selectdim(counterfactual_label(results),3,indices_)))
+    y′ = reduce(hcat,@.(selectdim(counterfactual_label(results),1,indices_)))
     
     X[:,chosen_individuals] = X′
     y[:,chosen_individuals] = y′

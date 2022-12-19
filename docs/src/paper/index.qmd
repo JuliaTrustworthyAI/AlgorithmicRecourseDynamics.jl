@@ -13,7 +13,6 @@ This part of the documentation is specific to the research paper "Endogenous Mac
 using Pkg; Pkg.activate("docs/src/paper")
 ```
 
-
 The status of this package environment is shown below:
 
 ```{julia}

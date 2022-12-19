@@ -1,6 +1,5 @@
 using CounterfactualExplanations
 using Flux
-using Flux.Optimise: update!
 using LinearAlgebra
 using Parameters
 using Statistics
@@ -52,7 +51,7 @@ function forward!(model::Flux.Chain, data; loss::Symbol, opt::Symbol, n_epochs::
             gs = Flux.gradient(Flux.params(model)) do
                 l = loss_(d...)
             end
-            update!(opt_, Flux.params(model), gs)
+            Flux.Optimise.update!(opt_, Flux.params(model), gs)
         end
     end
 

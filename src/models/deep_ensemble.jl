@@ -1,6 +1,5 @@
 using CounterfactualExplanations
 using Flux
-using Flux.Optimise: update!
 using LinearAlgebra
 using Parameters
 using Statistics

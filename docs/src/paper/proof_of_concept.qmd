@@ -5,26 +5,8 @@ title: Proof of concept
 ```{julia}
 #| echo: false
 
-# Environment:
-using Pkg; Pkg.activate("docs/src/paper")
-
-# Deps:
-using AlgorithmicRecourseDynamics
-using AlgorithmicRecourseDynamics.Models
-using CounterfactualExplanations
-using Flux
-using LaplaceRedux
-using Markdown
-using MLJBase
-using Plots
-using Random
-
-# Setup
-Random.seed!(2023)
-theme(:wong)
-include("docs/src/utils.jl")    # some helper functions
-output_path = output_dir("poc") # output directory for artifacts
-www_path = www_dir("poc")       # output directory for images
+include("docs/src/paper/setup.jl")
+eval(setup)
 ```
 
 To start with, we will look at a proof-of-concept that demonstrates the main observation underlying that paper is framed around. In particular, we will use synthetic data to see how endogenous domain shifts and the resulting model shifts can have implications on the validity and cost of algorithmic recourse.
@@ -104,7 +86,6 @@ candidates = findall(ys.==0)
 chosen_individuals = rand(candidates, Int(round(μ*length(candidates))))
 X′ = copy(X)
 y′ = copy(ys)
-using CounterfactualExplanations.Counterfactuals: counterfactual, counterfactual_label
 factuals = select_factual(counterfactual_data,chosen_individuals)
 outcome = generate_counterfactual(factuals, 1, counterfactual_data, mod, gen; initialization=:identity)
 X′[:,chosen_individuals] = reduce(hcat, @.(selectdim(counterfactual(outcome), 3, 1)))

@@ -7,7 +7,7 @@ function generate_artifacts(
     root=".",
     artifact_toml=joinpath(root, "Artifacts.toml"), 
     deploy=true,
-    tag="artifacts"
+    tag="camera-ready"
 )
 
     if deploy && !haskey(ENV, "GITHUB_TOKEN")

@@ -1,4 +1,5 @@
 using CounterfactualExplanations
+using CounterfactualExplanations.DataPreprocessing
 using Flux
 using MLJBase
 using MLUtils

@@ -66,7 +66,7 @@ function run!(
     # Pre-allocate memory:
     output = [DataFrame() for i in 1:M]
 
-    p_fold = Progress(K; desc="Progress on folds:", showspeed=true, enabled=show_progress, output=stderr)
+    p_fold = Progress(K; desc="Total Progress:", showspeed=true, enabled=show_progress, output=stderr, color=:yellow)
     @info "Running experiment ..."
     for k in 1:K
         recourse_systems = experiment.recourse_systems[k]
@@ -77,7 +77,7 @@ function run!(
         end
         # Recursion over N rounds:
         chosen_individuals = zeros(size(recourse_systems))
-        p_round = Progress(N; desc="Progress on rounds:", showspeed=true, enabled=show_progress, output=stderr)
+        p_round = Progress(N; desc="Progress on round:", showspeed=true, enabled=show_progress, output=stderr, color=:green)
         for n in 1:N
             # Choose individuals that shall receive recourse:
             chosen_individuals_n = choose_individuals(experiment, recourse_systems; intersect_=intersect_)
@@ -96,7 +96,7 @@ function run!(
                     output[m] = vcat(output[m], output_checkpoint, cols=:union)
                 end
             end
-            next!(p_round, showvalues=[(:Fold, k), (:Round, n)])
+            next!(p_round, showvalues=[(:Fold, k//K), (:Round, n//N)])
         end
         next!(p_fold)
     end

@@ -12,12 +12,14 @@ function run_bootstrap(
     filename::String="bootstrapped_results.csv", show_progress=!is_logging(stderr)
 )
     df = DataFrame()
+    n_total = length(results)
+    p_total = Progress(n_total; desc="Total Progress:", showspeed=true, enabled=show_progress, output = stderr, color=:yellow)
     for (key, val) in results
         n_folds = length(val.experiment.recourse_systems)
-        p_fold = Progress(n_folds; desc="Progress on folds:", showspeed=true, enabled=show_progress, output = stderr)
+        p_fold = Progress(n_folds; desc="Progress on fold:", showspeed=true, enabled=show_progress, output = stderr, color=:green)
         for fold in 1:n_folds
             N = length(val.experiment.system_identifiers)
-            p_sys = Progress(N; desc="Progress on systems:", showspeed=true, enabled=show_progress, output = stderr)
+            p_sys = Progress(N; desc="Progress on system:", showspeed=true, enabled=show_progress, output = stderr, color=:blue)
             Threads.@threads for i in 1:N
                 rec_sys = val.experiment.recourse_systems[fold][i]
                 model_name, gen_name = collect(val.experiment.system_identifiers)[i]
@@ -27,10 +29,11 @@ function run_bootstrap(
                 df_.generator .= gen_name
                 df_.fold .= fold
                 df = vcat(df, df_)
-                next!(p_sys, showvalues = [(:Model, model_name), (:Generator, gen_name)])
+                next!(p_sys, showvalues = [(:Model, model_name), (:Generator, gen_name), (:System, i//N)])
             end
-            next!(p_fold)
+            next!(p_fold, showvalues = [(:Fold, fold//n_folds)])
         end
+        next!(p_total)
     end
     df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
     CSV.write(filename, df)

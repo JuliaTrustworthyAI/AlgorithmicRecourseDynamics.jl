@@ -269,7 +269,7 @@ end
 #### Bootstrap
 
 ```{julia}
-n_bootstrap = 1000
+n_bootstrap = 100
 df = run_bootstrap(results, n_bootstrap; filename=joinpath(output_path,"bootstrap.csv"))
 ```
 

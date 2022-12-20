@@ -48,18 +48,17 @@ using MLUtils: undersample
 # Make DataFrames.jl work
 MLUtils.getobs(data::DataFrame, i) = data[i,:]
 MLUtils.numobs(data::DataFrame) = nrow(data)
-df_balanced = getobs(undersample(df, df.target;shuffle=true))
+df_balanced = getobs(undersample(df, df.target;shuffle=true))[1]
 ```
 
 ```{julia}
-CSV.write(joinpath(data_path, "cal_housing.csv"), df)
+CSV.write(joinpath(data_path, "cal_housing.csv"), df_balanced)
 ```
 
 
 ## Give Me Some Credit
 
 ```{julia}
-using CSV, DataFrames, Statistics, StatsBase
 df = CSV.read(joinpath(data_path, "raw/cs-training.csv"), DataFrame)
 select!(df, Not([:Column1]))
 rename!(df, :SeriousDlqin2yrs => :target)
@@ -68,7 +67,7 @@ dropmissing!(df)
 mapcols!(x -> eltype(x) <: AbstractString ? parse.(Int, x) : x, df)
 # Features:
 X = Matrix(df[:,Not(:target)])
-dt = fit(ZScoreTransform, X, dims=1)
+dt = StatsBase.fit(ZScoreTransform, X, dims=1)
 StatsBase.transform!(dt, X)
 # Target:
 y = df.target
@@ -83,7 +82,7 @@ using MLUtils: undersample
 # Make DataFrames.jl work
 MLUtils.getobs(data::DataFrame, i) = data[i,:]
 MLUtils.numobs(data::DataFrame) = nrow(data)
-df_balanced = getobs(undersample(df, df.target;shuffle=true))
+df_balanced = getobs(undersample(df, df.target;shuffle=true))[1]
 ```
 
 ```{julia}
@@ -93,30 +92,21 @@ CSV.write(joinpath(data_path, "gmsc.csv"), df_balanced)
 ## UCI Credit Card Default
 
 ```{julia}
-using CSV, DataFrames, Statistics, StatsBase
 df = CSV.read(joinpath(data_path, "raw/UCI_Credit_Card.csv"), DataFrame)
-select!(df, Not([:ID, :SEX, :EDUCATION, :MARRIAGE]))
+select!(df, Not([:ID]))
 rename!(df, "default.payment.next.month" => :target)
 dropmissing!(df)
+df.SEX = categorical(df.SEX)
+df.EDUCATION = categorical(df.EDUCATION)
+df.MARRIAGE = categorical(df.MARRIAGE)
 mapcols!(x -> eltype(x) <: AbstractString ? parse.(Int, x) : x, df)
-# Features:
-X = Matrix(df[:,Not(:target)])
-dt = fit(ZScoreTransform, X, dims=1)
-StatsBase.transform!(dt, X)
-# Target:
-y = df.target
-# Data:
-df = DataFrame(X,:auto)
-df.target = y
 ```
 
 ```{julia}
-using MLUtils
-using MLUtils: undersample
 # Make DataFrames.jl work
 MLUtils.getobs(data::DataFrame, i) = data[i,:]
 MLUtils.numobs(data::DataFrame) = nrow(data)
-df_balanced = getobs(undersample(df, df.target;shuffle=true))
+df_balanced = getobs(undersample(df, df.target;shuffle=true))[1]
 ```
 
 ```{julia}

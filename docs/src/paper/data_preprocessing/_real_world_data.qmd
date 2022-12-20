@@ -1,17 +1,12 @@
 ---
 title: Preprocessing Real-World Data
-jupyter: julia-1.7
 ---
 
 ```{julia}
-using Pkg; Pkg.activate("dev")
-```
+#| echo: false
 
-```{julia}
-include("dev/utils.jl")
-using AlgorithmicRecourseDynamics
-using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra
-theme(:wong)
+include("docs/src/paper/setup.jl")
+eval(setup)
 output_path = output_dir("real_world")
 www_path = www_dir("real_world")
 data_path = data_dir("real_world")
@@ -19,25 +14,26 @@ data_path = data_dir("real_world")
 
 ## California Housing Data
 
-Fetching the data using Python's `sklearn`:
+Fetching the data using Python's `sklearn` (run this in the Python REPL):
 
-```{python}
+```python
 from sklearn.datasets import fetch_california_housing
 df, y = fetch_california_housing(return_X_y=True, as_frame=True)
 df["target"] = y.values
-data_path = "../../artifacts/upload/data/real_world"
+data_path = "dev/artifacts/upload/data/real_world"
 import os
+if not os.path.isdir(os.path.join(data_path,"raw")):
+    os.makedirs(os.path.join(data_path,"raw"))
 df.to_csv(os.path.join(data_path,"raw/cal_housing.csv"), index=False)
 ```
 
 Loading the data into Julia session:
 
 ```{julia}
-using CSV, DataFrames, Statistics, StatsBase
 df = CSV.read(joinpath(data_path, "raw/cal_housing.csv"), DataFrame)
 # Features:
 X = Matrix(df[:,Not(:target)])
-dt = fit(ZScoreTransform, X, dims=1)
+dt = StatsBase.fit(ZScoreTransform, X, dims=1)
 StatsBase.transform!(dt, X)
 # Target:
 y = df.target

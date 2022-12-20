@@ -1,9 +1,11 @@
 setup = quote
     # Environment:
-    using Pkg; Pkg.activate("docs/src/paper")
+    using Pkg
+    Pkg.activate("docs/src/paper")
 
     # Deps:
     using AlgorithmicRecourseDynamics
+    using AlgorithmicRecourseDynamics: run_bootstrap
     using AlgorithmicRecourseDynamics.Models
     using AlgorithmicRecourseDynamics.Models: model_evaluation
     using CounterfactualExplanations
@@ -16,12 +18,12 @@ setup = quote
     using MLJBase
     using Plots
     using Random
+    using RCall
     using Serialization
 
     # Setup
     Random.seed!(2023)              # global seed to allow for reproducibility
     theme(:wong)
     include("docs/src/utils.jl")    # some helper functions
-    output_path = output_dir("poc") # output directory for artifacts
-    www_path = www_dir("poc")       # output directory for images
+
 end

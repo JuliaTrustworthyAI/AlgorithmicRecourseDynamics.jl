@@ -1,7 +1,7 @@
-# Train-test split
-using StatsBase
-using CounterfactualExplanations
+using CounterfactualExplanations.DataPreprocessing: CounterfactualData
 using Flux
+using StatsBase
+
 """
     train_test_split(data::CounterfactualData;test_size=0.2)
 

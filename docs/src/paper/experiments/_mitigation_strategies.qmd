@@ -1,18 +1,12 @@
-## Mitigation Strategies
+### Mitigation Strategies
 
 ```{julia}
-#| eval: true
-using Pkg; Pkg.activate("dev")
-```
+#| echo: false
 
-```{julia}
-#| eval: true
-include("dev/utils.jl")
-using AlgorithmicRecourseDynamics
-using CounterfactualExplanations, Flux, Plots, PlotThemes, Random, LaplaceRedux, LinearAlgebra, Images
-theme(:wong)
+include("docs/src/paper/setup.jl")
+eval(setup)
 output_path = output_dir("mitigation_strategies")
-www_path = www_dir("mitigation_strategies");
+www_path = www_dir("mitigation_strategies")
 ```
 
 ```{julia}
@@ -30,7 +24,7 @@ generators = Dict(
 )
 ```
 
-### Synthetic
+#### Synthetic
 
 ```{julia}
 max_obs = 1000
@@ -53,17 +47,16 @@ n_evals = 5
 n_rounds = 50
 evaluate_every = Int(round(n_rounds/n_evals))
 n_folds = 5
-n_bootstrap = 1
 T = 100
 using Serialization
 results = run_experiments(
     experiments;
-    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap, T=T
+    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, T=T
 )
 Serialization.serialize(joinpath(output_path,"results_synthetic.jls"),results)
 ```
 
-### Plots
+#### Plots
 
 ```{julia}
 using Serialization
@@ -84,7 +77,7 @@ for (data_name, res) in results
 end
 ```
 
-#### Line Charts
+##### Line Charts
 
 @fig-mit-line shows the evolution of the evaluation metrics over the course of the experiment.
 
@@ -108,7 +101,7 @@ for img in img_files
 end
 ```
 
-#### Error Bar Charts
+##### Error Bar Charts
 
 @fig-mit-error shows the evaluation metrics at the end of the experiments.
 
@@ -132,35 +125,14 @@ for img in img_files
 end
 ```
 
-### Bootstrap
+#### Bootstrap
 
 ```{julia}
 n_bootstrap = 1000
-using AlgorithmicRecourseDynamics.Evaluation: evaluate_system
-using DataFrames
-df = DataFrame()
-for (key, val) in results
-    n_folds = length(val.experiment.recourse_systems)
-    for fold in 1:n_folds
-        for i in length(val.experiment.system_identifiers)
-            rec_sys = val.experiment.recourse_systems[fold][i]
-            model_name, gen_name = collect(val.experiment.system_identifiers)[i]
-            df_ = evaluate_system(rec_sys, val.experiment; n=n_bootstrap)
-            df_.model .= model_name
-            df_.generator .= gen_name
-            df_.fold .= fold
-            df = vcat(df, df_)
-        end
-    end
-end
-df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
-using RCall
-save_path = joinpath(output_path, "bootstrap_synthetic.csv")
-using CSV
-CSV.write(save_path)
+df = run_bootstrap(results, n_bootstrap; filename=joinpath(output_path,"bootstrap_synthetic.csv"))
 ```
 
-### Chart in paper
+#### Chart in paper
 
 @fig-mit-paper shows the chart that went into the paper.
 
@@ -227,7 +199,7 @@ Images.load(joinpath(www_path,"paper_synthetic_results.png"))
 ```
 
 
-### Latent Space Search
+#### Latent Space Search
 
 ```{julia}
 generators = Dict(
@@ -247,12 +219,11 @@ n_evals = 5
 n_rounds = 50
 evaluate_every = Int(round(n_rounds/n_evals))
 n_folds = 5
-n_bootstrap = 1
 T = 100
 using Serialization
 results = run_experiments(
     experiments;
-    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, n_bootstrap=n_bootstrap, T=T
+    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, T=T
 )
 Serialization.serialize(joinpath(output_path,"results_synthetic_latent.jls"),results)
 ```
@@ -276,9 +247,9 @@ for (data_name, res) in results
 end
 ```
 
-### Plots
+#### Plots
 
-#### Line Charts
+##### Line Charts
 
 @fig-mit-line-latent shows the evolution of the evaluation metrics over the course of the experiment.
 
@@ -299,7 +270,7 @@ for img in img_files
 end
 ```
 
-#### Error Bar Charts
+##### Error Bar Charts
 
 @fig-mit-error-latent shows the evaluation metrics at the end of the experiments.
 
@@ -320,35 +291,14 @@ for img in img_files
 end
 ```
 
-### Bootstrap
+#### Bootstrap
 
 ```{julia}
 n_bootstrap = 1000
-using AlgorithmicRecourseDynamics.Evaluation: evaluate_system
-using DataFrames
-df = DataFrame()
-for (key, val) in results
-    n_folds = length(val.experiment.recourse_systems)
-    for fold in 1:n_folds
-        for i in length(val.experiment.system_identifiers)
-            rec_sys = val.experiment.recourse_systems[fold][i]
-            model_name, gen_name = collect(val.experiment.system_identifiers)[i]
-            df_ = evaluate_system(rec_sys, val.experiment; n=n_bootstrap)
-            df_.model .= model_name
-            df_.generator .= gen_name
-            df_.fold .= fold
-            df = vcat(df, df_)
-        end
-    end
-end
-df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
-using RCall
-save_path = joinpath(output_path, "bootstrap_latent.csv")
-using CSV
-CSV.write(save_path)
+df = run_bootstrap(results, n_bootstrap; filename=joinpath(output_path,"bootstrap_latent.csv"))
 ```
 
-### Chart in paper
+#### Chart in paper
 
 @fig-mit-latent-paper shows the chart that went into the paper.
 
@@ -414,111 +364,14 @@ Images.save(joinpath(www_path,"paper_synthetic_latent_results.png"), img)
 Images.load(joinpath(www_path,"paper_synthetic_latent_results.png"))
 ```
 
-## Real World
-
-```{julia}
-generators = Dict(
-    :Generic=>GenericGenerator(decision_threshold=0.5),
-    :Latent=>REVISEGenerator(),
-    :Generic_conservative=>GenericGenerator(decision_threshold=0.9),
-    :Gravitational=>GravitationalGenerator(),
-    :ClapROAR=>ClapROARGenerator()
-)
-```
-
-```{julia}
-max_obs = 2500
-data_sets = AlgorithmicRecourseDynamics.Data.load_real_world(max_obs)
-```
-
-```{julia}
-using CounterfactualExplanations.DataPreprocessing: unpack
-bs = 50
-function data_loader(data::CounterfactualData)
-    X, y = unpack(data)
-    data = Flux.DataLoader((X,y),batchsize=bs)
-    return data
-end
-model_params = (batch_norm=false,n_hidden=32,n_layers=3,dropout=true,p_dropout=0.25)
-```
-
-```{julia}
-experiments = set_up_experiments(
-    data_sets,models,generators; 
-    pre_train_models=100, model_params=model_params, 
-    data_loader=data_loader
-)
-```
-
-```{julia}
-n_evals = 5
-n_rounds = 50
-evaluate_every = Int(round(n_rounds/n_evals))
-n_folds = 5
-n_bootstrap = 1
-n_samples = 10000
-T = 250
-using Serialization
-results = run_experiments(
-    experiments;
-    save_path=output_path,
-    evaluate_every=evaluate_every,
-    n_rounds=n_rounds, 
-    n_folds=n_folds, 
-    n_bootstrap=n_bootstrap, 
-    T=T
-)
-Serialization.serialize(joinpath(output_path,"results_real_world.jls"),results)
-```
-
-```{julia}
-using Serialization
-results = Serialization.deserialize(joinpath(output_path,"results_real_world.jls"))
-```
-
-```{julia}
-using Images
-line_charts = Dict()
-errorbar_charts = Dict()
-for (data_name, res) in results
-    plt = plot(res)
-    Images.save(joinpath(www_path, "line_chart_$(data_name).png"), plt)
-    line_charts[data_name] = plt
-    plt = plot(res,maximum(res.output.n))
-    Images.save(joinpath(www_path, "errorbar_chart_$(data_name).png"), plt)
-    errorbar_charts[data_name] = plt
-end
-```
-
-### Bootstrap
+#### Bootstrap
 
 ```{julia}
 n_bootstrap = 1000
-using AlgorithmicRecourseDynamics.Evaluation: evaluate_system
-using DataFrames
-df = DataFrame()
-for (key, val) in results
-    n_folds = length(val.experiment.recourse_systems)
-    for fold in 1:n_folds
-        for i in length(val.experiment.system_identifiers)
-            rec_sys = val.experiment.recourse_systems[fold][i]
-            model_name, gen_name = collect(val.experiment.system_identifiers)[i]
-            df_ = evaluate_system(rec_sys, val.experiment; n=n_bootstrap)
-            df_.model .= model_name
-            df_.generator .= gen_name
-            df_.fold .= fold
-            df = vcat(df, df_)
-        end
-    end
-end
-df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
-using RCall
-save_path = joinpath(output_path, "bootstrap_real_world.csv")
-using CSV
-CSV.write(save_path)
+df = run_bootstrap(results, n_bootstrap; filename=joinpath(output_path,"bootstrap_real_world.csv"))
 ```
 
-### Chart in paper
+#### Chart in paper
 
 @fig-mit-latent-paper shows the chart that went into the paper.
 

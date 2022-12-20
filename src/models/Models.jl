@@ -1,5 +1,8 @@
 module Models
 
+using AlgorithmicRecourseDynamics
+using CounterfactualExplanations
+
 include("utils.jl")
 
 # Models:

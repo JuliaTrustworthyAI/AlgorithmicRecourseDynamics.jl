@@ -1,5 +1,5 @@
 using LazyArtifacts
-using CounterfactualExplanations
+using CounterfactualExplanations.DataPreprocessing: CounterfactualData
 using CSV
 using DataFrames
 using StatsBase

@@ -7,6 +7,8 @@ title: Proof of concept
 
 include("docs/src/paper/setup.jl")
 eval(setup)
+output_path = output_dir("poc") # output directory for artifacts
+www_path = www_dir("poc")       # output directory for images
 ```
 
 To start with, we will look at a proof-of-concept that demonstrates the main observation underlying that paper is framed around. In particular, we will use synthetic data to see how endogenous domain shifts and the resulting model shifts can have implications on the validity and cost of algorithmic recourse.

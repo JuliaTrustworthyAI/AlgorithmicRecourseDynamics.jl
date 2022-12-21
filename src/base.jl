@@ -175,7 +175,10 @@ function set_up_experiment(
 
     # Pretrain:
     if !isnothing(pre_train_models)
-        map!(model -> Models.train(model, data_train; n_epochs=pre_train_models, kwargs...), values(models))
+        for (key, model) in models
+            @info "Training $key"
+            Models.train(model, data_train; n_epochs=pre_train_models, kwargs...)
+        end
     end
 
     experiment = Experiment(data_train, data_test, target, models, deepcopy(generators), num_counterfactuals)
@@ -218,7 +221,11 @@ function set_up_experiments(
         kwargs...
     )
 
-    experiments = Dict(key => set_up_single(data) for (key, data) in catalogue)
+    experiments = Dict{Symbol, Experiment}()
+    for (key, data) in catalogue
+        @info "Setting up $(key)"
+        experiments[key] = set_up_single(data)
+    end
 
     return experiments
 end

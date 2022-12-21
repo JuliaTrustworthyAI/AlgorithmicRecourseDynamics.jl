@@ -170,6 +170,7 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
 
     X′ = reduce(hcat, @.(selectdim(counterfactual(results), 3, indices_)))
     y′ = reduce(hcat, @.(selectdim(counterfactual_label(results), 1, indices_)))
+    println(y′)
 
     X[:, chosen_individuals] = X′
     y[:, chosen_individuals] = y′

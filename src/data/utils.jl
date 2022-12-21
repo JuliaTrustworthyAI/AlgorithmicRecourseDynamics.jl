@@ -31,7 +31,8 @@ function undersample(data::CounterfactualData, n_per_class::Int)
     classes_ = sort(unique(y_cls))
 
     idx = sort(reduce(vcat,[sample(findall(vec(y_cls.==cls)), n_per_class,replace=false) for cls in classes_]))
-    data = CounterfactualData(X[:,idx], y[:,idx])
+    data.X = X[:, idx]
+    data.y = y[:,idx]
 
     return data
 

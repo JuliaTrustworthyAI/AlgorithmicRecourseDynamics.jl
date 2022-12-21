@@ -17,7 +17,9 @@ setup = quote
     using LaplaceRedux
     using Markdown
     using MLJBase
+    using MLJModels: OneHotEncoder
     using MLUtils
+    using MLUtils: undersample
     using Plots
     using Random
     using RCall
@@ -28,5 +30,9 @@ setup = quote
     Random.seed!(2023)              # global seed to allow for reproducibility
     theme(:wong)
     include("docs/src/utils.jl")    # some helper functions
+
+    # Make DataFrames.jl work
+    MLUtils.getobs(data::DataFrame, i) = data[i, :]
+    MLUtils.numobs(data::DataFrame) = nrow(data)
 
 end

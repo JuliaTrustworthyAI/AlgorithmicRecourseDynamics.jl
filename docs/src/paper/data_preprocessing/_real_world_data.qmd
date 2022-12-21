@@ -27,36 +27,54 @@ if not os.path.isdir(os.path.join(data_path,"raw")):
 df.to_csv(os.path.join(data_path,"raw/cal_housing.csv"), index=False)
 ```
 
-Loading the data into Julia session:
+Loading the data into Julia session. 
 
 ```{julia}
 df = CSV.read(joinpath(data_path, "raw/cal_housing.csv"), DataFrame)
-# Features:
-X = Matrix(df[:,Not(:target)])
-dt = StatsBase.fit(ZScoreTransform, X, dims=1)
-StatsBase.transform!(dt, X)
+# # Features:
+# X = Matrix(df[:,Not(:target)])
+# dt = StatsBase.fit(ZScoreTransform, X, dims=1)
+# StatsBase.transform!(dt, X)
+# df = DataFrame(X,:auto)
 # Target:
 y = df.target
-y = Float64.(y .>= median(y)); # binary target
+y = Float64.(y .>= median(y)); # binary target (positive outcome)
 # Data:
-df = DataFrame(X,:auto)
 df.target = y
 ```
 
+Random undersampling to balance the data:
+
 ```{julia}
-using MLUtils: undersample
-# Make DataFrames.jl work
-MLUtils.getobs(data::DataFrame, i) = data[i,:]
-MLUtils.numobs(data::DataFrame) = nrow(data)
 df_balanced = getobs(undersample(df, df.target;shuffle=true))[1]
 ```
 
+All features are continuous:
+
 ```{julia}
-CSV.write(joinpath(data_path, "cal_housing.csv"), df_balanced)
+schema(df_balanced)
+```
+
+Turning the data into `CounterfactualData`:
+
+```{julia}
+X = Matrix(df_balanced[:,Not(:target)])
+X = permutedims(X)
+y = permutedims(df_balanced.target)
+data = CounterfactualData(X,y)
+```
+
+Saving the data:
+
+```{julia}
+CSV.write(joinpath(data_path, "cal_housing.csv"), df_balanced)              # binary file
+Serialization.serialize(joinpath(data_path,"cal_housing.jls"), data)        # CounterfactualData
 ```
 
 
 ## Give Me Some Credit
+
+Loading and basic preprocessing:
 
 ```{julia}
 df = CSV.read(joinpath(data_path, "raw/cs-training.csv"), DataFrame)
@@ -65,31 +83,46 @@ rename!(df, :SeriousDlqin2yrs => :target)
 mapcols!(x -> [ifelse(x_=="NA", missing, x_) for x_ in x], df)
 dropmissing!(df)
 mapcols!(x -> eltype(x) <: AbstractString ? parse.(Int, x) : x, df)
-# Features:
-X = Matrix(df[:,Not(:target)])
-dt = StatsBase.fit(ZScoreTransform, X, dims=1)
-StatsBase.transform!(dt, X)
+# # Features:
+# X = Matrix(df[:,Not(:target)])
+# dt = StatsBase.fit(ZScoreTransform, X, dims=1)
+# StatsBase.transform!(dt, X)
+# df = DataFrame(X,:auto)
 # Target:
-y = df.target
-# Data:
-df = DataFrame(X,:auto)
-df.target = y
+df.target .= map(y -> y == 0 ? 1 : 0, df.target)        # postive outcome = no delinquency
 ```
 
+Balancing:
+
 ```{julia}
-using MLUtils
-using MLUtils: undersample
-# Make DataFrames.jl work
-MLUtils.getobs(data::DataFrame, i) = data[i,:]
-MLUtils.numobs(data::DataFrame) = nrow(data)
 df_balanced = getobs(undersample(df, df.target;shuffle=true))[1]
 ```
 
+All features are continuous:
+
 ```{julia}
-CSV.write(joinpath(data_path, "gmsc.csv"), df_balanced)
+schema(df_balanced)
+```
+
+Turning the data into `CounterfactualData`:
+
+```{julia}
+X = Matrix(df_balanced[:,Not(:target)])
+X = permutedims(X)
+y = permutedims(df_balanced.target)
+data = CounterfactualData(X,y)
+```
+
+Saving:
+
+```{julia}
+CSV.write(joinpath(data_path, "gmsc.csv"), df_balanced)         # binary file
+Serialization.serialize(joinpath(data_path,"gmsc.jls"), data)   # CounterfactualData
 ```
 
 ## UCI Credit Card Default
+
+Loading and basic preprocessing:
 
 ```{julia}
 df = CSV.read(joinpath(data_path, "raw/UCI_Credit_Card.csv"), DataFrame)
@@ -100,17 +133,57 @@ df.SEX = categorical(df.SEX)
 df.EDUCATION = categorical(df.EDUCATION)
 df.MARRIAGE = categorical(df.MARRIAGE)
 mapcols!(x -> eltype(x) <: AbstractString ? parse.(Int, x) : x, df)
+df.target .= map(y -> y == 0 ? 1 : 0, df.target)        # postive outcome = no default
 ```
 
+Balancing:
+
 ```{julia}
-# Make DataFrames.jl work
-MLUtils.getobs(data::DataFrame, i) = data[i,:]
-MLUtils.numobs(data::DataFrame) = nrow(data)
 df_balanced = getobs(undersample(df, df.target;shuffle=true))[1]
 ```
 
+**Not** all features are continuous:
+
 ```{julia}
-CSV.write(joinpath(data_path, "credit_default.csv"), df_balanced)
+schema(df_balanced)
+```
+
+One-hot encoding:
+
+```{julia}
+hot = OneHotEncoder()
+mach = MLJBase.fit!(machine(hot, df_balanced))
+df_balanced = MLJBase.transform(mach, df_balanced)
+schema(df_balanced)
+```
+
+Categorical indices:
+
+```{julia}
+features_categorical = [
+    [2,3],
+    collect(4:10),
+    collect(11:14)
+]
+```
+
+Preparing for use with `CounterfactualExplanations.jl`:
+
+```{julia}
+X = Matrix(df_balanced[:,Not(:target)])
+X = permutedims(X)
+y = permutedims(df_balanced.target)
+data = CounterfactualData(
+    X, y;
+    features_categorical = features_categorical
+)
+```
+
+Saving:
+
+```{julia}
+CSV.write(joinpath(data_path, "credit_default.csv"), df_balanced)         # binary file
+Serialization.serialize(joinpath(data_path,"credit_default.jls"), data)   # CounterfactualData
 ```
 
 

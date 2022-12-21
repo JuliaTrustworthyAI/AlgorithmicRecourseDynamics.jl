@@ -39,13 +39,13 @@ end
 function forward!(model::Flux.Chain, data; loss::Symbol, opt::Symbol, n_epochs::Int=10)
 
     # Loss:
-    loss_(x, y) = getfield(Flux.Losses, loss)(model(x), y) 
-    avg_loss(data) = mean(map(d -> loss_(d[1],d[2]), data))
+    loss_(x, y) = getfield(Flux.Losses, loss)(model(x), y)
+    avg_loss(data) = mean(map(d -> loss_(d[1], d[2]), data))
 
     # Optimizer:
     opt_ = getfield(Flux.Optimise, opt)()
 
-    # Training:    
+    # Training:  
     for epoch = 1:n_epochs
         for d in data
             gs = Flux.gradient(Flux.params(model)) do
@@ -82,7 +82,9 @@ function build_mlp(;
         @assert output_dim==1 "Expected output dimension of 1 for logisitic regression, got $output_dim."
 
         # Logistic regression:
-        model = Chain(Dense(input_dim, output_dim))
+        model = Chain(
+            Dense(input_dim, output_dim)
+        )
 
     elseif batch_norm
 

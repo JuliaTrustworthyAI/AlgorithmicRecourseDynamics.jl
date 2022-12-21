@@ -15,7 +15,7 @@ max_obs = 2500
 data_sets = AlgorithmicRecourseDynamics.Data.load_real_world(max_obs; data_dir=data_path)
 choices = [
     :cal_housing, 
-    :credit_default, 
+    # :credit_default, 
     :gmsc, 
 ]
 data_sets = filter(p -> p[1] in choices, data_sets)
@@ -40,10 +40,10 @@ models = [
     :FluxEnsemble
 ]
 generators = Dict(
-    # :Greedy=>GreedyGenerator(), 
-    # :Generic=>GenericGenerator(),
+    :Greedy=>GreedyGenerator(), 
+    :Generic=>GenericGenerator(),
     :REVISE=>REVISEGenerator(),
-    # :DICE=>DiCEGenerator(),
+    :DICE=>DiCEGenerator(),
 )
 ```
 

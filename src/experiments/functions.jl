@@ -111,13 +111,14 @@ function choose_individuals(experiment::Experiment, recourse_systems::AbstractAr
     args = experiment.fixed_parameters
     target, μ = experiment.target, args.μ
 
-    candidates = map(recourse_systems) do x
-        n_classes = size(x.data.y, 1)
+    candidates = map(recourse_systems) do sys
+        ŷ = probs(sys.model, sys.data.X)
+        n_classes = size(sys.data.y, 1)
         if n_classes == 1
-            cand_ = findall(vec(x.data.y) .!= target)
+            cand_ = findall(vec(ŷ) .!= target)
         else
-            y = Flux.onecold(x.data.y, 1:n_classes)
-            cand_ = findall(vec(y) .!= target)
+            ŷ = Flux.onecold(ŷ, 1:n_classes)
+            cand_ = findall(vec(ŷ) .!= target)
         end
         return cand_
     end

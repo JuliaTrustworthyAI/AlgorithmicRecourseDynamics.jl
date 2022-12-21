@@ -31,11 +31,6 @@ Loading the data into Julia session.
 
 ```{julia}
 df = CSV.read(joinpath(data_path, "raw/cal_housing.csv"), DataFrame)
-# # Features:
-# X = Matrix(df[:,Not(:target)])
-# dt = StatsBase.fit(ZScoreTransform, X, dims=1)
-# StatsBase.transform!(dt, X)
-# df = DataFrame(X,:auto)
 # Target:
 y = df.target
 y = Float64.(y .>= median(y)); # binary target (positive outcome)
@@ -55,10 +50,19 @@ All features are continuous:
 schema(df_balanced)
 ```
 
+Feature transformation:
+
+```{julia}
+transformer = Standardizer(count=true)
+mach = MLJBase.fit!(machine(transformer, df_balanced[:,Not(:target)]))
+X = MLJBase.transform(mach, df_balanced[:,Not(:target)])
+schema(X)
+```
+
 Turning the data into `CounterfactualData`:
 
 ```{julia}
-X = Matrix(df_balanced[:,Not(:target)])
+X = Matrix(X)
 X = permutedims(X)
 y = permutedims(df_balanced.target)
 data = CounterfactualData(X,y)
@@ -83,12 +87,6 @@ rename!(df, :SeriousDlqin2yrs => :target)
 mapcols!(x -> [ifelse(x_=="NA", missing, x_) for x_ in x], df)
 dropmissing!(df)
 mapcols!(x -> eltype(x) <: AbstractString ? parse.(Int, x) : x, df)
-# # Features:
-# X = Matrix(df[:,Not(:target)])
-# dt = StatsBase.fit(ZScoreTransform, X, dims=1)
-# StatsBase.transform!(dt, X)
-# df = DataFrame(X,:auto)
-# Target:
 df.target .= map(y -> y == 0 ? 1 : 0, df.target)        # postive outcome = no delinquency
 ```
 
@@ -104,10 +102,19 @@ All features are continuous:
 schema(df_balanced)
 ```
 
+Feature transformation:
+
+```{julia}
+transformer = Standardizer(count=true)
+mach = MLJBase.fit!(machine(transformer, df_balanced[:,Not(:target)]))
+X = MLJBase.transform(mach, df_balanced[:,Not(:target)])
+schema(X)
+```
+
 Turning the data into `CounterfactualData`:
 
 ```{julia}
-X = Matrix(df_balanced[:,Not(:target)])
+X = Matrix(X)
 X = permutedims(X)
 y = permutedims(df_balanced.target)
 data = CounterfactualData(X,y)
@@ -148,13 +155,13 @@ df_balanced = getobs(undersample(df, df.target;shuffle=true))[1]
 schema(df_balanced)
 ```
 
-One-hot encoding:
+Feature transformation:
 
 ```{julia}
-hot = OneHotEncoder()
-mach = MLJBase.fit!(machine(hot, df_balanced))
-df_balanced = MLJBase.transform(mach, df_balanced)
-schema(df_balanced)
+transformer = Standardizer(count=true) |> ContinuousEncoder()
+mach = MLJBase.fit!(machine(transformer, df_balanced[:,Not(:target)]))
+X = MLJBase.transform(mach, df_balanced[:,Not(:target)])
+schema(X)
 ```
 
 Categorical indices:
@@ -170,7 +177,7 @@ features_categorical = [
 Preparing for use with `CounterfactualExplanations.jl`:
 
 ```{julia}
-X = Matrix(df_balanced[:,Not(:target)])
+X = Matrix(X)
 X = permutedims(X)
 y = permutedims(df_balanced.target)
 data = CounterfactualData(

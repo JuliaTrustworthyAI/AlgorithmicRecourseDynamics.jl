@@ -29,7 +29,7 @@ function data_loader(data::CounterfactualData)
     data = Flux.DataLoader((X,y),batchsize=bs)
     return data
 end
-model_params = (batch_norm=false,n_hidden=64,n_layers=3,dropout=true,p_dropout=0.5)
+model_params = (batch_norm=false,n_hidden=64,n_layers=3,dropout=true,p_dropout=0.1)
 ```
 
 

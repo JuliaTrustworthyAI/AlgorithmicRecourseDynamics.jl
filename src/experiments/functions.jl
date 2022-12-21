@@ -46,9 +46,7 @@ function Experiment(
     system_identifiers = Base.Iterators.product(keys(models), keys(generators))
 
     # Full data:
-    X_train, y_train = DataPreprocessing.unpack(train_data)
-    X_test, y_test = DataPreprocessing.unpack(train_data)
-    data = CounterfactualData(hcat(X_train, X_test), hcat(y_train, y_test))
+    data = hcat(train_data, test_data)
 
     # Initial scores:
     initial_model_scores = [(name, Models.model_evaluation(model, test_data)) for (name, model) in pairs(models)]
@@ -167,10 +165,8 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
     )
 
     indices_ = rand(1:experiment.num_counterfactuals, length(results)) # randomly draw from generated counterfactuals
-
     X′ = reduce(hcat, @.(selectdim(counterfactual(results), 3, indices_)))
     y′ = reduce(hcat, @.(selectdim(counterfactual_label(results), 1, indices_)))
-    println(y′)
 
     X[:, chosen_individuals] = X′
     y[:, chosen_individuals] = y′
@@ -182,7 +178,12 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
     end
 
     # Update data, classifier and benchmark:
-    recourse_system.data = CounterfactualData(X, y; generative_model=gen_mod)
+    recourse_system.data = CounterfactualData(
+        X, y; 
+        generative_model = gen_mod, 
+        features_categorical = counterfactual_data.features_categorical,
+        features_continuous = counterfactual_data.features_continuous,
+    )
     recourse_system.model = Models.train(M, counterfactual_data)
     recourse_system.benchmark = vcat(recourse_system.benchmark, CounterfactualExplanations.Benchmark.benchmark(results))
 

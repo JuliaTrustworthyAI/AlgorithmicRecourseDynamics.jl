@@ -17,7 +17,7 @@ setup = quote
     using LaplaceRedux
     using Markdown
     using MLJBase
-    using MLJModels: OneHotEncoder
+    using MLJModels: ContinuousEncoder, OneHotEncoder, Standardizer
     using MLUtils
     using MLUtils: undersample
     using Plots

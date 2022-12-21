@@ -168,7 +168,7 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
 
     indices_ = rand(1:experiment.num_counterfactuals, length(results)) # randomly draw from generated counterfactuals
     X′ = reduce(hcat, @.(selectdim(counterfactual(results), 3, indices_)))
-    y′ = reduce(hcat, @.(selectdim(counterfactual_label(results), 1, indices_)))
+    y′ = reduce(hcat, @.(selectdim(counterfactual_label(results),3,indices_)))
 
     X[:, chosen_individuals] = X′
     y[:, chosen_individuals] = y′

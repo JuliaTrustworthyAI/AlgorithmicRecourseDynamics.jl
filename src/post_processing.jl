@@ -29,9 +29,9 @@ function run_bootstrap(
                 df_.generator .= gen_name
                 df_.fold .= fold
                 df = vcat(df, df_)
-                next!(p_sys, showvalues = [(:Model, model_name), (:Generator, gen_name), (:System, i//N)])
+                next!(p_sys, showvalues = [(:Model, model_name), (:Generator, gen_name), (:System, "$i/$N")])
             end
-            next!(p_fold, showvalues = [(:Fold, fold//n_folds)])
+            next!(p_fold, showvalues = [(:Fold, "$fold/$n_folds")])
         end
         next!(p_total)
     end

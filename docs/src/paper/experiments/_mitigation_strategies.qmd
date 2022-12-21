@@ -128,7 +128,7 @@ end
 #### Bootstrap
 
 ```{julia}
-n_bootstrap = 1000
+n_bootstrap = 10
 df = run_bootstrap(results, n_bootstrap; filename=joinpath(output_path,"bootstrap_synthetic.csv"))
 ```
 
@@ -294,7 +294,7 @@ end
 #### Bootstrap
 
 ```{julia}
-n_bootstrap = 1000
+n_bootstrap = 10
 df = run_bootstrap(results, n_bootstrap; filename=joinpath(output_path,"bootstrap_latent.csv"))
 ```
 
@@ -364,10 +364,88 @@ Images.save(joinpath(www_path,"paper_synthetic_latent_results.png"), img)
 Images.load(joinpath(www_path,"paper_synthetic_latent_results.png"))
 ```
 
+## Real World
+
+```{julia}
+generators = Dict(
+    :Generic=>GenericGenerator(decision_threshold=0.5),
+    :Latent=>REVISEGenerator(),
+    :Generic_conservative=>GenericGenerator(decision_threshold=0.9),
+    :Gravitational=>GravitationalGenerator(),
+    :ClapROAR=>ClapROARGenerator()
+)
+```
+
+```{julia}
+max_obs = 2500
+data_path = data_dir("real_world")
+data_sets = AlgorithmicRecourseDynamics.Data.load_real_world(max_obs; data_dir=data_path)
+choices = [
+    :cal_housing, 
+    :credit_default, 
+    :gmsc, 
+]
+data_sets = filter(p -> p[1] in choices, data_sets)
+```
+
+```{julia}
+using CounterfactualExplanations.DataPreprocessing: unpack
+bs = 500
+function data_loader(data::CounterfactualData)
+    X, y = unpack(data)
+    data = Flux.DataLoader((X,y),batchsize=bs)
+    return data
+end
+model_params = (batch_norm=false,n_hidden=64,n_layers=3,dropout=true,p_dropout=0.1)
+```
+
+```{julia}
+experiments = set_up_experiments(
+    data_sets,models,generators; 
+    pre_train_models=100, model_params=model_params, 
+    data_loader=data_loader
+)
+```
+
+```{julia}
+n_evals = 5
+n_rounds = 50
+evaluate_every = Int(round(n_rounds/n_evals))
+n_folds = 5
+n_samples = 10000
+T = 100
+generative_model_params = (epochs=250, latent_dim=8)
+results = run_experiments(
+    experiments;
+    save_path=output_path,evaluate_every=evaluate_every,n_rounds=n_rounds, n_folds=n_folds, T=T, n_samples=n_samples,
+    generative_model_params=generative_model_params
+)
+Serialization.serialize(joinpath(output_path,"results_real_world.jls"),results)
+```
+
+```{julia}
+using Serialization
+results = Serialization.deserialize(joinpath(output_path,"results_real_world.jls"))
+```
+
+```{julia}
+using Images
+line_charts = Dict()
+errorbar_charts = Dict()
+for (data_name, res) in results
+    plt = plot(res)
+    Images.save(joinpath(www_path, "line_chart_$(data_name).png"), plt)
+    line_charts[data_name] = plt
+    plt = plot(res,maximum(res.output.n))
+    Images.save(joinpath(www_path, "errorbar_chart_$(data_name).png"), plt)
+    errorbar_charts[data_name] = plt
+end
+```
+
 #### Bootstrap
 
 ```{julia}
-n_bootstrap = 1000
+n_bootstrap = 10
 df = run_bootstrap(results, n_bootstrap; filename=joinpath(output_path,"bootstrap_real_world.csv"))
 ```
 

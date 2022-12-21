@@ -15,7 +15,7 @@ max_obs = 2500
 data_sets = AlgorithmicRecourseDynamics.Data.load_real_world(max_obs; data_dir=data_path)
 choices = [
     :cal_housing, 
-    # :credit_default, 
+    :credit_default, 
     :gmsc, 
 ]
 data_sets = filter(p -> p[1] in choices, data_sets)
@@ -136,7 +136,7 @@ end
 #### Bootstrap
 
 ```{julia}
-n_bootstrap = 1000
+n_bootstrap = 10
 df = run_bootstrap(results, n_bootstrap; filename=joinpath(output_path,"bootstrap.csv"))
 ```
 

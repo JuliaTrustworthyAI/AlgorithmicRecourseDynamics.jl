@@ -66,7 +66,7 @@ function run!(
     # Pre-allocate memory:
     output = [DataFrame() for i in 1:M]
 
-    p_fold = Progress(K; desc="Total Progress:", showspeed=true, enabled=show_progress, output=stderr, color=:yellow)
+    p_fold = Progress(K; desc="Progress on folds:", showspeed=true, enabled=show_progress, output=stderr, color=:yellow)
     @info "Running experiment ..."
     for k in 1:K
         recourse_systems = experiment.recourse_systems[k]
@@ -96,7 +96,7 @@ function run!(
                     output[m] = vcat(output[m], output_checkpoint, cols=:union)
                 end
             end
-            next!(p_round, showvalues=[(:Fold, k//K), (:Round, n//N)])
+            next!(p_round, showvalues=[(:Fold, "$k/$K"), (:Round, "$n/$N")])
         end
         next!(p_fold)
     end

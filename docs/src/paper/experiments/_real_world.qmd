@@ -40,10 +40,10 @@ models = [
     :FluxEnsemble
 ]
 generators = Dict(
-    :Greedy=>GreedyGenerator(), 
-    :Generic=>GenericGenerator(),
+    # :Greedy=>GreedyGenerator(), 
+    # :Generic=>GenericGenerator(),
     :REVISE=>REVISEGenerator(),
-    :DICE=>DiCEGenerator(),
+    # :DICE=>DiCEGenerator(),
 )
 ```
 

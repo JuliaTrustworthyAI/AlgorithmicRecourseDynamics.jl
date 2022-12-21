@@ -158,6 +158,7 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
 
     # Generate recourse:
     factuals = select_factual(counterfactual_data, chosen_individuals)
+
     results = generate_counterfactual(
         factuals, target, counterfactual_data, M, generator;
         T=T, num_counterfactuals=experiment.num_counterfactuals, generative_model_params=args.generative_model_params,
@@ -178,12 +179,9 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
     end
 
     # Update data, classifier and benchmark:
-    recourse_system.data = CounterfactualData(
-        X, y; 
-        generative_model = gen_mod, 
-        features_categorical = counterfactual_data.features_categorical,
-        features_continuous = counterfactual_data.features_continuous,
-    )
+    recourse_system.data.X = X
+    recourse_system.data.y = y
+    recourse_system.data.generative_model = gen_mod
     recourse_system.model = Models.train(M, counterfactual_data)
     recourse_system.benchmark = vcat(recourse_system.benchmark, CounterfactualExplanations.Benchmark.benchmark(results))
 

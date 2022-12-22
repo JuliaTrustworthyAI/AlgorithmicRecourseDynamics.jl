@@ -6,11 +6,11 @@ This is a supplementary appendix to the research paper **Endogenous Macrodynamic
 
 ## Experimental Results {#sec-results}
 
-{{< include experiments/_synthetic.qmd >}}
+{{< include _synthetic.qmd >}}
 
-{{< include experiments/_real_world.qmd >}}
+{{< include _real_world.qmd >}}
 
-{{< include experiments/_mitigation_strategies.qmd >}}
+{{< include _mitigation_strategies.qmd >}}
  
 ## Generators {#sec-generators}
 

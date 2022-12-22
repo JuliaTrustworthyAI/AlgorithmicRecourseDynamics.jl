@@ -25,3 +25,4 @@ jupyter: julia-1.8
 
 # AlgorithmicRecourseDynamics
 
+{{< include docs/src/_intro.qmd >}}

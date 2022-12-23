@@ -8,7 +8,7 @@ eval(setup_docs)
 
 ## Basic Usage
 
-### Data and Model
+Below we first generate some synthetic data for a binary classification task and instantiate an instance of `CounterfactualData`.
 
 ```{julia}
 N = 1000
@@ -22,13 +22,21 @@ X = X'
 counterfactual_data = CounterfactualData(X,ys')
 ```
 
+We then define a simple model for the task and prepare it for use with `CounterfactualExplanations.jl`:
+
 ```{julia}
 n_epochs = 100
 model = Chain(Dense(2,1))
 mod = FluxModel(model)
+```
 
+To generate algorithmic recourse, we will use a simple generic generator:
+
+```{julia}
 generator = GenericGenerator()
 ```
+
+Finally we train our model on a subset of the data. The chart below shows the results.
 
 ```{julia}
 #| output: true
@@ -41,17 +49,23 @@ display(plt_original)
 
 ### Simulation
 
+To model the dynamics of algorithmic recourse, we use simulations, in which we repeatedly select as subset of individuals from the non-target class, generate and implement recourse for all of them and finally retrain the model. To set this experiment up, we can use the code below:
+
 ```{julia}
 models = Dict(:mymodel => mod)
 generators = Dict(:wachter => generator)
 experiment = set_up_experiment(data_train, data_test, models, generators)
 ```
 
+Finally, we just run the experiment using default parameter settings that specify the number of rounds, the proportion of individuals to select for recourse and related aspects:
+
 ```{julia}
 #| output: true
 
 run!(experiment)
 ```
+
+The chart below shows the data and predictions at the end of the simulation:
 
 ```{julia}
 #| output: true
@@ -64,4 +78,4 @@ plt_original = plot(new_model, new_data; zoom=0, colorbar=false)
 
 ## Related Research Paper 📝
 
-The package was developed for a research project that investigates the dynamics of various counterfactual generators. 
+The package was developed for a research project that investigates the dynamics of various counterfactual generators. You can find the details [here](https://github.com/pat-alt/endogenous-macrodynamics-in-algorithmic-recourse).

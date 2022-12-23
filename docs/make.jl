@@ -21,11 +21,6 @@ makedocs(;
     ),
     pages = [
         "🏠 Home" => "index.md",
-        "🎓 Research Paper" => [
-            "Overview" => "paper/index.md",
-            "Proof-of-Concept" => "paper/proof_of_concept.md",
-            "Supplementary Appendix" => "paper/appendix.md",
-        ],
         "🧐 Reference" => "_reference.md",
     ],
 )

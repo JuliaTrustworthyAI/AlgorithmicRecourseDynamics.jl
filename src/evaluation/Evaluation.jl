@@ -1,5 +1,7 @@
 module Evaluation
 
+using AlgorithmicRecourseDynamics
+using CounterfactualExplanations
 using Distances
 using StatsBase
 using LinearAlgebra

@@ -1,30 +1,63 @@
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pat-alt.github.io/AlgorithmicRecourseDynamics.jl/stable) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pat-alt.github.io/AlgorithmicRecourseDynamics.jl/dev) [![Build Status](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/actions/workflows/CI.yml?query=branch%3Amain) [![Coverage](https://codecov.io/gh/pat-alt/AlgorithmicRecourseDynamics.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/pat-alt/AlgorithmicRecourseDynamics.jl) [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle) [![ColPrac: Contributor’s Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet.png)](https://github.com/SciML/ColPrac) [![Twitter Badge](https://img.shields.io/twitter/url/https/twitter.com/paltmey.svg?style=social&label=Follow%20%40paltmey)](https://twitter.com/paltmey)
+
 # AlgorithmicRecourseDynamics
 
-<!-- [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://pat-alt.github.io/CounterfactualExplanations.jl/stable) -->
-<!-- [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://pat-alt.github.io/CounterfactualExplanations.jl/dev) -->
+`AlgorithmicRecourseDynamics.jl` is a small package for modeling Algorithmic Recourse Dynamics. It builds on `CounterfactualExplanations`, a package for generating counterfactual explanations.
 
-[![Build Status](https://github.com/pat-alt/CounterfactualExplanations.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/pat-alt/CounterfactualExplanations.jl/actions/workflows/CI.yml?query=branch%3Amain) <!-- [![Coverage](https://codecov.io/gh/pat-alt/CounterfactualExplanations.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/pat-alt/CounterfactualExplanations.jl) -->
+## Basic Usage
 
-`AlgorithmicRecourseDynamics.jl` is a Julia package for modelling Algorithmic Recourse Dynamics.
+### Data and Model
 
-## Research Paper 📝
+``` julia
+N = 1000
+xmax = 2
+X, ys = make_blobs(
+    N, 2; 
+    centers=2, as_table=false, center_box=(-xmax => xmax), cluster_std=0.1
+)
+ys .= ys.==2
+X = X'
+counterfactual_data = CounterfactualData(X,ys')
+```
 
-**Note** ⚠: You are on the `#original-paper` branch of `AlgorithmicRecourseDynamics.jl`. This branch is a static artifact corresponding to the state of the package at the time the paper was first published. It can be used to replicate the original findings of the paper. For an up-to-date version of the package, please switch to the [`#main`](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl) branch.
+``` julia
+n_epochs = 100
+model = Chain(Dense(2,1))
+mod = FluxModel(model)
 
-## At a Glance
+generator = GenericGenerator()
+```
 
-The paper titles **Endogenous Macrodynamics in Algorithmic Recourse** is currently under review and not yet published. You can find a preprint along with other resources right here on this branch of the repository:
+``` julia
+data_train, data_test = Data.train_test_split(counterfactual_data)
+Models.train(mod, data_train; n_epochs=n_epochs)
+plt_original = plot(mod, counterfactual_data; zoom=0, colorbar=false)
+display(plt_original)
+```
 
--   [Paper](paper/paper.pdf)
--   [Notebooks](dev/notebooks/)
--   [Supplementary Appendix](build/dev/notebooks/appendix.html) (download the HTML and view in browser)
--   [Artifacts](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/releases/tag/artifacts) (including data and experimental results)
+![](README_files/figure-commonmark/cell-5-output-1.svg)
 
-In this work we investigate what happens if Algorithmic Recourse is actually implemented by a large number of individuals. The chart below illustrates what we mean by Endogenous Macrodynamics in Algorithmic Recourse: (a) we have a simple linear classifier trained for binary classification where samples from the negative class ($y=0$) are marked in blue and samples of the positive class ($y=1$) are marked in orange; (b) the implementation of AR for a random subset of individuals leads to a noticable domain shift; (c) as the classifier is retrained we observe a corresponding model shift; (d) as this process is repeated, the decision boundary moves away from the target class.
+### Simulation
 
-![](paper/www/poc.png)
+``` julia
+models = Dict(:mymodel => mod)
+generators = Dict(:wachter => generator)
+experiment = set_up_experiment(data_train, data_test, models, generators)
+```
 
-## Paper Abstract
+``` julia
+run!(experiment)
+```
 
-Existing work on Counterfactual Explanations (CE) and Algorithmic Recourse (AR) has largely been limited to the static setting and focused on single individuals: given some estimated model the goal is to find valid counterfactuals for individual instance that fulfill various desiderata. The ability of such counterfactuals to handle dynamics like data and model drift remains a largely unexplored research challenge at this point. There has also been surprisingly little work on the related question of how the actual implementation of recourse by one individual may affect other individuals. Through this work we aim to close that gap by systematizing and extending existing knowledge. We first show that many of the existing methodologies can be collectively described by a generalized framework. We then argue that the existing framework fails to account for a hidden external cost of recourse, that only reveals itself when studying the endogenous dynamics of recourse at the group level. Through simulation experiments involving various state-of-the-art counterfactual generators and several benchmark datasets, we generate large numbers of counterfactuals and study the resulting domain and model shifts. We find that the induced shifts are substantial enough to likely impede the applicability Algorithmic Recourse in situations that involve competition for scarce resources. Fortunately, we find various potential mitigation strategies that can be used in combination with existing approaches. Our simulation framework for studying recourse dynamics is fast and open-sourced.
+``` julia
+new_data = experiment.recourse_systems[1][1].data
+new_model = experiment.recourse_systems[1][1].model
+plt_original = plot(new_model, new_data; zoom=0, colorbar=false)
+```
+
+![](README_files/figure-commonmark/cell-8-output-1.svg)
+
+## Related Research Paper 📝
+
+The package was developed for a research project that investigates the dynamics of various counterfactual generators.

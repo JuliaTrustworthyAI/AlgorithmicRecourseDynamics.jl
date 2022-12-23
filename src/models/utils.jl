@@ -1,4 +1,9 @@
-using MLUtils, CounterfactualExplanations
+using CounterfactualExplanations: AbstractFittedModel
+using CounterfactualExplanations.DataPreprocessing: CounterfactualData
+using Flux
+using MLJBase
+using MLUtils
+
 """
     data_loader(data::CounterfactualData)
 
@@ -11,11 +16,8 @@ function data_loader(data::CounterfactualData)
     return data
 end
 
-using CounterfactualExplanations
-using CounterfactualExplanations.DataPreprocessing
-using MLJ, Flux
-function model_evaluation(M::CounterfactualExplanations.AbstractFittedModel, test_data::CounterfactualData)
-    X, y = DataPreprocessing.unpack(test_data)
+function model_evaluation(M::AbstractFittedModel, test_data::CounterfactualData)
+    X, y = CounterfactualExplanations.DataPreprocessing.unpack(test_data)
     m = MulticlassFScore()
     binary = M.likelihood == :classification_binary
     if binary

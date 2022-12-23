@@ -1,0 +1,10 @@
+{
+  "hash": "6255089458dd9adc1ef9096613618d20",
+  "result": {
+    "markdown": "---\ntitle: Endogenous Macrodynamics in Algorithmic Recourse\nsubtitle: Research Paper\n--- \n\n```@meta\nCurrentModule = ConformalPrediction\n```\n\nThis part of the documentation is specific to the research paper \"Endogenous Macrodynamics in Algorithmic Recourse\". To allow for reproducibility of the results at the time of publication, there is a specific package environment linked to this part of the documentation that **will not be updated**. It can be activated as follows:\n\n::: {.cell execution_count=1}\n``` {.julia .cell-code}\nusing Pkg; Pkg.activate(\"docs/src/paper\")\n```\n:::\n\n\nThe status of this package environment is shown below:\n\n::: {.cell execution_count=2}\n``` {.julia .cell-code}\nPkg.status()\n```\n\n::: {.cell-output .cell-output-stdout}\n```\nStatus `~/code/AlgorithmicRecourseDynamics.jl/docs/src/paper/Project.toml`\n  [3d1ede72] AlgorithmicRecourseDynamics v0.1.0 `../../..`\n  [2f13d31b] CounterfactualExplanations v0.1.4 `../../../../CounterfactualExplanations.jl`\n  [587475ba] Flux v0.13.9\n  [c52c1a26] LaplaceRedux v0.1.2\n  [a7f614a8] MLJBase v0.21.3\n⌃ [91a5bcdd] Plots v1.37.2\n  [9a3f8284] Random\nInfo Packages marked with ⌃ have new versions available\n```\n:::\n:::\n\n\n",
+    "supporting": [
+      "index_files"
+    ],
+    "filters": []
+  }
+}

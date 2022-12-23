@@ -1,16 +1,52 @@
-using RCall
-import Plots: plot
+using AlgorithmicRecourseDynamics: is_logging
+using CSV
 using DataFrames
-using Statistics
 using Images
+using Plots
+using ProgressMeter: Progress, next!
+using RCall
+using Statistics
 
-function plot(results::ExperimentResults, variable::Symbol=:mmd, scope::Symbol=:model; size=3, title=nothing, kwargs...)
-    
+function run_bootstrap(
+    results::Dict{Symbol, ExperimentResults}, n_bootstrap::Int=1000; 
+    filename::String="bootstrapped_results.csv", show_progress=!is_logging(stderr)
+)
+    df = DataFrame()
+    n_total = length(results)
+    p_total = Progress(n_total; desc="Total Progress:", showspeed=true, enabled=show_progress, output = stderr, color=:yellow)
+    for (key, val) in results
+        n_folds = length(val.experiment.recourse_systems)
+        p_fold = Progress(n_folds; desc="Progress on fold:", showspeed=true, enabled=show_progress, output = stderr, color=:green)
+        for fold in 1:n_folds
+            N = length(val.experiment.system_identifiers)
+            p_sys = Progress(N; desc="Progress on system:", showspeed=true, enabled=show_progress, output = stderr, color=:blue)
+            Threads.@threads for i in 1:N
+                rec_sys = val.experiment.recourse_systems[fold][i]
+                model_name, gen_name = collect(val.experiment.system_identifiers)[i]
+                df_ = evaluate_system(rec_sys, val.experiment; n=n_bootstrap)
+                df_.data .= key
+                df_.model .= model_name
+                df_.generator .= gen_name
+                df_.fold .= fold
+                df = vcat(df, df_)
+                next!(p_sys, showvalues = [(:Model, model_name), (:Generator, gen_name), (:System, "$i/$N")])
+            end
+            next!(p_fold, showvalues = [(:Fold, "$fold/$n_folds")])
+        end
+        next!(p_total)
+    end
+    df = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df)
+    CSV.write(filename, df)
+    return df
+end
+
+function Plots.plot(results::ExperimentResults, variable::Symbol=:mmd, scope::Symbol=:model; size=3, title=nothing, kwargs...)
+
     df = results.output
     @assert variable in unique(df.name) "Not a valid variable."
 
     gdf = groupby(df, [:generator, :model, :n, :name, :scope])
-    df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
+    df_plot = combine(gdf, :value => (x -> [(mean(x), mean(x) + std(x), mean(x) - std(x))]) => [:mean, :ymax, :ymin])
     df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
     df_plot.name .= [r[:name] == "mmd" ? "$(r[:name])_$(r[:scope])" : r[:name] for r in eachrow(df_plot)]
     select!(df_plot, Not(:scope))
@@ -37,15 +73,15 @@ function plot(results::ExperimentResults, variable::Symbol=:mmd, scope::Symbol=:
 
 end
 
-function plot(results::ExperimentResults, n::Int, variable::Symbol=:mmd, scope::Symbol=:model; size=3, title=nothing, kwargs...)
-    
+function Plots.plot(results::ExperimentResults, n::Int, variable::Symbol=:mmd, scope::Symbol=:model; size=3, title=nothing, kwargs...)
+
     df = results.output
     @assert variable in unique(df.name) "Not a valid variable."
     @assert n in unique(df.n) "No results for round `n`."
-    df = df[df.n .== n,:]
+    df = df[df.n.==n, :]
 
     gdf = groupby(df, [:generator, :model, :n, :name, :scope])
-    df_plot = combine(gdf, :value => (x -> [(mean(x),mean(x)+std(x),mean(x)-std(x))]) => [:mean, :ymax, :ymin])
+    df_plot = combine(gdf, :value => (x -> [(mean(x), mean(x) + std(x), mean(x) - std(x))]) => [:mean, :ymax, :ymin])
     df_plot = mapcols(x -> typeof(x) == Vector{Symbol} ? string.(x) : x, df_plot)
     df_plot.name .= [r[:name] == "mmd" ? "$(r[:name])_$(r[:scope])" : r[:name] for r in eachrow(df_plot)]
     select!(df_plot, Not(:scope))
@@ -71,15 +107,15 @@ function plot(results::ExperimentResults, n::Int, variable::Symbol=:mmd, scope::
     temp_path <- file.path(tempdir(), "plot.png")
     ggsave(temp_path,width=$ncol * $size,height=$nrow * $size * 0.8) 
     """
-    
+
     img = Images.load(rcopy(R"temp_path"))
     return img
 
 end
 
-function kable(result::ExperimentResults,n::Vector{Int}; format="latex")
+function kable(result::ExperimentResults, n::Vector{Int}; format="latex")
     df = deepcopy(result.output)
-    mapcols!(x -> eltype(x)==Symbol ? string.(x) : x, df)
+    mapcols!(x -> eltype(x) == Symbol ? string.(x) : x, df)
     R"""
     library(data.table)
     dt <- data.table($df)
@@ -102,17 +138,17 @@ end
 using DataFrames
 function kable(
     results::Dict{Symbol,ExperimentResults},
-    n::Vector{Int}; 
+    n::Vector{Int};
     format="latex",
     exclude_metric::Vector{Symbol}=[:mmd_grid]
 )
-    df = DataFrame() 
+    df = DataFrame()
     for (key, val) in results
         df_ = deepcopy(val.output)
         df_.dataset .= key
-        df = vcat(df,df_)
+        df = vcat(df, df_)
     end
-    mapcols!(x -> eltype(x)==Symbol ? string.(x) : x, df)
+    mapcols!(x -> eltype(x) == Symbol ? string.(x) : x, df)
     R"""
     library(data.table)
     dt <- data.table($df)

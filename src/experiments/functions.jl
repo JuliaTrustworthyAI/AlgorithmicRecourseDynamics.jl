@@ -1,16 +1,21 @@
-using CounterfactualExplanations, DataFrames
-
+using CounterfactualExplanations: counterfactual, counterfactual_label, generate_counterfactual
+using CounterfactualExplanations.DataPreprocessing
+using DataFrames
+using Flux
+using ..Models
 using Parameters
+using StatsBase
+
 @with_kw mutable struct FixedParameters
     n_rounds::Int = 10
     n_folds::Int = 5
-    seed::Union{Nothing, Int} = nothing
-    T::Int = 1000
+    seed::Union{Nothing,Int} = nothing
+    T::Int = 100
     μ::AbstractFloat = 0.05
     intersect_::Bool = true
     convergence::Symbol = :threshold_only
     generative_model_params::NamedTuple = (;)
-    latent_space::Union{Nothing, Bool} = nothing
+    latent_space::Union{Nothing,Bool} = nothing
 end
 
 mutable struct Experiment
@@ -27,7 +32,7 @@ mutable struct Experiment
     initial_model_scores::Vector
 end
 
-using CounterfactualExplanations.DataPreprocessing
+
 """
     Experiment(data::CounterfactualExplanations.CounterfactualData, target::Number, models::NamedTuple, generators::NamedTuple)
 
@@ -36,17 +41,15 @@ using CounterfactualExplanations.DataPreprocessing
 function Experiment(
     train_data::CounterfactualExplanations.CounterfactualData, test_data::CounterfactualExplanations.CounterfactualData, target::Number, models::Union{NamedTuple,Dict}, generators::Union{NamedTuple,Dict}, num_counterfactuals::Int=1
 )
-    
+
     # Add system identifiers:
     system_identifiers = Base.Iterators.product(keys(models), keys(generators))
 
     # Full data:
-    X_train, y_train = DataPreprocessing.unpack(train_data)
-    X_test, y_test = DataPreprocessing.unpack(train_data)
-    data = CounterfactualData(hcat(X_train, X_test), hcat(y_train, y_test))
+    data = hcat(train_data, test_data)
 
     # Initial scores:
-    initial_model_scores = [(name,Models.model_evaluation(model,test_data)) for (name,model) in pairs(models)]
+    initial_model_scores = [(name, Models.model_evaluation(model, test_data)) for (name, model) in pairs(models)]
 
     experiment = Experiment(
         data, # initial data is owned by the experiment, shared across recourse systems,
@@ -69,7 +72,7 @@ function set_up_system_grid!(experiment::Experiment, K::Int=1)
 
     data = experiment.train_data
     grid = Base.Iterators.product(values(experiment.models), values(experiment.generators))
-    
+
     # Set up systems grid
     recourse_systems = map(1:K) do k
         map(grid) do vars
@@ -84,8 +87,6 @@ function set_up_system_grid!(experiment::Experiment, K::Int=1)
     end
     experiment.recourse_systems = recourse_systems
 end
-
-using CounterfactualExplanations
 
 """
     Experiment(X::AbstractArray,y::AbstractArray,M::CounterfactualExplanations.AbstractFittedModel,target::AbstractFloat,grid::Base.Iterators.ProductIterator,n_rounds::Int)
@@ -102,7 +103,6 @@ mutable struct RecourseSystem
     benchmark::DataFrame
 end
 
-using StatsBase, Flux
 """
     choose_individuals(system::RecourseSystem, target::Number)
     
@@ -111,13 +111,14 @@ function choose_individuals(experiment::Experiment, recourse_systems::AbstractAr
     args = experiment.fixed_parameters
     target, μ = experiment.target, args.μ
 
-    candidates = map(recourse_systems) do x
-        n_classes = size(x.data.y,1)
+    candidates = map(recourse_systems) do sys
+        ŷ = probs(sys.model, sys.data.X)
+        n_classes = size(sys.data.y, 1)
         if n_classes == 1
-            cand_ = findall(vec(x.data.y) .!= target)
+            cand_ = findall(vec(ŷ) .!= target)
         else
-            y = Flux.onecold(x.data.y,1:n_classes)
-            cand_ = findall(vec(y) .!= target)
+            ŷ = Flux.onecold(ŷ, 1:n_classes)
+            cand_ = findall(vec(ŷ) .!= target)
         end
         return cand_
     end
@@ -125,32 +126,29 @@ function choose_individuals(experiment::Experiment, recourse_systems::AbstractAr
     if intersect_
         candidates_intersect = intersect(candidates...)
         n_individuals = Int(round(μ * length(candidates_intersect)))
-        chosen_individuals = StatsBase.sample(candidates_intersect,n_individuals,replace=false)
+        chosen_individuals = StatsBase.sample(candidates_intersect, n_individuals, replace=false)
         chosen_individuals = map(candidates) do x
             sort(chosen_individuals)
         end
     else
         chosen_individuals = map(candidates) do x
             n_individuals = Int(round(μ * length(x)))
-            sort(StatsBase.sample(x,n_individuals,replace=false))
+            sort(StatsBase.sample(x, n_individuals, replace=false))
         end
     end
 
     return chosen_individuals
 end
 
-using CounterfactualExplanations.DataPreprocessing: unpack
-using CounterfactualExplanations
-using CounterfactualExplanations.Counterfactuals: counterfactual, counterfactual_label
-using ..Models
+
 """
 
 """
-function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen_individuals::AbstractVector)
-    
+function update_experiment!(experiment::Experiment, recourse_system::RecourseSystem, chosen_individuals::AbstractVector)
+
     # Recourse System:
     counterfactual_data = recourse_system.data
-    X, y = unpack(counterfactual_data)
+    X, y = DataPreprocessing.unpack(counterfactual_data)
     M = recourse_system.model
     generator = recourse_system.generator
 
@@ -160,20 +158,25 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
     target = experiment.target
 
     # Generate recourse:
-    factuals = select_factual(counterfactual_data,chosen_individuals)
+    factuals = select_factual(counterfactual_data, chosen_individuals)
+
     results = generate_counterfactual(
-        factuals, target, counterfactual_data, M, generator; 
+        factuals, target, counterfactual_data, M, generator;
         T=T, num_counterfactuals=experiment.num_counterfactuals, generative_model_params=args.generative_model_params,
         latent_space=args.latent_space
-    );
-    
-    indices_ = rand(1:experiment.num_counterfactuals,length(results)) # randomly draw from generated counterfactuals
+    )
 
-    X′ = reduce(hcat,@.(selectdim(counterfactual(results),3,indices_)))
-    y′ = reduce(hcat,@.(selectdim(counterfactual_label(results),3,indices_)))
-    
-    X[:,chosen_individuals] = X′
-    y[:,chosen_individuals] = y′
+    # Unwrap new data:
+    indices_ = rand(1:experiment.num_counterfactuals, length(results)) # randomly draw from generated counterfactuals
+    X′ = reduce(hcat, @.(selectdim(counterfactual(results), 3, indices_)))
+    y′ = reduce(hcat, @.(selectdim(counterfactual_label(results), 3, indices_)))
+
+    # If for any counterfactuals the returned label is NaN, this is considered as invalid and the current label is not updated:
+    chosen_individuals = chosen_individuals[vec(.!(isnan.(y′)))]
+
+    # Update data:
+    X[:, chosen_individuals] = X′
+    y[:, chosen_individuals] = y′
 
     # Generative model:
     gen_mod = deepcopy(counterfactual_data.generative_model)
@@ -182,7 +185,9 @@ function update!(experiment::Experiment, recourse_system::RecourseSystem, chosen
     end
 
     # Update data, classifier and benchmark:
-    recourse_system.data = CounterfactualData(X,y;generative_model=gen_mod)
+    recourse_system.data.X = X
+    recourse_system.data.y = y
+    recourse_system.data.generative_model = gen_mod
     recourse_system.model = Models.train(M, counterfactual_data)
     recourse_system.benchmark = vcat(recourse_system.benchmark, CounterfactualExplanations.Benchmark.benchmark(results))
 

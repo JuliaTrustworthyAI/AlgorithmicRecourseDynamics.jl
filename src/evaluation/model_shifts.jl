@@ -1,23 +1,27 @@
+using CounterfactualExplanations.Models: probs
+using DataFrames
+using LinearAlgebra
+using ..Models: model_evaluation
+using StatsBase
+
 struct ModelMetric <: AbstractMetric
     metric::Number
     p_value::Union{Missing,Number}
     name::Symbol
 end
 
-using DataFrames
-import DataFrames: DataFrame
+
 """
     DataFrame(metric::ModelMetric)
 
 Turns an instance of class `ModelMetric` into `DataFrame`.
 """
-function DataFrame(metric::ModelMetric)
+function DataFrames.DataFrame(metric::ModelMetric)
     vals = (metric.metric, metric.p_value, metric.name, :model)
     df = DataFrame(NamedTuple{(:value, :p_value, :name, :scope)}.([vals]))
     return df
 end
 
-using LinearAlgebra
 function perturbation(experiment::Experiment, recourse_system::RecourseSystem)
 
     # Initial:
@@ -33,11 +37,7 @@ function perturbation(experiment::Experiment, recourse_system::RecourseSystem)
 
 end
 
-using CounterfactualExplanations
-using CounterfactualExplanations.Models: probs
-using CounterfactualExplanations.DataPreprocessing: unpack
-using DataFrames
-using StatsBase
+
 """
     mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=1000, grid_search=false, kwargs...)
 
@@ -45,7 +45,7 @@ Calculates the MMD on the probabilities of classification assigned by the model 
 """
 function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=1000, grid_search=false, n_samples=1000, kwargs...)
 
-    X, _ = unpack(experiment.data)
+    X, _ = CounterfactualExplanations.DataPreprocessing.unpack(experiment.data)
 
     if grid_search
         X = reduce(hcat, [map(x -> rand(range(x..., length=100)), extrema(X, dims=2)) for i in 1:n_samples])
@@ -68,7 +68,6 @@ function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=10
 
 end
 
-using LinearAlgebra
 """
     decisiveness(experiment::Experiment, recourse_system::RecourseSystem)
 
@@ -76,7 +75,7 @@ Calculates the pseudo-distance of points to the decision boundary measured as th
 """
 function decisiveness(experiment::Experiment, recourse_system::RecourseSystem)
 
-    X, _ = unpack(experiment.data)
+    X, _ = CounterfactualExplanations.DataPreprocessing.unpack(experiment.data)
 
     # Initial:
     M = recourse_system.initial_model
@@ -100,7 +99,7 @@ Calculates the Disagreement pseudo-distance defined in https://doi.org/10.1145/1
 """
 function disagreement(experiment::Experiment, recourse_system::RecourseSystem)
 
-    X, _ = unpack(experiment.data)
+    X, _ = CounterfactualExplanations.DataPreprocessing.unpack(experiment.data)
 
     # Initial:
     M = recourse_system.initial_model
@@ -115,7 +114,6 @@ function disagreement(experiment::Experiment, recourse_system::RecourseSystem)
     return metric
 end
 
-using ..Models: model_evaluation
 function model_performance(experiment::Experiment, recourse_system::RecourseSystem)
 
     # Initial:

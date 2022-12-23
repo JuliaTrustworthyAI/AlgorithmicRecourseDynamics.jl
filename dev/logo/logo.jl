@@ -25,13 +25,8 @@ function get_data(N=1000, xmax=2)
     )
     ys .= ys .== 2
     X = X'
-    xs = Flux.unstack(X, 2)
-    data = zip(xs, ys)
-    counterfactual_data = CounterfactualData(X, ys')
-    return counterfactual_data, data
+    return CounterfactualData(X, ys')
 end
-plot()
-scatter!(counterfactual_data)
 
 function logo_picture(;
     ndots=3,

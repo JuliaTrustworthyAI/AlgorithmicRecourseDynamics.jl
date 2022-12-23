@@ -10,7 +10,7 @@ using StatsBase
     n_rounds::Int = 10
     n_folds::Int = 5
     seed::Union{Nothing,Int} = nothing
-    T::Int = 1000
+    T::Int = 100
     μ::AbstractFloat = 0.05
     intersect_::Bool = true
     convergence::Symbol = :threshold_only

@@ -1,9 +1,6 @@
 project:
   title: "AlgorithmicRecourseDynamics.jl"
   execute-dir: project
-filters:
-  - lua/abstract-to-meta.lua
-  - quarto
 bibliography: bib.bib
 
 crossref:

@@ -1,10 +1,67 @@
-`AlgorithmicRecourseDynamics.jl` is a Julia package for modeling Algorithmic Recourse Dynamics.
+```{julia}
+#| echo: false
+include("docs/setup_docs.jl")
+eval(setup_docs)
+```
+
+`AlgorithmicRecourseDynamics.jl` is a small package for modeling Algorithmic Recourse Dynamics. It builds on `CounterfactualExplanations`, a package for generating counterfactual explanations.
+
+## Basic Usage
+
+### Data and Model
+
+```{julia}
+N = 1000
+xmax = 2
+X, ys = make_blobs(
+    N, 2; 
+    centers=2, as_table=false, center_box=(-xmax => xmax), cluster_std=0.1
+)
+ys .= ys.==2
+X = X'
+counterfactual_data = CounterfactualData(X,ys')
+```
+
+```{julia}
+n_epochs = 100
+model = Chain(Dense(2,1))
+mod = FluxModel(model)
+
+generator = GenericGenerator()
+```
+
+```{julia}
+#| output: true
+
+data_train, data_test = Data.train_test_split(counterfactual_data)
+Models.train(mod, data_train; n_epochs=n_epochs)
+plt_original = plot(mod, counterfactual_data; zoom=0, colorbar=false)
+display(plt_original)
+```
+
+### Simulation
+
+```{julia}
+models = Dict(:mymodel => mod)
+generators = Dict(:wachter => generator)
+experiment = set_up_experiment(data_train, data_test, models, generators)
+```
+
+```{julia}
+#| output: true
+
+run!(experiment)
+```
+
+```{julia}
+#| output: true
+
+new_data = experiment.recourse_systems[1][1].data
+new_model = experiment.recourse_systems[1][1].model
+plt_original = plot(new_model, new_data; zoom=0, colorbar=false)
+```
+
 
 ## Related Research Paper 📝
 
-In this work we investigate what happens if Algorithmic Recourse is actually implemented by a large number of individuals. The chart below illustrates what we mean by Endogenous Macrodynamics in Algorithmic Recourse: (a) we have a simple linear classifier trained for binary classification where samples from the negative class (y=0) are marked in blue and samples of the positive class (y=1) are marked in orange; (b) the implementation of AR for a random subset of individuals leads to a noticable domain shift; (c) as the classifier is retrained we observe a corresponding model shift; (d) as this process is repeated, the decision boundary moves away from the target class.
-
-
-
-![](paper/www/poc.png)
-
+The package was developed for a research project that investigates the dynamics of various counterfactual generators. 

@@ -1,4 +1,3 @@
-using Serialization
 using StatsBase
 
 function scale(X, dim)

@@ -166,10 +166,15 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
         latent_space=args.latent_space
     )
 
+    # Unwrap new data:
     indices_ = rand(1:experiment.num_counterfactuals, length(results)) # randomly draw from generated counterfactuals
     X′ = reduce(hcat, @.(selectdim(counterfactual(results), 3, indices_)))
-    y′ = reduce(hcat, @.(selectdim(counterfactual_label(results),3,indices_)))
+    y′ = reduce(hcat, @.(selectdim(counterfactual_label(results), 3, indices_)))
 
+    # If for any counterfactuals the returned label is NaN, this is considered as invalid and the current label is not updated:
+    chosen_individuals = chosen_individuals[vec(.!(isnan.(y′)))]
+
+    # Update data:
     X[:, chosen_individuals] = X′
     y[:, chosen_individuals] = y′
 

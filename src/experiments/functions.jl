@@ -7,7 +7,7 @@ using Parameters
 using StatsBase
 
 @with_kw mutable struct FixedParameters
-    n_rounds::Int = 10
+    n_rounds::Int = 50
     n_folds::Int = 5
     seed::Union{Nothing,Int} = nothing
     T::Int = 100
@@ -115,7 +115,7 @@ function choose_individuals(experiment::Experiment, recourse_systems::AbstractAr
         ŷ = probs(sys.model, sys.data.X)
         n_classes = size(sys.data.y, 1)
         if n_classes == 1
-            cand_ = findall(vec(ŷ) .!= target)
+            cand_ = findall(round.(vec(ŷ)) .!= target)
         else
             ŷ = Flux.onecold(ŷ, 1:n_classes)
             cand_ = findall(vec(ŷ) .!= target)
@@ -157,39 +157,43 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
     T = args.T
     target = experiment.target
 
-    # Generate recourse:
-    factuals = select_factual(counterfactual_data, chosen_individuals)
+    if length(chosen_individuals) > 0
 
-    results = generate_counterfactual(
-        factuals, target, counterfactual_data, M, generator;
-        T=T, num_counterfactuals=experiment.num_counterfactuals, generative_model_params=args.generative_model_params,
-        latent_space=args.latent_space
-    )
+        # Generate recourse:
+        factuals = select_factual(counterfactual_data, chosen_individuals)
 
-    # Unwrap new data:
-    indices_ = rand(1:experiment.num_counterfactuals, length(results)) # randomly draw from generated counterfactuals
-    X′ = reduce(hcat, @.(selectdim(counterfactual(results), 3, indices_)))
-    y′ = reduce(hcat, @.(selectdim(counterfactual_label(results), 3, indices_)))
+        results = generate_counterfactual(
+            factuals, target, counterfactual_data, M, generator;
+            T=T, num_counterfactuals=experiment.num_counterfactuals, generative_model_params=args.generative_model_params,
+            latent_space=args.latent_space
+        )
 
-    # If for any counterfactuals the returned label is NaN, this is considered as invalid and the current label is not updated:
-    chosen_individuals = chosen_individuals[vec(.!(isnan.(y′)))]
+        # Unwrap new data:
+        indices_ = rand(1:experiment.num_counterfactuals, length(results)) # randomly draw from generated counterfactuals
+        X′ = reduce(hcat, @.(selectdim(counterfactual(results), 3, indices_)))
+        y′ = reduce(hcat, @.(selectdim(counterfactual_label(results), 3, indices_)))
 
-    # Update data:
-    X[:, chosen_individuals] = X′
-    y[:, chosen_individuals] = y′
+        # If for any counterfactuals the returned label is NaN, this is considered as invalid and the current label is not updated:
+        chosen_individuals = chosen_individuals[vec(.!(isnan.(y′)))]
 
-    # Generative model:
-    gen_mod = deepcopy(counterfactual_data.generative_model)
-    if !isnothing(gen_mod)
-        CounterfactualExplanations.GenerativeModels.retrain!(gen_mod, X, y)
+        # Update data:
+        X[:, chosen_individuals] = X′
+        y[:, chosen_individuals] = y′
+
+        # Generative model:
+        gen_mod = deepcopy(counterfactual_data.generative_model)
+        if !isnothing(gen_mod)
+            CounterfactualExplanations.GenerativeModels.retrain!(gen_mod, X, y)
+        end
+
+        # Update data, classifier and benchmark:
+        recourse_system.data.X = X
+        recourse_system.data.y = y
+        recourse_system.data.generative_model = gen_mod
+        recourse_system.model = Models.train(M, counterfactual_data)
+        recourse_system.benchmark = vcat(recourse_system.benchmark, CounterfactualExplanations.Benchmark.benchmark(results))
+
     end
-
-    # Update data, classifier and benchmark:
-    recourse_system.data.X = X
-    recourse_system.data.y = y
-    recourse_system.data.generative_model = gen_mod
-    recourse_system.model = Models.train(M, counterfactual_data)
-    recourse_system.benchmark = vcat(recourse_system.benchmark, CounterfactualExplanations.Benchmark.benchmark(results))
 
 end
 

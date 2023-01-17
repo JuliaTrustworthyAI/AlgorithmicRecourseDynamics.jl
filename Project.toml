@@ -1,7 +1,7 @@
 name = "AlgorithmicRecourseDynamics"
 uuid = "3d1ede72-abb8-4340-bf8e-2ae06849b5ec"
 authors = ["Patrick Altmeyer"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -27,6 +27,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 CSV = "0.10"
+CounterfactualExplanations = "0.1"
 DataFrames = "1"
 Distances = "0.10"
 Flux = "0.13"

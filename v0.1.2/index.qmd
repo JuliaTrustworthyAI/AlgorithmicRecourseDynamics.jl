@@ -1,0 +1,9 @@
+```@meta
+CurrentModule = AlgorithmicRecourseDynamics
+```
+
+# AlgorithmicRecourseDynamics
+
+Documentation for [AlgorithmicRecourseDynamics.jl](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl).
+
+{{< include _intro.qmd >}}

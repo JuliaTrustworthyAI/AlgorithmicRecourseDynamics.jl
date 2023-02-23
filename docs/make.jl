@@ -11,11 +11,11 @@ DocMeta.setdocmeta!(AlgorithmicRecourseDynamics, :DocTestSetup, ex_meta; recursi
 makedocs(;
     modules = [AlgorithmicRecourseDynamics],
     authors = "Patrick Altmeyer",
-    repo = "https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl/blob/{commit}{path}#{line}",
+    repo = "https://github.com/juliatrustworthyai/AlgorithmicRecourseDynamics.jl/blob/{commit}{path}#{line}",
     sitename = "AlgorithmicRecourseDynamics.jl",
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://pat-alt.github.io/AlgorithmicRecourseDynamics.jl",
+        canonical = "https://juliatrustworthyai.github.io/AlgorithmicRecourseDynamics.jl",
         edit_link = "main",
         assets = String[],
     ),
@@ -25,4 +25,4 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo = "github.com/pat-alt/AlgorithmicRecourseDynamics.jl", devbranch = "main")
+deploydocs(; repo = "github.com/juliatrustworthyai/AlgorithmicRecourseDynamics.jl", devbranch = "main")

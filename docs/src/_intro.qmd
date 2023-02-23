@@ -4,9 +4,9 @@ include("docs/setup_docs.jl")
 eval(setup_docs)
 ```
 
-`AlgorithmicRecourseDynamics.jl` is a small package for modeling Algorithmic Recourse Dynamics. It builds on `CounterfactualExplanations`, a package for generating counterfactual explanations.
+`AlgorithmicRecourseDynamics.jl` is a small package for modelling Algorithmic Recourse Dynamics that was developed as part of a research paper by @altmeyer2023endogenous. It builds on `CounterfactualExplanations`, a package for generating counterfactual explanations.
 
-## Basic Usage
+## 🔍 Basic Usage
 
 Below we first generate some synthetic data for a binary classification task and instantiate an instance of `CounterfactualData`.
 
@@ -76,6 +76,9 @@ plt_original = plot(new_model, new_data; zoom=0, colorbar=false)
 ```
 
 
-## Related Research Paper 📝
+## 📝 Related Research Paper 
 
-The package was developed for a research project that investigates the dynamics of various counterfactual generators. You can find the details [here](https://github.com/pat-alt/endogenous-macrodynamics-in-algorithmic-recourse).
+The research paper by @altmeyer2023endogenous investigates the dynamics of various counterfactual generators. You can find the details [here](https://github.com/pat-alt/endogenous-macrodynamics-in-algorithmic-recourse).
+
+## 🎓 References
+

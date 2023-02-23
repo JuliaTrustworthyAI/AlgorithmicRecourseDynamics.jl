@@ -5,7 +5,7 @@ CurrentModule = AlgorithmicRecourseDynamics
 
 # AlgorithmicRecourseDynamics
 
-Documentation for [AlgorithmicRecourseDynamics.jl](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl).
+Documentation for [AlgorithmicRecourseDynamics.jl](https://github.com/juliatrustworthyai/AlgorithmicRecourseDynamics.jl).
 
 `AlgorithmicRecourseDynamics.jl` is a small package for modeling Algorithmic Recourse Dynamics. It builds on `CounterfactualExplanations`, a package for generating counterfactual explanations.
 

@@ -42,7 +42,7 @@ Finally we train our model on a subset of the data. The chart below shows the re
 #| output: true
 
 data_train, data_test = Data.train_test_split(counterfactual_data)
-Models.train(mod, data_train; n_epochs=n_epochs)
+CounterfactualExplanations.Models.train(mod, data_train; n_epochs=n_epochs)
 plt_original = plot(mod, counterfactual_data; zoom=0, colorbar=false)
 display(plt_original)
 ```

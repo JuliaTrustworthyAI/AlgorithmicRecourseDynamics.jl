@@ -177,7 +177,7 @@ function set_up_experiment(
     if !isnothing(pre_train_models)
         for (key, model) in models
             @info "Training $key"
-            Models.train(model, data_train; n_epochs=pre_train_models, kwargs...)
+            CounterfactualExplanations.Models.train(model, data_train; n_epochs=pre_train_models, kwargs...)
         end
     end
 

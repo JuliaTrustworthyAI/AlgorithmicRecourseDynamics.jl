@@ -45,7 +45,7 @@ Calculates the MMD on the probabilities of classification assigned by the model 
 """
 function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=1000, grid_search=false, n_samples=1000, kwargs...)
 
-    X, _ = CounterfactualExplanations.DataPreprocessing.unpack(experiment.data)
+    X, _ = CounterfactualExplanations.DataPreprocessing.unpack_data(experiment.data)
 
     if grid_search
         X = reduce(hcat, [map(x -> rand(range(x..., length=100)), extrema(X, dims=2)) for i in 1:n_samples])
@@ -75,7 +75,7 @@ Calculates the pseudo-distance of points to the decision boundary measured as th
 """
 function decisiveness(experiment::Experiment, recourse_system::RecourseSystem)
 
-    X, _ = CounterfactualExplanations.DataPreprocessing.unpack(experiment.data)
+    X, _ = CounterfactualExplanations.DataPreprocessing.unpack_data(experiment.data)
 
     # Initial:
     M = recourse_system.initial_model
@@ -99,7 +99,7 @@ Calculates the Disagreement pseudo-distance defined in https://doi.org/10.1145/1
 """
 function disagreement(experiment::Experiment, recourse_system::RecourseSystem)
 
-    X, _ = CounterfactualExplanations.DataPreprocessing.unpack(experiment.data)
+    X, _ = CounterfactualExplanations.DataPreprocessing.unpack_data(experiment.data)
 
     # Initial:
     M = recourse_system.initial_model

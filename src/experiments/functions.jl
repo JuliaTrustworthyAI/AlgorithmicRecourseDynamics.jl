@@ -148,7 +148,7 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
 
     # Recourse System:
     counterfactual_data = recourse_system.data
-    X, y = DataPreprocessing.unpack(counterfactual_data)
+    X, y = DataPreprocessing.unpack_data(counterfactual_data)
     M = recourse_system.model
     generator = recourse_system.generator
 
@@ -191,7 +191,7 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
         recourse_system.data.X = X
         recourse_system.data.y = y
         recourse_system.data.generative_model = gen_mod
-        recourse_system.model = Models.train(M, counterfactual_data)
+        recourse_system.model = CounterfactualExplanations.Models.train(M, counterfactual_data)
         recourse_system.benchmark = vcat(recourse_system.benchmark, CounterfactualExplanations.Benchmark.benchmark(results))
 
     end

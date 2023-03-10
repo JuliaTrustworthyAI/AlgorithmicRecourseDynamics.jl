@@ -25,4 +25,6 @@ makedocs(;
     ],
 )
 
-deploydocs(; repo = "github.com/juliatrustworthyai/AlgorithmicRecourseDynamics.jl", devbranch = "main")
+deploydocs(; 
+    repo = "github.com/JuliaTrustworthyAI/AlgorithmicRecourseDynamics.jl", devbranch = "main"
+)

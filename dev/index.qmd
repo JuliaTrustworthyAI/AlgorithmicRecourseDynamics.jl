@@ -4,6 +4,6 @@ CurrentModule = AlgorithmicRecourseDynamics
 
 # AlgorithmicRecourseDynamics
 
-Documentation for [AlgorithmicRecourseDynamics.jl](https://github.com/pat-alt/AlgorithmicRecourseDynamics.jl).
+Documentation for [AlgorithmicRecourseDynamics.jl](https://github.com/juliatrustworthyai/AlgorithmicRecourseDynamics.jl).
 
 {{< include _intro.qmd >}}

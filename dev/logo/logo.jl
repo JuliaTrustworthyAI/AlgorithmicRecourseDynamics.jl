@@ -60,9 +60,7 @@ function logo_picture(;
     Model = @load LinearRegressor pkg = MLJLinearModels
     degree_polynomial = 5
     polynomial_features(x, degree::Int) = reduce(hcat, map(i -> x .^ i, 1:degree))
-    #! format: off
     pipe = (x -> MLJBase.table(polynomial_features(x, degree_polynomial))) |> Model()
-    #! format: on
     conf_model = conformal_model(pipe; coverage=0.95)
     mach = machine(conf_model, x, y)
     fit!(mach; rows=train)

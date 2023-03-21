@@ -4,7 +4,6 @@ using Flux
 using StatsBase
 
 function Base.hcat(data::CounterfactualData, more_data::CounterfactualData)
-
     data = deepcopy(data)
     more_data = deepcopy(more_data)
 

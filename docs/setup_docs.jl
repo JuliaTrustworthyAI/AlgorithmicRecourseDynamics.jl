@@ -1,5 +1,4 @@
 setup_docs = quote
-
     using Pkg
     Pkg.activate("docs")
 
@@ -16,5 +15,4 @@ setup_docs = quote
 
     Random.seed!(2023)
     theme(:wong)
-
 end

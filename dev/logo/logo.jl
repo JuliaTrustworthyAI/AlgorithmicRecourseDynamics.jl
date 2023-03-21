@@ -20,8 +20,7 @@ const julia_colors = Dict(
 
 function get_data(N=1000, xmax=2)
     X, ys = make_blobs(
-        N, 2;
-        centers=2, as_table=false, center_box=(-xmax => xmax), cluster_std=0.1
+        N, 2; centers=2, as_table=false, center_box=(-xmax => xmax), cluster_std=0.1
     )
     ys .= ys .== 2
     X = X'
@@ -31,7 +30,7 @@ end
 function logo_picture(;
     ndots=3,
     frame_size=500,
-    ms=frame_size // 10,
+    ms=frame_size//10,
     mcolor=(:red, :green, :purple),
     margin=0.1,
     fun=f(x) = x * cos(x),
@@ -43,7 +42,7 @@ function logo_picture(;
     gt_stroke_size=5,
     interval_color=julia_colors[:blue],
     interval_alpha=0.2,
-    seed=2022
+    seed=2022,
 )
 
     # Setup
@@ -52,8 +51,8 @@ function logo_picture(;
     Random.seed!(seed)
 
     # Data
-    x, y = get_data(xmax=xmax, noise=noise, fun=fun)
-    train, test = partition(eachindex(y), 0.4, 0.4, shuffle=true)
+    x, y = get_data(; xmax=xmax, noise=noise, fun=fun)
+    train, test = partition(eachindex(y), 0.4, 0.4; shuffle=true)
     xtrue = range(-xmax, xmax, ntrue)
     ytrue = fun.(xtrue)
 
@@ -61,16 +60,18 @@ function logo_picture(;
     Model = @load LinearRegressor pkg = MLJLinearModels
     degree_polynomial = 5
     polynomial_features(x, degree::Int) = reduce(hcat, map(i -> x .^ i, 1:degree))
+    #! format: off
     pipe = (x -> MLJBase.table(polynomial_features(x, degree_polynomial))) |> Model()
+    #! format: on
     conf_model = conformal_model(pipe; coverage=0.95)
     mach = machine(conf_model, x, y)
-    fit!(mach, rows=train)
+    fit!(mach; rows=train)
     yhat = predict(mach, x[test])
     y_lb = [y[1] for y in yhat]
     y_ub = [y[2] for y in yhat]
 
     # Logo
-    idx = sample(test, ndots, replace=false)
+    idx = sample(test, ndots; replace=false)
     xplot, yplot = (x[idx], y[idx])
     _scale = (frame_size / (2 * maximum(x))) * (1 - margin)
 
@@ -78,15 +79,15 @@ function logo_picture(;
     setline(gt_stroke_size)
     sethue(gt_color)
     true_points = [Point((_scale .* (x, y))...) for (x, y) in zip(xtrue, ytrue)]
-    poly(true_points[1:(end-1)], action=:stroke)
+    poly(true_points[1:(end - 1)]; action=:stroke)
 
     # Data
     data_plot = zip(xplot, yplot)
-    for i = 1:length(data_plot)
+    for i in 1:length(data_plot)
         _x, _y = _scale .* collect(data_plot)[i]
         color_idx = i % n_mcolor == 0 ? n_mcolor : i % n_mcolor
         sethue(mcolor[color_idx]...)
-        circle(Point(_x, _y), ms, action=:fill)
+        circle(Point(_x, _y), ms; action=:fill)
     end
 
     # Prediction interval:
@@ -99,17 +100,16 @@ function logo_picture(;
         Point((_scale .* (x, y))...) for (x, y) in zip(x[test][_order_ub], y_ub[_order_ub])
     ]
     setcolor(sethue(interval_color)..., interval_alpha)
-    poly(vcat(lb, ub), action=:fill)
-
+    return poly(vcat(lb, ub); action=:fill)
 end
 
 function draw_small_logo(filename="docs/src/assets/logo.svg"; width=500)
     frame_size = width
     Drawing(frame_size, frame_size, filename)
     origin()
-    logo_picture(frame_size=frame_size)
+    logo_picture(; frame_size=frame_size)
     finish()
-    preview()
+    return preview()
 end
 
 function draw_wide_logo_new(
@@ -120,7 +120,7 @@ function draw_wide_logo_new(
     font_fill="transparent",
     font_color=Luxor.julia_blue,
     bg_color="transparent",
-    picture_kwargs...
+    picture_kwargs...,
 )
 
     # Setup:
@@ -142,7 +142,7 @@ function draw_wide_logo_new(
     # Picture:
     @layer begin
         translate(cells[1])
-        logo_picture(
+        logo_picture(;
             frame_size=height,
             margin=0.1,
             ms=ms,
@@ -162,7 +162,7 @@ function draw_wide_logo_new(
                 translate(pos)
                 setline(Int(round(gt_stroke_size / 5)))
                 sethue(font_fill)
-                textoutlines(strs[n], O, :path, valign=:middle, halign=:center)
+                textoutlines(strs[n], O, :path; valign=:middle, halign=:center)
                 sethue(font_color)
                 strokepath()
             end
@@ -170,7 +170,7 @@ function draw_wide_logo_new(
     end
 
     finish()
-    preview()
+    return preview()
 end
 
 draw_wide_logo_new()

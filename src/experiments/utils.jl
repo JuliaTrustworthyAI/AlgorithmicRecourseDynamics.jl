@@ -1,11 +1,8 @@
 # Compute cartesian product over two vectors:
-function expandgrid(x,y)
+function expandgrid(x, y)
     N = length(x) * length(y)
-    grid = Iterators.product(x,y) |>
-        Iterators.flatten |>
-        collect |>
-        z -> reshape(z, (2,N)) |>
-        transpose |>
-        Matrix
+    grid = (z -> Matrix(transpose(reshape(z, (2, N)))))(
+        collect(Iterators.flatten(Iterators.product(x, y)))
+    )
     return grid
 end

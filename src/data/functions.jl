@@ -1,7 +1,7 @@
 using StatsBase
 
 function scale(X, dim)
-    dt = fit(ZScoreTransform, X, dim=dim)
+    dt = fit(ZScoreTransform, X; dim=dim)
     X_scaled = StatsBase.transform(dt, X)
     return X_scaled, dt
 end

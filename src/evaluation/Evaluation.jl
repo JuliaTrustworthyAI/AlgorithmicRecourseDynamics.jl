@@ -19,8 +19,13 @@ include("domain_shifts.jl")
 include("model_shifts.jl")
 
 using DataFrames
-function evaluate_system(recourse_system::RecourseSystem, experiment::Experiment; to_dataframe=true, n=1000, n_samples=1000)
-    
+function evaluate_system(
+    recourse_system::RecourseSystem,
+    experiment::Experiment;
+    to_dataframe=true,
+    n=1000,
+    n_samples=1000,
+)
     metrics = [
         mmd_domain(experiment, recourse_system; n=n),
         perturbation(experiment, recourse_system),
@@ -28,11 +33,11 @@ function evaluate_system(recourse_system::RecourseSystem, experiment::Experiment
         mmd_model(experiment, recourse_system; n=n, grid_search=true, n_samples=n_samples),
         disagreement(experiment, recourse_system),
         decisiveness(experiment, recourse_system),
-        model_performance(experiment, recourse_system)
+        model_performance(experiment, recourse_system),
     ]
 
     if to_dataframe
-        metrics = reduce(vcat,map(DataFrame, metrics))
+        metrics = reduce(vcat, map(DataFrame, metrics))
     end
 
     return metrics

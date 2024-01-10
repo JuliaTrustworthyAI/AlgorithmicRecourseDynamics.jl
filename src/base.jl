@@ -2,7 +2,13 @@
 using CSV
 using DataFrames
 using .Evaluation: evaluate_system
-using .Experiments: Experiment, FixedParameters, RecourseSystem, set_up_system_grid!, update_experiment!, choose_individuals
+using .Experiments:
+    Experiment,
+    FixedParameters,
+    RecourseSystem,
+    set_up_system_grid!,
+    update_experiment!,
+    choose_individuals
 using Flux
 using LinearAlgebra
 using ProgressMeter: Progress, next!
@@ -12,12 +18,20 @@ using Statistics
 using StatsBase
 
 function collect_output(
-    experiment::Experiment, recourse_system::RecourseSystem, chosen_individuals::Union{Nothing,AbstractArray}, k::Int, n::Int, m::Int;
-    n_bootstrap=1, n_samples=1000
+    experiment::Experiment,
+    recourse_system::RecourseSystem,
+    chosen_individuals::Union{Nothing,AbstractArray},
+    k::Int,
+    n::Int,
+    m::Int;
+    n_bootstrap=1,
+    n_samples=1000,
 )
 
     # Evaluate:
-    output = evaluate_system(recourse_system, experiment, n=n_bootstrap, n_samples=n_samples)
+    output = evaluate_system(
+        recourse_system, experiment; n=n_bootstrap, n_samples=n_samples
+    )
 
     # Add additional information:
     output.k .= k
@@ -25,7 +39,11 @@ function collect_output(
     output.model .= collect(experiment.system_identifiers)[m][1]
     output.generator .= collect(experiment.system_identifiers)[m][2]
     output.n_individuals .= isnothing(chosen_individuals) ? 0 : length(chosen_individuals)
-    output.pct_total .= isnothing(chosen_individuals) ? 0 : length(chosen_individuals) / size(experiment.train_data.y, 2)
+    output.pct_total .= if isnothing(chosen_individuals)
+        0
+    else
+        length(chosen_individuals) / size(experiment.train_data.y, 2)
+    end
 
     # Add recourse measures:
     if n > 0
@@ -44,7 +62,13 @@ end
 A wrapper function that runs the experiment for endogenous models shifts.
 """
 function run!(
-    experiment::Experiment; evaluate_every=10, n_bootstrap=1, n_samples=1000, forward=false, show_progress=!is_logging(stderr), fixed_parameters...
+    experiment::Experiment;
+    evaluate_every=10,
+    n_bootstrap=1,
+    n_samples=1000,
+    forward=false,
+    show_progress=!is_logging(stderr),
+    fixed_parameters...,
 )
 
     # Load fixed hyperparameters:
@@ -66,37 +90,68 @@ function run!(
     # Pre-allocate memory:
     output = [DataFrame() for i in 1:M]
 
-    p_fold = Progress(K; desc="Progress on folds:", showspeed=true, enabled=show_progress, output=stderr, color=:yellow)
+    p_fold = Progress(
+        K;
+        desc="Progress on folds:",
+        showspeed=true,
+        enabled=show_progress,
+        output=stderr,
+        color=:yellow,
+    )
     @info "Running experiment ..."
     for k in 1:K
         recourse_systems = experiment.recourse_systems[k]
         # Initial evaluation:
         for m in 1:M
-            output_initial = collect_output(experiment, recourse_systems[m], nothing, k, 0, m, n_bootstrap=nothing)
-            output[m] = vcat(output[m], output_initial, cols=:union)
+            output_initial = collect_output(
+                experiment, recourse_systems[m], nothing, k, 0, m; n_bootstrap=nothing
+            )
+            output[m] = vcat(output[m], output_initial; cols=:union)
         end
         # Recursion over N rounds:
         chosen_individuals = zeros(size(recourse_systems))
-        p_round = Progress(N; desc="Progress on round:", showspeed=true, enabled=show_progress, output=stderr, color=:green)
+        p_round = Progress(
+            N;
+            desc="Progress on round:",
+            showspeed=true,
+            enabled=show_progress,
+            output=stderr,
+            color=:green,
+        )
         for n in 1:N
             # Choose individuals that shall receive recourse:
-            chosen_individuals_n = choose_individuals(experiment, recourse_systems; intersect_=intersect_)
-            chosen_individuals = map((x, y) -> union(x, y), chosen_individuals, chosen_individuals_n)
+            chosen_individuals_n = choose_individuals(
+                experiment, recourse_systems; intersect_=intersect_
+            )
+            chosen_individuals = map(
+                (x, y) -> union(x, y), chosen_individuals, chosen_individuals_n
+            )
             Threads.@threads for m in 1:M
                 recourse_system = recourse_systems[m]
                 chosen_individuals_m = chosen_individuals_n[m]
                 recourse_system.chosen_individuals = chosen_individuals[m]
                 # Update experiment
                 with_logger(NullLogger()) do
-                    AlgorithmicRecourseDynamics.update_experiment!(experiment, recourse_system, chosen_individuals_m)
+                    AlgorithmicRecourseDynamics.update_experiment!(
+                        experiment, recourse_system, chosen_individuals_m
+                    )
                 end
                 # Evaluate:
                 if n % evaluate_every == 0
-                    output_checkpoint = collect_output(experiment, recourse_system, chosen_individuals[m], k, n, m, n_bootstrap=n_bootstrap, n_samples=n_samples)
-                    output[m] = vcat(output[m], output_checkpoint, cols=:union)
+                    output_checkpoint = collect_output(
+                        experiment,
+                        recourse_system,
+                        chosen_individuals[m],
+                        k,
+                        n,
+                        m;
+                        n_bootstrap=n_bootstrap,
+                        n_samples=n_samples,
+                    )
+                    output[m] = vcat(output[m], output_checkpoint; cols=:union)
                 end
             end
-            next!(p_round, showvalues=[(:Fold, "$k/$K"), (:Round, "$n/$N")])
+            next!(p_round; showvalues=[(:Fold, "$k/$K"), (:Round, "$n/$N")])
         end
         next!(p_fold)
     end
@@ -105,7 +160,6 @@ function run!(
     output = reduce(vcat, output)
 
     return output
-
 end
 
 """
@@ -128,17 +182,17 @@ function set_up_experiment(
     generators::Dict{Symbol,<:CounterfactualExplanations.Generators.AbstractGenerator};
     target::Int=1,
     num_counterfactuals::Int=5,
-    kwargs...
+    kwargs...,
 )
-
-    experiment = Experiment(data_train, data_test, target, models, deepcopy(generators), num_counterfactuals)
+    experiment = Experiment(
+        data_train, data_test, target, models, deepcopy(generators), num_counterfactuals
+    )
 
     # Sanity check:
     @info "Initial model scores:"
     println(experiment.initial_model_scores)
 
     return experiment
-
 end
 
 """
@@ -162,13 +216,15 @@ function set_up_experiment(
     target::Int=1,
     num_counterfactuals::Int=5,
     pre_train_models::Union{Nothing,Int}=100,
-    kwargs...
+    kwargs...,
 )
-
     available_models = [:LogisticRegression, :FluxModel, :FluxEnsemble]
     @assert all(map(model -> model in available_models, models)) "`models` can only be $(available_models)"
 
-    models = Dict([(model, getfield(AlgorithmicRecourseDynamics.Models, model)(data; model_params...)) for model in models])
+    models = Dict([
+        (model, getfield(AlgorithmicRecourseDynamics.Models, model)(data; model_params...))
+        for model in models
+    ])
 
     # Data:
     data_train, data_test = Data.train_test_split(data)
@@ -177,20 +233,22 @@ function set_up_experiment(
     if !isnothing(pre_train_models)
         for (key, model) in models
             @info "Training $key"
-            CounterfactualExplanations.Models.train(model, data_train; n_epochs=pre_train_models, kwargs...)
+            CounterfactualExplanations.Models.train(
+                model, data_train; n_epochs=pre_train_models, kwargs...
+            )
         end
     end
 
-    experiment = Experiment(data_train, data_test, target, models, deepcopy(generators), num_counterfactuals)
+    experiment = Experiment(
+        data_train, data_test, target, models, deepcopy(generators), num_counterfactuals
+    )
 
     # Sanity check:
     @info "Initial model scores:"
     println(experiment.initial_model_scores)
 
     return experiment
-
 end
-
 
 """
     function set_up_experiments(
@@ -207,21 +265,28 @@ Sets up multiple experiments.
 """
 function set_up_experiments(
     catalogue::Dict{Symbol,CounterfactualData},
-    models::Union{Dict{Symbol,<:CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}},
+    models::Union{
+        Dict{Symbol,<:CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}
+    },
     generators::Dict{Symbol,<:CounterfactualExplanations.Generators.AbstractGenerator};
     target::Int=1,
     num_counterfactuals::Int=5,
     pre_train_models::Union{Nothing,Int}=100,
-    kwargs...
+    kwargs...,
 )
-    set_up_single(data) = set_up_experiment(
-        data, models, generators;
-        target=target, num_counterfactuals=num_counterfactuals,
-        pre_train_models=pre_train_models,
-        kwargs...
-    )
+    function set_up_single(data)
+        return set_up_experiment(
+            data,
+            models,
+            generators;
+            target=target,
+            num_counterfactuals=num_counterfactuals,
+            pre_train_models=pre_train_models,
+            kwargs...,
+        )
+    end
 
-    experiments = Dict{Symbol, Experiment}()
+    experiments = Dict{Symbol,Experiment}()
     for (key, data) in catalogue
         @info "Setting up $(key)"
         experiments[key] = set_up_single(data)
@@ -250,9 +315,8 @@ function run_experiment(
     evaluate_every::Int=2,
     save_path::Union{Nothing,String}=nothing,
     save_name::Union{Nothing,String}=nothing,
-    kwargs...
+    kwargs...,
 )
-
     exp_name = isnothing(save_name) ? "unnamed" : save_name
 
     @info "Starting experiment: $exp_name"
@@ -275,7 +339,6 @@ function run_experiment(
         Serialization.serialize(joinpath(save_path, "results.jls"), results)
 
         @info "Saved experiment: $exp_name"
-
     end
 
     return results
@@ -299,7 +362,9 @@ Sets up one experiment for the provided data, models and generators and then run
 """
 function run_experiment(
     data::CounterfactualData,
-    models::Union{Dict{Symbol,<:CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}},
+    models::Union{
+        Dict{Symbol,<:CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}
+    },
     generators::Dict{Symbol,<:CounterfactualExplanations.Generators.AbstractGenerator};
     target::Int=1,
     num_counterfactuals::Int=5,
@@ -307,12 +372,15 @@ function run_experiment(
     pre_train_models::Union{Nothing,Int}=100,
     save_path::Union{Nothing,String}=nothing,
     save_name::Union{Nothing,String}=nothing,
-    kwargs...
+    kwargs...,
 )
-
     experiment = set_up_experiment(
-        data, models, generators;
-        target=target, num_counterfactuals=num_counterfactuals, pre_train_models=pre_train_models
+        data,
+        models,
+        generators;
+        target=target,
+        num_counterfactuals=num_counterfactuals,
+        pre_train_models=pre_train_models,
     )
 
     exp_name = isnothing(save_name) ? "unnamed" : save_name
@@ -337,11 +405,9 @@ function run_experiment(
         Serialization.serialize(joinpath(save_path, "results.jls"), results)
 
         @info "Saved experiment: $exp_name"
-
     end
 
     return results
-
 end
 
 """
@@ -360,26 +426,29 @@ function run_experiments(
     save_path::Union{Nothing,String}=nothing,
     save_name_suffix::String="",
     create_copy::Bool=true,
-    kwargs...
+    kwargs...,
 )
-
     if create_copy
         experiments = deepcopy(experiments)
     end
 
-    run_single(experiment, name) = run_experiment(
-        experiment;
-        evaluate_every=evaluate_every,
-        save_path=save_path,
-        save_name=name,
-        kwargs...
-    )
+    function run_single(experiment, name)
+        return run_experiment(
+            experiment;
+            evaluate_every=evaluate_every,
+            save_path=save_path,
+            save_name=name,
+            kwargs...,
+        )
+    end
 
     save_name_suffix = save_name_suffix != "" ? "_$save_name_suffix" : save_name_suffix
-    output = Dict(name => run_single(experiment, "$(string(name))$(save_name_suffix)") for (name, experiment) in experiments)
+    output = Dict(
+        name => run_single(experiment, "$(string(name))$(save_name_suffix)") for
+        (name, experiment) in experiments
+    )
 
     return output
-
 end
 
 """
@@ -399,7 +468,9 @@ Sets up and runs experiments for multiple data sets.
 """
 function run_experiments(
     catalogue::Dict{Symbol,CounterfactualData},
-    models::Union{Dict{Symbol,<:CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}},
+    models::Union{
+        Dict{Symbol,<:CounterfactualExplanations.Models.AbstractFittedModel},Vector{Symbol}
+    },
     generators::Dict{Symbol,<:CounterfactualExplanations.Generators.AbstractGenerator};
     target::Int=1,
     num_counterfactuals::Int=5,
@@ -407,24 +478,28 @@ function run_experiments(
     pre_train_models::Union{Nothing,Int}=100,
     save_path::Union{Nothing,String}=nothing,
     save_name_suffix::String="",
-    kwargs...
+    kwargs...,
 )
-
-    run_single(data, save_name) = run_experiment(
-        data, models, generators;
-        target=target, num_counterfactuals=num_counterfactuals,
-        evaluate_every=evaluate_every,
-        pre_train_models=pre_train_models,
-        save_path=save_path,
-        save_name=save_name,
-        kwargs...
-    )
+    function run_single(data, save_name)
+        return run_experiment(
+            data,
+            models,
+            generators;
+            target=target,
+            num_counterfactuals=num_counterfactuals,
+            evaluate_every=evaluate_every,
+            pre_train_models=pre_train_models,
+            save_path=save_path,
+            save_name=save_name,
+            kwargs...,
+        )
+    end
 
     save_name_suffix = save_name_suffix != "" ? "_$save_name_suffix" : save_name_suffix
-    output = Dict(name => run_single(data, "$(string(name))$(save_name_suffix)") for (name, data) in catalogue)
+    output = Dict(
+        name => run_single(data, "$(string(name))$(save_name_suffix)") for
+        (name, data) in catalogue
+    )
 
     return output
 end
-
-
-

@@ -10,7 +10,6 @@ struct ModelMetric <: AbstractMetric
     name::Symbol
 end
 
-
 """
     DataFrame(metric::ModelMetric)
 
@@ -34,21 +33,31 @@ function perturbation(experiment::Experiment, recourse_system::RecourseSystem)
     metric = ModelMetric(value, missing, :perturbation)
 
     return metric
-
 end
-
 
 """
     mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=1000, grid_search=false, kwargs...)
 
 Calculates the MMD on the probabilities of classification assigned by the model to the set of (all) instances. Allows to quantify the model shift.
 """
-function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=1000, grid_search=false, n_samples=1000, kwargs...)
-
+function mmd_model(
+    experiment::Experiment,
+    recourse_system::RecourseSystem;
+    n=1000,
+    grid_search=false,
+    n_samples=1000,
+    kwargs...,
+)
     X, _ = CounterfactualExplanations.DataPreprocessing.unpack_data(experiment.data)
 
     if grid_search
-        X = reduce(hcat, [map(x -> rand(range(x..., length=100)), extrema(X, dims=2)) for i in 1:n_samples])
+        X = reduce(
+            hcat,
+            [
+                map(x -> rand(range(x...; length=100)), extrema(X; dims=2)) for
+                i in 1:n_samples
+            ],
+        )
     end
 
     # Initial:
@@ -65,7 +74,6 @@ function mmd_model(experiment::Experiment, recourse_system::RecourseSystem; n=10
     metric = ModelMetric(value, p_value, metric_name)
 
     return metric
-
 end
 
 """
@@ -74,7 +82,6 @@ end
 Calculates the pseudo-distance of points to the decision boundary measured as the average probability of classification centered around 0.5. High value corresponds to a large margin of classification.
 """
 function decisiveness(experiment::Experiment, recourse_system::RecourseSystem)
-
     X, _ = CounterfactualExplanations.DataPreprocessing.unpack_data(experiment.data)
 
     # Initial:
@@ -98,7 +105,6 @@ end
 Calculates the Disagreement pseudo-distance defined in https://doi.org/10.1145/1273496.1273541 as Pr(h(x) != h'(x)), that is the probability that labels assigned by one classifier do not agree with the labels assigned by another classifier. Simply put, it measures the overlap between models. As this is an empirical measure, we can vary the number of records in `data`.
 """
 function disagreement(experiment::Experiment, recourse_system::RecourseSystem)
-
     X, _ = CounterfactualExplanations.DataPreprocessing.unpack_data(experiment.data)
 
     # Initial:
@@ -108,7 +114,7 @@ function disagreement(experiment::Experiment, recourse_system::RecourseSystem)
     new_M = recourse_system.model
     new_proba = reduce(hcat, map(x -> length(x) == 1 ? [x, 1 - x] : x, probs(new_M, X)))
 
-    value = sum(argmax(proba, dims=1) .!= argmax(new_proba, dims=1)) / size(X, 2)
+    value = sum(argmax(proba; dims=1) .!= argmax(new_proba; dims=1)) / size(X, 2)
     metric = ModelMetric(value, missing, :disagreement)
 
     return metric
@@ -129,6 +135,4 @@ function model_performance(experiment::Experiment, recourse_system::RecourseSyst
     value = new_score_ - score_
     metric = ModelMetric(value, missing, :model_performance)
     return metric
-
 end
-

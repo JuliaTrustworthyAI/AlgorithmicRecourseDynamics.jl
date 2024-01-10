@@ -17,17 +17,31 @@ function DataFrames.DataFrame(metric::DomainMetric)
     return df
 end
 
-
 """
     mmd_domain(experiment::Experiment, recourse_system::RecourseSystem, n=1000; target_only::Bool=true, kwargs...)
 
 Calculates MMD for the input data.
 """
-function mmd_domain(experiment::Experiment, recourse_system::RecourseSystem; n=1000, n_samples=1000, target_only::Bool=true, kwargs...)
+function mmd_domain(
+    experiment::Experiment,
+    recourse_system::RecourseSystem;
+    n=1000,
+    n_samples=1000,
+    target_only::Bool=true,
+    kwargs...,
+)
     X, y = CounterfactualExplanations.DataPreprocessing.unpack_data(experiment.data)
-    new_X, new_y = CounterfactualExplanations.DataPreprocessing.unpack_data(recourse_system.data)
+    new_X, new_y = CounterfactualExplanations.DataPreprocessing.unpack_data(
+        recourse_system.data
+    )
     if target_only
-        value, p_value = mmd(X[:, vec(y .== experiment.target)], new_X[:, vec(new_y .== experiment.target)], n_samples; compute_p=n, kwargs...)
+        value, p_value = mmd(
+            X[:, vec(y .== experiment.target)],
+            new_X[:, vec(new_y .== experiment.target)],
+            n_samples;
+            compute_p=n,
+            kwargs...,
+        )
     else
         value, p_value = mmd(X, new_X, n_samples; compute_p=n, kwargs...)
     end
@@ -36,6 +50,3 @@ function mmd_domain(experiment::Experiment, recourse_system::RecourseSystem; n=1
 
     return metric
 end
-
-
-

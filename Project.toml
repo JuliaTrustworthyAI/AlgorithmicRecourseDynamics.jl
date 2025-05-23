@@ -25,7 +25,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 CSV = "0.10"
-CounterfactualExplanations = "0.1 - 0"
+CounterfactualExplanations = "0.1 - 0.1.6"
 DataFrames = "1"
 Distances = "0.10"
 Flux = "0.13 - 0.14"

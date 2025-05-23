@@ -26,6 +26,6 @@ using Test
     generators = Dict(:wachter => generator)
     experiment = set_up_experiment(data_train, data_test, models, generators)
 
-    run!(experiment)
+    run!(experiment, n_folds=1, n_rounds=5)
 
 end

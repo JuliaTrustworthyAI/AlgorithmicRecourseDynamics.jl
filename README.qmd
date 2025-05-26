@@ -12,7 +12,9 @@ crossref:
   fig-prefix: Figure
   tbl-prefix: Table
 bibliography: bib.bib
-jupyter: julia-1.8
+engine: julia
+julia:
+  exeflags: ["+1.9"]
 ---
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://juliatrustworthyai.github.io/AlgorithmicRecourseDynamics.jl/stable) 
@@ -20,8 +22,6 @@ jupyter: julia-1.8
 [![Build Status](https://github.com/juliatrustworthyai/AlgorithmicRecourseDynamics.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/juliatrustworthyai/AlgorithmicRecourseDynamics.jl/actions/workflows/CI.yml?query=branch%3Amain) 
 [![Coverage](https://codecov.io/gh/juliatrustworthyai/AlgorithmicRecourseDynamics.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/juliatrustworthyai/AlgorithmicRecourseDynamics.jl) 
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle) 
-[![ColPrac: Contributor’s Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet.png)](https://github.com/SciML/ColPrac) 
-[![Twitter Badge](https://img.shields.io/twitter/url/https/twitter.com/paltmey.svg?style=social&label=Follow%20%40paltmey)](https://twitter.com/paltmey)
 
 # AlgorithmicRecourseDynamics
 

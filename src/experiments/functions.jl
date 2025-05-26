@@ -172,14 +172,15 @@ function update_experiment!(experiment::Experiment, recourse_system::RecourseSys
         indices_ = rand(1:experiment.num_counterfactuals, length(results)) # randomly draw from generated counterfactuals
         X′ = reduce(hcat, @.(selectdim(counterfactual(results), 3, indices_)))
         y′ = reduce(hcat, @.(selectdim(counterfactual_label(results), 3, indices_)))
+        y′ = [y[1] for y in y′]
 
-    # If for any counterfactuals the returned label is NaN, this is considered as invalid and the current label is not updated:
-    valid_ces = vec(.!(isnan.(y′)))
-    chosen_individuals = chosen_individuals[valid_ces]
+        # If for any counterfactuals the returned label is NaN, this is considered as invalid and the current label is not updated:
+        valid_ces = vec(.!(isnan.(y′)))
+        chosen_individuals = chosen_individuals[valid_ces]
 
-    # Update data:
-    X[:, chosen_individuals] = X′[:, valid_ces]
-    y[:, chosen_individuals] = y′[:, valid_ces]
+        # Update data:
+        X[:, chosen_individuals] = X′[:, valid_ces]
+        y[:, chosen_individuals] = y′[:, valid_ces]
 
         # Generative model:
         gen_mod = deepcopy(counterfactual_data.generative_model)

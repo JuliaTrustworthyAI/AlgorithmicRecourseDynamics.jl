@@ -78,7 +78,7 @@ function set_up_system_grid!(experiment::Experiment, K::Int=1)
         map(grid) do vars
             newdata = deepcopy(data)
             model = deepcopy(vars[1]) # initial model is owned by the recourse systems
-            score = Models.model_evaluation(model, experiment.test_data)
+            score = Models.model_evaluation(model, experiment.test_data)[1]
             newmodel = deepcopy(model)
             generator = vars[2]
             recourse_system = RecourseSystem(newdata, newmodel, generator, model, score, nothing, DataFrame())

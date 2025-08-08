@@ -118,12 +118,12 @@ function model_performance(experiment::Experiment, recourse_system::RecourseSyst
 
     # Initial:
     M = recourse_system.initial_model
-    score_ = model_evaluation(M, experiment.test_data)
+    score_ = model_evaluation(M, experiment.test_data)[1]
     @assert score_ == recourse_system.initial_score
 
     # New:
     new_M = recourse_system.model
-    new_score_ = model_evaluation(new_M, experiment.test_data)
+    new_score_ = model_evaluation(new_M, experiment.test_data)[1]
 
     # Difference:
     value = new_score_ - score_
